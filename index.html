@@ -12,6 +12,7 @@
             --bg-color: #f4f7f9;
             --text-color: #333;
             --card-bg: #ffffff;
+            --danger-color: #ff4d4d;
         }
 
         body {
@@ -24,14 +25,40 @@
 
         header {
             background-color: var(--card-bg);
-            padding: 20px; text-align: center;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 900;
         }
 
-        header h1 { margin: 0; font-size: 24px; color: var(--primary-color); }
+        header h1 { margin: 0; font-size: 20px; color: var(--primary-color); }
+
+        /* زر القائمة الجانبية */
+        .menu-btn {
+            background: none; border: none; font-size: 24px; cursor: pointer; color: var(--primary-color); outline: none;
+        }
+
+        /* القائمة الجانبية السحرية */
+        .sidebar {
+            position: fixed; top: 0; right: -280px; width: 280px; height: 100%;
+            background-color: var(--card-bg); box-shadow: -2px 0 15px rgba(0,0,0,0.1);
+            z-index: 1001; transition: right 0.3s ease; padding: 20px; box-sizing: border-box;
+        }
+        .sidebar.open { right: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 15px; margin-bottom: 20px; }
+        .sidebar-header h3 { margin: 0; color: #2d3748; font-size: 18px; }
+        .close-sidebar { background: none; border: none; font-size: 20px; cursor: pointer; color: #718096; }
+        
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .sidebar-menu li { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; font-weight: 600; color: #4a5568; transition: background 0.2s; display: flex; align-items: center; gap: 10px; }
+        .sidebar-menu li:hover { background-color: #f0f7ff; color: var(--primary-color); }
+        .sidebar-menu li.logout { color: var(--danger-color); margin-top: 30px; border-top: 1px solid #edf2f7; border-radius: 0; }
+        .sidebar-menu li.logout:hover { background-color: #fff5f5; color: var(--danger-color); }
 
         .search-section { max-width: 800px; margin: 30px auto; padding: 0 20px; text-align: center; }
-        .search-section p { color: #666; font-size: 16px; }
+        .search-section p { color: #666; font-size: 16px; margin-bottom: 5px; }
 
         .search-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; }
         .search-container input, .search-container select {
@@ -61,11 +88,10 @@
 
         .doctor-card h3 { margin: 10px 0 5px 0; font-size: 18px; color: #2d3748; }
         .doctor-card .specialty {
-            color: var(--primary-color); font-weight: 600; margin: 0 0 10px 0; font-size: 14px;
+            color: var(--primary-color); font-weight: 600; margin: 0 0 15px 0; font-size: 14px;
             background: #eef5ff; display: inline-block; padding: 4px 12px; border-radius: 20px;
         }
 
-        .doctor-card .rating { color: #ffb100; font-size: 15px; margin-bottom: 10px; }
         .doctor-card .doctor-details { text-align: right; margin-top: 15px; margin-bottom: 20px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
         .doctor-card .doctor-details p { margin: 6px 0; font-size: 13px; color: #4a5568; line-height: 1.4; }
         .doctor-card .doctor-details strong { color: #2d3748; }
@@ -79,43 +105,71 @@
 
         .status-message { text-align: center; grid-column: 1 / -1; padding: 40px; color: #718096; font-size: 18px; }
 
-        /* Modal */
+        /* غطاء الخلفية عند فتح القوائم والمودالز */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:1000; display:none; }
+
+        /* Modals */
         .modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;
         }
 
         .modal-content {
             background-color: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 450px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; text-align: right;
+            max-height: 85vh; overflow-y: auto;
         }
 
-        .modal-content h2 { margin-top: 0; color: #2d3748; font-size: 20px; margin-bottom: 20px; }
+        .modal-content h2 { margin-top: 0; color: #2d3748; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #f0f4f8; padding-bottom: 10px; }
         .modal-content label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: #4a5568; }
         .modal-content input {
             width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e0e0e0; border-radius: 8px;
-            box-sizing: border-box; outline: none; font-size: 15px;
+            box-sizing: border-box; outline: none; font-size: 15px; background-color: #f8fafc;
         }
-        .modal-content input:focus { border-color: var(--primary-color); }
+        .modal-content input:disabled { background-color: #edf2f7; color: #718096; cursor: not-allowed; }
 
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
         .modal-actions button { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
         .btn-submit { background-color: var(--primary-color); color: white; }
         .btn-submit:hover { background-color: var(--primary-hover); }
         .btn-cancel { background-color: #edf2f7; color: #4a5568; }
         .btn-cancel:hover { background-color: #e2e8f0; }
+
+        /* كروت الحجوزات */
+        .booking-item { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 12px; background: #f8fafc; }
+        .booking-item p { margin: 4px 0; font-size: 14px; }
+        .badge-status { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .status-pending { background-color: #fef3c7; color: #d97706; }
+        .status-confirmed { background-color: #dcfce7; color: #15803d; }
+        .status-rejected { background-color: #fee2e2; color: #b91c1c; }
     </style>
 </head>
+
 <body>
 
     <header>
-        <h1>DoctorForMe - منصة الحجوزات</h1>
-    </header>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <h1>DoctorForMe - دليل الأطباء</h1>
+        <div style="width: 24px;"></div> </header>
+
+    <div id="sidebarOverlay" class="overlay" onclick="toggleSidebar()"></div>
+    <div id="mySidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3 id="patientGreeting">مرحباً بك</h3>
+            <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        </div>
+    <ul class="sidebar-menu">
+    <li onclick="openMyBookingsModal()">📅 حجوزاتي الحالية</li>
+    <li onclick="openFeedbackModal()">💡 المقترحات والشكاوى</li> <li onclick="contactSupport()">💬 خدمة العملاء</li>
+    <li onclick="getHelp()">❓ طلب مساعدة</li>
+    <li class="logout" onclick="logout()">🚪 تسجيل الخروج</li>
+</ul>
+    </div>
 
     <section class="search-section">
-        <p>ابحث عن طبيبك المفضل بالتخصص أو الاسم واحجز موعدك بسهولة</p>
+        <p>ابحث ذكياً باسم الطبيب، التخصص، أو منطقة العيادة واحجز موعدك فوراً</p>
         <div class="search-container">
-            <input type="text" id="searchName" placeholder="اكتب اسم الدكتور هنا...">
+            <input type="text" id="searchQuery" placeholder="اكتب الاسم، التخصص، أو المنطقة...">
             <select id="filterSpecialty">
                 <option value="الكل">كل التخصصات</option>
                 <option value="أسنان">أسنان</option>
@@ -134,13 +188,25 @@
     <div id="bookingModal" class="modal">
         <div class="modal-content">
             <h2 id="modalTitle">تأكيد حجز الموعد</h2>
-            <label for="patientName">اسم المريض بالكامل:</label>
-            <input type="text" id="patientName" placeholder="اكتب اسمك هنا...">
-            <label for="patientPhone">رقم الهاتف:</label>
-            <input type="tel" id="patientPhone" placeholder="اكتب رقم موبايلك...">
+            <label for="patientName">اسم المريض:</label>
+            <input type="text" id="patientName" disabled>
+            
+            <label for="patientPhone">رقم الهاتف المسجل:</label>
+            <input type="tel" id="patientPhone" disabled>
+            
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
                 <button class="btn-submit" id="confirmBookingBtn">تأكيد الحجز الفوري</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="myBookingsModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2>قائمة حجوزاتي الطبية</h2>
+            <div id="myBookingsList">جاري تحميل حجوزاتك...</div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeMyBookingsModal()">إغلاق</button>
             </div>
         </div>
     </div>
@@ -149,52 +215,71 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // 1. الفحص التلقائي لتسجيل الدخول عند فتح الصفحة
-document.addEventListener("DOMContentLoaded", () => {
-    const currentRole = localStorage.getItem('user_role');
+        // فتح وإغلاق مودال الشكاوى والمقترحات
+function openFeedbackModal() {
+    toggleSidebar(); // غلق القائمة الجانبية أولاً
+    document.getElementById('feedbackModal').style.display = 'flex';
+}
+
+function closeFeedbackModal() {
+    document.getElementById('feedbackModal').style.display = 'none';
+    document.getElementById('feedbackText').value = ''; // تفريغ النص
+}
+
+// كود إرسال الشكوى أو المقترح للفايربيز
+document.getElementById('submitFeedbackBtn').addEventListener('click', async () => {
+    const feedbackType = document.getElementById('feedbackType').value;
+    const feedbackText = document.getElementById('feedbackText').value.trim();
+    
     const patientName = localStorage.getItem('user_name');
     const patientPhone = localStorage.getItem('user_phone');
 
-    // لو مش مسجل دخول خالص أو الحساب مش مريض، حوّله لصفحة اللوجن
-    if (!currentRole || currentRole !== 'patient') {
-        alert("برجاء تسجيل الدخول أولاً كمريض للاستفادة من خدمات الحجز.");
-        window.location.href = 'login.html';
+    if (!feedbackText) {
+        alert("برجاء كتابة تفاصيل المقترح أو الشكوى أولاً.");
         return;
     }
 
-    console.log(`مرحباً بالمريض: ${patientName} - رقم الهاتف: ${phone}`);
-});
+    try {
+        // إرسال البيانات لكولكشن جديد باسم feedbacks
+        await db.collection("feedbacks").add({
+            patient_name: patientName,
+            patient_phone: patientPhone,
+            type: feedbackType,
+            text: feedbackText,
+            status: "unread", // ميزة إضافية عشان الأدمن يعرف المقروء وغير المقروء
+            created_at: new Date().toISOString()
+        });
 
-// 2. تعديل الجزء الخاص بفتح نافذة الحجز (المودال)
-// ابحث عن الدالة اللي بتفتح المودال (غالباً اسمها openBookingModal أو ما يشابهها) 
-// واجعلها تقرأ البيانات المحفوظة مباشرة بدلاً من ترك الحقول فارغة:
-window.openBookingModal = function(doctorId, doctorName) {
-    selectedDoctorId = doctorId;
-    selectedDoctorName = doctorName;
-    
-    // إظهار المودال
-    document.getElementById('bookingModal').style.display = 'flex';
-    
-    // التعبئة التلقائية لبيانات المريض المحفوظة من جلسة تسجيل الدخول
-    if (document.getElementById('patientNameInput')) {
-        document.getElementById('patientNameInput').value = localStorage.getItem('user_name') || '';
-        document.getElementById('patientNameInput').disabled = true; // اختياري: قفل الحقل عشان المريض مغيرش اسمه في الحجز عن حسابه
+        alert("تم إرسال رسالتك بنجاح! شكراً جزيلاً لاهتمامك بمساعدتنا على التطوير. ❤️");
+        closeFeedbackModal();
+
+    } catch (error) {
+        alert("حدث خطأ أثناء إرسال الرسالة، برجاء المحاولة مرة أخرى.");
+        console.error("Feedback Error: ", error);
     }
-    
-    if (document.getElementById('patientPhoneInput')) {
-        document.getElementById('patientPhoneInput').value = localStorage.getItem('user_phone') || '';
-        document.getElementById('patientPhoneInput').disabled = true; // قفل الحقل لضمان الحجز بنفس الرقم المسجل
-    }
-};
-        // !!! ضع هنا بيانات مشروعك الحقيقية !!!
-         const firebaseConfig = {
-    apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", // دي الوحيدة اللي هتلاقيها مكتوبة واضحة أول ما تضغط على DoctorForMe Web
-    authDomain: "doctorforme-62aaf.firebaseapp.com",
-    projectId: "doctorforme-62aaf",
-    storageBucket: "doctorforme-62aaf.appspot.com",
-    messagingSenderId: "121506902078",
-    appId: "1:121506902078:web:7f15e8da771bd973a96cef" // هتظهرلك كاملة لما تضغط على الويب
-};
+});
+        // التحقق التلقائي الصارم من هوية المريض
+        document.addEventListener("DOMContentLoaded", () => {
+            const currentRole = localStorage.getItem('user_role');
+            const patientName = localStorage.getItem('user_name');
+
+            if (!currentRole || currentRole !== 'patient') {
+                alert("برجاء تسجيل الدخول أولاً كمريض للاستفادة من خدمات الحجز.");
+                window.location.href = 'login.html';
+                return;
+            }
+            document.getElementById('patientGreeting').innerText = `مرحباً، ${patientName.split(' ')[0]} 👋`;
+        });
+
+        // بيانات مشروع Firebase الحقيقية الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", 
+            authDomain: "doctorforme-62aaf.firebaseapp.com",
+            projectId: "doctorforme-62aaf",
+            storageBucket: "doctorforme-62aaf.appspot.com",
+            messagingSenderId: "121506902078",
+            appId: "1:121506902078:web:7f15e8da771bd973a96cef" 
+        };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -205,12 +290,14 @@ window.openBookingModal = function(doctorId, doctorName) {
         let selectedDoctorId = '';
         let selectedDoctorName = '';
 
-        async function fetchDoctors(nameSearch = '', specialtyFilter = 'الكل') {
-            doctorsListContainer.innerHTML = '<div class="status-message">جاري تحميل قائمة الأطباء...</div>';
+        // نظام البحث الذكي الشامل (اسم، تخصص، منطقة)
+        async function fetchDoctors(searchText = '', specialtyFilter = 'الكل') {
+            doctorsListContainer.innerHTML = '<div class="status-message">جاري تحميل قائمة الأطباء الحالية...</div>';
 
             try {
                 let collectionRef = db.collection("doctors");
                 
+                // فلترة التخصص إن وجدت من القائمة المنسدلة
                 if (specialtyFilter !== 'الكل' && specialtyFilter !== 'كل التخصصات') {
                     collectionRef = collectionRef.where("specialty", "==", specialtyFilter);
                 }
@@ -219,35 +306,39 @@ window.openBookingModal = function(doctorId, doctorName) {
                 doctorsListContainer.innerHTML = '';
 
                 if (querySnapshot.empty) {
-                    doctorsListContainer.innerHTML = '<div class="status-message">عذراً، لم نجد أطباء في قاعدة البيانات حالياً.</div>';
+                    doctorsListContainer.innerHTML = '<div class="status-message">عذراً، لم نجد أطباء نشطين حالياً في المنصة.</div>';
                     return;
                 }
 
                 let hasVisibleDoctors = false;
+                const search = searchText.toLowerCase().trim();
 
                 querySnapshot.forEach((doc) => {
                     const doctor = doc.data();
-                    
-                    if (nameSearch && !doctor.name.toLowerCase().includes(nameSearch.toLowerCase())) {
+                    const doctorName = doctor.name.toLowerCase();
+                    const doctorSpecialty = doctor.specialty.toLowerCase();
+                    const doctorAddress = doctor.clinic_address?.full_address ? doctor.clinic_address.full_address.toLowerCase() : '';
+
+                    // البحث الذكي الشامل والمجرد
+                    if (search && !doctorName.includes(search) && !doctorSpecialty.includes(search) && !doctorAddress.includes(search)) {
                         return; 
                     }
 
                     hasVisibleDoctors = true;
                     const daysText = doctor.working_days ? doctor.working_days.join(' - ') : 'غير محدد';
                     const hoursText = doctor.working_hours ? `من ${doctor.working_hours.start} إلى ${doctor.working_hours.end}` : 'غير محدد';
-
-                    // منطق الخرائط المحدث
                     const mapUrl = doctor.clinic_address?.map_url;
+                    
                     const addressHTML = mapUrl 
                         ? `<a href="${mapUrl}" target="_blank" style="color: #2a85ff; text-decoration: underline; font-weight: bold;">${doctor.clinic_address.full_address} (عرض على الخريطة 🗺️)</a>`
                         : (doctor.clinic_address?.full_address || 'غير محدد');
 
+                    // الكارت خالي تماماً من خانة التقييم وبنظام منسق ونظيف
                     const card = `
                         <div class="doctor-card">
                             <img src="${doctor.image_url || 'https://via.placeholder.com/150'}" alt="${doctor.name}" onerror="this.src='https://via.placeholder.com/150'">
                             <h3>${doctor.name}</h3>
                             <span class="specialty">${doctor.specialty}</span>
-                            <div class="rating">⭐ ${doctor.rating || '4.5'}</div>
                             
                             <div class="doctor-details">
                                 <p>📍 <strong>العنوان:</strong> ${addressHTML}</p>
@@ -262,76 +353,160 @@ window.openBookingModal = function(doctorId, doctorName) {
                 });
 
                 if (!hasVisibleDoctors) {
-                    doctorsListContainer.innerHTML = '<div class="status-message">لا يوجد طبيب بهذا الاسم في التخصص المحدد.</div>';
+                    doctorsListContainer.innerHTML = '<div class="status-message">لا توجد نتائج تطابق بحثك الذكي (الاسم/التخصص/المنطقة).</div>';
                 }
 
             } catch (error) {
                 console.error("Error: ", error);
-                doctorsListContainer.innerHTML = '<div class="status-message" style="color: red;">فشل الاتصال بقاعدة البيانات.</div>';
+                doctorsListContainer.innerHTML = '<div class="status-message" style="color: red;">فشل الاتصال بقاعدة بيانات الأطباء.</div>';
             }
         }
 
+        // فتح وإغلاق القائمة الجانبية
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mySidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        }
+
+        // فتح مودال الحجز وملء البيانات التلقائية للمريض بشكل مقفل وآمن
         window.openBookingModal = function(doctorId, doctorName) {
             selectedDoctorId = doctorId;
             selectedDoctorName = doctorName;
-            document.getElementById('modalTitle').innerText = `حجز موعد مع ${doctorName}`;
+            document.getElementById('modalTitle').innerText = `حجز موعد فوري مع ${doctorName}`;
+            
+            document.getElementById('patientName').value = localStorage.getItem('user_name') || '';
+            document.getElementById('patientPhone').value = localStorage.getItem('user_phone') || '';
+            
             bookingModal.style.display = 'flex';
         }
 
         window.closeModal = function() {
             bookingModal.style.display = 'none';
-            document.getElementById('patientName').value = '';
-            document.getElementById('patientPhone').value = '';
         }
 
+        // تأكيد وإرسال طلب الحجز للـ Firestore
         document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
-            const patientName = document.getElementById('patientName').value.trim();
-            const patientPhone = document.getElementById('patientPhone').value.trim();
+            const name = localStorage.getItem('user_name');
+            const phone = localStorage.getItem('user_phone');
 
-            if (!patientName || !patientPhone) {
-                alert("برجاء إدخال الاسم ورقم الهاتف لإتمام الحجز.");
-                return;
-            }
-
-  try {
-                // 1. إرسال الحجز لأول مرة كـ pending (قيد الانتظار)
+            try {
                 const docRef = await db.collection("bookings").add({
                     doctor_id: selectedDoctorId,
                     doctor_name: selectedDoctorName,
-                    patient_name: patientName,
-                    patient_phone: patientPhone,
-                    status: "pending", // تبدأ دائماً قيد الانتظار
+                    patient_name: name,
+                    patient_phone: phone,
+                    status: "pending", 
                     created_at: new Date().toISOString()
                 });
 
-                alert(`تم إرسال طلب الحجز بنجاح! برجاء عدم إغلاق الصفحة، سنقوم بإشعارك فور رد الطبيب.`);
+                alert(`تم إرسال طلب حجزك بنجاح للطبيب المختار! يمكنك متابعة حالة طلبك من قائمة "حجوزاتي" في القائمة الجانبية.`);
                 closeModal();
 
-                // 2. الكود السحري للإشعار اللحظي للمريض:
+                // التنبيه والإنصات اللحظي للتأكيد السريع للمريض المفتوح حالياً
                 db.collection("bookings").doc(docRef.id).onSnapshot((docSnapshot) => {
                     const currentData = docSnapshot.data();
-                    
-                    if (currentData.status === 'confirmed') {
-                        alert(`🎉 بشرى سارة! تم تأكيد حجزك بنجاح مع ${currentData.doctor_name}!`);
-                    } else if (currentData.status === 'rejected') {
-                        alert(`❌ نعتذر منك، تم رفض طلب حجزك مع ${currentData.doctor_name}.\nالسبب: ${currentData.rejection_reason}`);
+                    if (currentData && currentData.status === 'confirmed') {
+                        alert(`🎉 مبارك! تم تأكيد حجزك رسمياً مع ${currentData.doctor_name}!`);
+                    } else if (currentData && currentData.status === 'rejected') {
+                        alert(`❌ تم رفض طلب حجزك مع ${currentData.doctor_name}.\nالسبب: ${currentData.rejection_reason || 'الموعد غير متاح'}`);
                     }
                 });
 
             } catch (error) {
-                alert("حدث خطأ أثناء الحجز.");
+                alert("حدث خطأ تقني أثناء معالجة حجزك المباشر.");
             }
         });
 
-        document.getElementById('searchName').addEventListener('input', (e) => {
+        // فتح نافذة عرض حجوزات المريض ومتابعتها بلحظة
+        function openMyBookingsModal() {
+            toggleSidebar();
+            const listContainer = document.getElementById('myBookingsList');
+            document.getElementById('myBookingsModal').style.display = 'flex';
+            const userPhone = localStorage.getItem('user_phone');
+
+            db.collection("bookings")
+              .where("patient_phone", "==", userPhone)
+              .onSnapshot((snapshot) => {
+                  listContainer.innerHTML = '';
+                  if(snapshot.empty) {
+                      listContainer.innerHTML = '<p style="text-align:center; color:#718096;">ليس لديك أي حجوزات مسجلة حتى الآن.</p>';
+                      return;
+                  }
+                  snapshot.forEach(doc => {
+                      const data = doc.data();
+                      let statusClass = 'status-pending';
+                      let statusText = 'قيد الانتظار ⏳';
+                      if(data.status === 'confirmed') { statusClass = 'status-confirmed'; statusText = 'مؤكد ومقبول  ✅'; }
+                      if(data.status === 'rejected') { statusClass = 'status-rejected'; statusText = 'مرفوض ❌'; }
+
+                      const item = `
+                          <div class="booking-item">
+                              <p><strong>الطبيب:</strong> ${data.doctor_name}</p>
+                              <p><strong>الحالة:</strong> <span class="badge-status ${statusClass}">${statusText}</span></p>
+                              ${data.rejection_reason ? `<p style="color:var(--danger-color); font-size:13px;"><strong>السبب:</strong> ${data.rejection_reason}</p>` : ''}
+                              <p style="font-size:11px; color:#a0aec0;">تاريخ الطلب: ${new Date(data.created_at).toLocaleString('ar-EG')}</p>
+                          </div>
+                      `;
+                      listContainer.innerHTML += item;
+                  });
+              });
+        }
+
+        function closeMyBookingsModal() { document.getElementById('myBookingsModal').style.display = 'none'; }
+
+        // خدمة العملاء والمساعدة المباشرة
+        function contactSupport() {
+            alert("جاري تحويلك الآن لمحادثة الدعم الفني وخدمة عملاء DoctorForMe عبر الواتساب...");
+            window.open("https://wa.me/201000000000", "_blank"); // استبدل برقم الدعم الفني الحقيقي لك
+        }
+
+        function getHelp() {
+            alert("دليل المساعدة السريع للخدمة:\n\n1. للبحث: اكتب اسم الطبيب أو عيادته أو تخصصه مباشرة في شريط البحث الذكي.\n2. للحجز: اضغط على احجز الآن وسيتم تأكيد طلبك فوراً.\n3. لمتابعة الحجز: افتح القائمة الجانبية واضغط على (حجوزاتي).");
+        }
+
+        // تسجيل الخروج الآمن والكامل
+        function logout() {
+            if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج الآن؟")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        // مستمعي أحداث مدخلات البحث الفوري المطور والذكي
+        document.getElementById('searchQuery').addEventListener('input', (e) => {
             fetchDoctors(e.target.value, document.getElementById('filterSpecialty').value);
         });
 
         document.getElementById('filterSpecialty').addEventListener('change', (e) => {
-            fetchDoctors(document.getElementById('searchName').value, e.target.value);
+            fetchDoctors(document.getElementById('searchQuery').value, e.target.value);
         });
 
+        // تشغيل الدليل وجلب البيانات المباشرة فور التحميل
         fetchDoctors();
     </script>
+    <div id="feedbackModal" class="modal">
+    <div class="modal-content">
+        <h2>أرسل مقترحك أو شكوتك</h2>
+        <p style="font-size: 13px; color: #718096; margin-top: -10px; margin-bottom: 20px;">صوتك يهمنا لتطوير المنصة وتحسين تجربتك.</p>
+        
+        <label for="feedbackType">نوع الرسالة:</label>
+        <select id="feedbackType" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e0e0e0; border-radius: 8px; outline: none;">
+            <option value="مقترح">💡 مقترح لتطوير المنصة</option>
+            <option value="شكوى ضد طبيب">❌ شكوى ضد طبيب أو عيادة</option>
+            <option value="مشكلة تقنية">🛠️ مشكلة تقنية في التطبيق</option>
+            <option value="أخرى">📝 أخرى</option>
+        </select>
+
+        <label for="feedbackText">تفاصيل الرسالة:</label>
+        <textarea id="feedbackText" rows="5" placeholder="اكتب تفاصيل مقترحك أو الشكوى هنا بكل وضوح..." style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; font-family: inherit; font-size: 15px; box-sizing: border-box; resize: vertical; margin-bottom: 20px; background-color: #f8fafc;"></textarea>
+        
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeFeedbackModal()">إلغاء</button>
+            <button class="btn-submit" id="submitFeedbackBtn">إرسال الآن</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
