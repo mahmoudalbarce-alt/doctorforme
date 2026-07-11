@@ -102,32 +102,34 @@
         }
 
         // دالة جلب الأطباء الحية الذكية والمتوافقة مع الهيكلين (القديم والحديث)
-  // دالة جلب الأطباء الحية الذكية والمتوافقة مع الهيكلين
+// دالة جلب الأطباء الشاملة بدون شروط فايربيز (الفرز يتم داخل المتصفح)
 function listenToDoctors() {
-    let query;
-    
-    // تعديل ذكي للاستعلام لضمان جلب القدامى
-    if (currentStatusFilter === 'pending') {
-        query = db.collection("doctors").where("status", "==", "pending");
-    } else {
-        // يجلب أي طبيب حالته ليست pending (يعني approved أو الحسابات القديمة التي ليس لها حالة معلقة)
-        query = db.collection("doctors").where("status", "!=", "pending");
-    }
-
-    query.onSnapshot((snapshot) => {
+    // جلب الكولكشن بالكامل بدون فلاتر لتفادي مشاكل الفهرسة وحقول البيانات الناقصة
+    db.collection("doctors").onSnapshot((snapshot) => {
         requestsContainer.innerHTML = '';
         
         if (snapshot.empty) {
-            requestsContainer.innerHTML = currentStatusFilter === 'pending' 
-                ? '<p class="no-requests">🎉 لا توجد طلبات انضمام معلقة حالياً.</p>'
-                : '<p class="no-requests">👤 لا يوجد أطباء مفعلون حالياً في قاعدة البيانات.</p>';
+            requestsContainer.innerHTML = '<p class="no-requests">👤 لا يوجد أي أطباء في قاعدة البيانات حالياً.</p>';
             return;
         }
+
+        let count = 0; // عداد للتأكد هل تم عرض أي طبيب في التبويب الحالي أم لا
 
         snapshot.forEach((doc) => {
             const doctor = doc.data();
             
-            // قراءة ذكية متوافقة مع نظام المصفوفة الجديد أو نظام الكائن الفردي القديم
+            // تحديد حالة الطبيب بدقة (إذا لم يكن هناك حقل status، نعتبره approved تلقائياً لأنه قديم)
+            const doctorStatus = doctor.status ? doctor.status.toLowerCase() : 'approved';
+            const isPending = doctorStatus === 'pending';
+            
+            // الفرز الفعلي بناءً على التبويب النشط
+            if (currentStatusFilter === 'pending' && !isPending) return;
+            if (currentStatusFilter === 'approved' && isPending) return;
+
+            // زيادة العداد لأننا وجدنا طبيب يطابق التبويب الحالي
+            count++;
+            
+            // قراءة ذكية متوافقة مع نظام العيادات الجديد والقديم
             let clinicsHTML = '';
             if (doctor.clinics && Array.isArray(doctor.clinics) && doctor.clinics.length > 0) {
                 doctor.clinics.forEach((clinic, index) => {
@@ -139,7 +141,6 @@ function listenToDoctors() {
                     `;
                 });
             } else if (doctor.clinic_address) {
-                // الهيكل القديم
                 clinicsHTML = `
                     <div class="clinic-item">
                         <strong>العنوان القديم:</strong> ${doctor.clinic_address.full_address || 'غير محدد'} <br>
@@ -149,15 +150,6 @@ function listenToDoctors() {
             } else {
                 clinicsHTML = '<p style="color:red; font-size:13px;">لم يتم العثور على عيادات مسجلة.</p>';
             }
-
-            // بناء كارت التحكم بالطبيب بناءً على حالته الحاليّة
-            // إذا كان الحقل pending أو غير موجود نعتبره نشط في التبويب الثاني
-            const isPending = doctor.status === 'pending';
-            
-            // تخطي العرض لو كنا في تبويب pending والطبيب ليس pending
-            if (currentStatusFilter === 'pending' && !isPending) return;
-            // تخطي العرض لو كنا في تبويب approved والطبيب pending
-            if (currentStatusFilter === 'approved' && isPending) return;
             
             const card = `
                 <div class="doctor-request-card" id="card_${doc.id}">
@@ -191,6 +183,13 @@ function listenToDoctors() {
             `;
             requestsContainer.innerHTML += card;
         });
+
+        // إذا كان العداد صفر، نكتب الرسالة التنبيهية المناسبة للتبويب
+        if (count === 0) {
+            requestsContainer.innerHTML = currentStatusFilter === 'pending' 
+                ? '<p class="no-requests">🎉 لا توجد طلبات انضمام معلقة حالياً.</p>'
+                : '<p class="no-requests">👤 لا يوجد أطباء مفعلون حالياً في قاعدة البيانات.</p>';
+        }
     });
 }
 
