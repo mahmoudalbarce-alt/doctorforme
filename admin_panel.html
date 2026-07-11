@@ -102,80 +102,97 @@
         }
 
         // دالة جلب الأطباء الحية الذكية والمتوافقة مع الهيكلين (القديم والحديث)
-        function listenToDoctors() {
-            db.collection("doctors").where("status", "==", currentStatusFilter).onSnapshot((snapshot) => {
-                requestsContainer.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    requestsContainer.innerHTML = currentStatusFilter === 'pending' 
-                        ? '<p class="no-requests">🎉 لا توجد طلبات انضمام معلقة حالياً.</p>'
-                        : '<p class="no-requests">👤 لا يوجد أطباء مفعلون حالياً في قاعدة البيانات.</p>';
-                    return;
-                }
+  // دالة جلب الأطباء الحية الذكية والمتوافقة مع الهيكلين
+function listenToDoctors() {
+    let query;
+    
+    // تعديل ذكي للاستعلام لضمان جلب القدامى
+    if (currentStatusFilter === 'pending') {
+        query = db.collection("doctors").where("status", "==", "pending");
+    } else {
+        // يجلب أي طبيب حالته ليست pending (يعني approved أو الحسابات القديمة التي ليس لها حالة معلقة)
+        query = db.collection("doctors").where("status", "!=", "pending");
+    }
 
-                snapshot.forEach((doc) => {
-                    const doctor = doc.data();
-                    
-                    // قراءة ذكية متوافقة مع نظام المصفوفة الجديد أو نظام الكائن الفردي القديم
-                    let clinicsHTML = '';
-                    if (doctor.clinics && Array.isArray(doctor.clinics) && doctor.clinics.length > 0) {
-                        doctor.clinics.forEach((clinic, index) => {
-                            clinicsHTML += `
-                                <div class="clinic-item">
-                                    <strong>العيادة (${index + 1}):</strong> ${clinic.address} <br>
-                                    <strong>مواعيد العمل:</strong> ${clinic.working_hours || (clinic.working_days ? clinic.working_days.join(' - ') : 'غير محدد')}
-                                </div>
-                            `;
-                        });
-                    } else if (doctor.clinic_address) {
-                        // الهيكل القديم
-                        clinicsHTML = `
-                            <div class="clinic-item">
-                                <strong>العنوان القديم:</strong> ${doctor.clinic_address.full_address || 'غير محدد'} <br>
-                                <strong>أيام العمل:</strong> ${doctor.working_days ? doctor.working_days.join(' - ') : 'غير محدد'}
-                            </div>
-                        `;
-                    } else {
-                        clinicsHTML = '<p style="color:red; font-size:13px;">لم يتم العثور على عيادات مسجلة.</p>';
-                    }
+    query.onSnapshot((snapshot) => {
+        requestsContainer.innerHTML = '';
+        
+        if (snapshot.empty) {
+            requestsContainer.innerHTML = currentStatusFilter === 'pending' 
+                ? '<p class="no-requests">🎉 لا توجد طلبات انضمام معلقة حالياً.</p>'
+                : '<p class="no-requests">👤 لا يوجد أطباء مفعلون حالياً في قاعدة البيانات.</p>';
+            return;
+        }
 
-                    // بناء كارت التحكم بالطبيب بناءً على حالته الحاليّة
-                    const isPending = currentStatusFilter === 'pending';
-                    
-                    const card = `
-                        <div class="doctor-request-card" id="card_${doc.id}">
-                            <span class="badge ${isPending ? 'badge-pending' : 'badge-approved'}">
-                                ${isPending ? 'معلق ⏳' : 'نشط ومفعل ✅'}
-                            </span>
-                            <h3>👨‍⚕️ الطبيب: ${doctor.name}</h3>
-                            <p><strong>التخصص:</strong> ${doctor.specialty}</p>
-                            <p><strong>رقم الهاتف:</strong> ${doctor.phone || 'غير مسجل'}</p>
-                            
-                            <h4>🏥 تفاصيل المقرات والعيادات:</h4>
-                            ${clinicsHTML}
-                            
-                            <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 20px 0;">
-                            
-                            ${isPending ? `
-                                <label for="img_${doc.id}">رابط صورة الطبيب من Google Drive (الإدارة):</label>
-                                <input type="text" id="img_${doc.id}" placeholder="ضع رابط مشاركة ملف الصورة من الدرايف هنا...">
-                                <span class="hint">* ستتولى الإدارة رفع وتأكيد رابط الصورة وتفعيل الحساب فوراً.</span>
-                            ` : `
-                                <p style="font-size:14px; color:#4a5568;">🔗 <strong>رابط الصورة الحالي:</strong> <a href="${doctor.image_url}" target="_blank" style="color:var(--primary-color)">عرض الصورة الشخصية 🖼️</a></p>
-                            `}
-                            
-                            <div class="actions-container">
-                                ${isPending ? `<button class="btn-approve" onclick="approveAndActivateDoctor('${doc.id}', '${doctor.name}')">✅ اعتماد وتفعيل الحساب</button>` : ''}
-                                <button class="btn-delete" style="${!isPending ? 'flex:1;' : ''}" onclick="deleteDoctor('${doc.id}', '${doctor.name}')">
-                                    🗑️ ${isPending ? 'رفض وحذف الطلب' : 'حذف الطبيب نهائياً من المنصة'}
-                                </button>
-                            </div>
+        snapshot.forEach((doc) => {
+            const doctor = doc.data();
+            
+            // قراءة ذكية متوافقة مع نظام المصفوفة الجديد أو نظام الكائن الفردي القديم
+            let clinicsHTML = '';
+            if (doctor.clinics && Array.isArray(doctor.clinics) && doctor.clinics.length > 0) {
+                doctor.clinics.forEach((clinic, index) => {
+                    clinicsHTML += `
+                        <div class="clinic-item">
+                            <strong>العيادة (${index + 1}):</strong> ${clinic.address} <br>
+                            <strong>مواعيد العمل:</strong> ${clinic.working_hours || (clinic.working_days ? clinic.working_days.join(' - ') : 'غير محدد')}
                         </div>
                     `;
-                    requestsContainer.innerHTML += card;
                 });
-            });
-        }
+            } else if (doctor.clinic_address) {
+                // الهيكل القديم
+                clinicsHTML = `
+                    <div class="clinic-item">
+                        <strong>العنوان القديم:</strong> ${doctor.clinic_address.full_address || 'غير محدد'} <br>
+                        <strong>أيام العمل:</strong> ${doctor.working_days ? doctor.working_days.join(' - ') : 'غير محدد'}
+                    </div>
+                `;
+            } else {
+                clinicsHTML = '<p style="color:red; font-size:13px;">لم يتم العثور على عيادات مسجلة.</p>';
+            }
+
+            // بناء كارت التحكم بالطبيب بناءً على حالته الحاليّة
+            // إذا كان الحقل pending أو غير موجود نعتبره نشط في التبويب الثاني
+            const isPending = doctor.status === 'pending';
+            
+            // تخطي العرض لو كنا في تبويب pending والطبيب ليس pending
+            if (currentStatusFilter === 'pending' && !isPending) return;
+            // تخطي العرض لو كنا في تبويب approved والطبيب pending
+            if (currentStatusFilter === 'approved' && isPending) return;
+            
+            const card = `
+                <div class="doctor-request-card" id="card_${doc.id}">
+                    <span class="badge ${isPending ? 'badge-pending' : 'badge-approved'}">
+                        ${isPending ? 'معلق ⏳' : 'نشط ومفعل ✅'}
+                    </span>
+                    <h3>👨‍⚕️ الطبيب: ${doctor.name}</h3>
+                    <p><strong>التخصص:</strong> ${doctor.specialty}</p>
+                    <p><strong>رقم الهاتف:</strong> ${doctor.phone || 'غير مسجل'}</p>
+                    
+                    <h4>🏥 تفاصيل المقرات والعيادات:</h4>
+                    ${clinicsHTML}
+                    
+                    <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 20px 0;">
+                    
+                    ${isPending ? `
+                        <label for="img_${doc.id}">رابط صورة الطبيب من Google Drive (الإدارة):</label>
+                        <input type="text" id="img_${doc.id}" placeholder="ضع رابط مشاركة ملف الصورة من الدرايف هنا...">
+                        <span class="hint">* ستتولى الإدارة رفع وتأكيد رابط الصورة وتفعيل الحساب فوراً.</span>
+                    ` : `
+                        <p style="font-size:14px; color:#4a5568;">🔗 <strong>رابط الصورة الحالي:</strong> <a href="${doctor.image_url || '#'}" target="_blank" style="color:var(--primary-color)">عرض الصورة الشخصية 🖼️</a></p>
+                    `}
+                    
+                    <div class="actions-container">
+                        ${isPending ? `<button class="btn-approve" onclick="approveAndActivateDoctor('${doc.id}', '${doctor.name}')">✅ اعتماد وتفعيل الحساب</button>` : ''}
+                        <button class="btn-delete" style="${!isPending ? 'flex:1;' : ''}" onclick="deleteDoctor('${doc.id}', '${doctor.name}')">
+                            🗑️ ${isPending ? 'رفض وحذف الطلب' : 'حذف الطبيب نهائياً من المنصة'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            requestsContainer.innerHTML += card;
+        });
+    });
+}
 
         window.approveAndActivateDoctor = async function(docId, doctorName) {
             const rawImageUrl = document.getElementById(`img_${docId}`).value.trim();
