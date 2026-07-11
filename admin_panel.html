@@ -3,177 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الإدارة - تفعيل الأطباء</title>
+    <title>لوحة الإدارة - مراجعة وتفعيل الأطباء</title>
     <style>
         :root {
             --primary-color: #2a85ff;
+            --primary-hover: #0066e2;
             --success-color: #2ecc71;
             --bg-color: #f4f7f9;
             --card-bg: #ffffff;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0; padding: 20px;
-        }
-
-        .admin-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        h2 { text-align: center; color: var(--primary-color); margin-bottom: 30px; }
-
-        .welcome-msg { font-size: 18px; margin-bottom: 20px; color: #4a5568; }
-
-        table {
-            width: 100%; border-collapse: collapse; margin-top: 20px; text-align: right;
-        }
-
-        th, td { padding: 15px; border-bottom: 1px solid #edf2f7; }
-        th { background-color: #f8fafc; color: #4a5568; }
-
-        .badge {
-            padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; display: inline-block;
-        }
-        .badge-pending { background-color: #fef3c7; color: #d97706; }
-
-        .btn-approve {
-            background-color: var(--success-color); color: white;
-            padding: 8px 14px; border: none; border-radius: 6px;
-            cursor: pointer; font-weight: bold; font-size: 13px;
-            transition: opacity 0.2s;
-        }
-        .btn-approve:hover { opacity: 0.9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; }
+        .admin-container { max-width: 800px; margin: 30px auto; background: var(--card-bg); padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { text-align: center; color: var(--primary-color); margin-top: 0; }
         
-        .no-data { text-align: center; padding: 30px; color: #718096; font-size: 16px; }
+        .doctor-request-card { background: #f8fafc; border: 2px solid #edf2f7; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
+        .clinic-item { background: #fff; padding: 10px 15px; border-radius: 8px; border-right: 4px solid var(--primary-color); margin-top: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        
+        label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #4a5568; }
+        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 15px; }
+        input:focus { border-color: var(--primary-color); }
+        
+        button { width: 100%; background-color: var(--success-color); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 25px; transition: background-color 0.2s; }
+        button:hover { opacity: 0.9; }
+        .hint { font-size: 12px; color: #718096; margin-top: 4px; display: block; }
+        
+        .no-requests { text-align: center; color: #718096; padding: 30px; }
     </style>
 </head>
 <body>
 
     <div class="admin-container">
-        <div class="welcome-msg">مرحباً، <strong id="adminName">الأدمن</strong> 👋</div>
-        <h2>طلبات انضمام الأطباء المعلقة</h2>
-        
-        <table id="requestsTable">
-            <thead>
-                <tr>
-                    <th>اسم الطبيب</th>
-                    <th>رقم الهاتف</th>
-                    <th>التخصص</th>
-                    <th>عنوان العيادة</th>
-                    <th>الحالة</th>
-                    <th>الإجراء</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
-        <div id="noDataMsg" class="no-data" style="display: none;">لا توجد طلبات تفعيل معلقة حالياً.</div>
+        <h2>لوحة الإدارة - مراجعة طلبات الانضمام المعلقة</h2>
+        <div id="requestsContainer">
+            <p class="no-requests">جاري فحص طلبات التسجيل المعلقة للأطباء...</p>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-       <script>
-     const firebaseConfig = {
-    apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", // دي الوحيدة اللي هتلاقيها مكتوبة واضحة أول ما تضغط على DoctorForMe Web
-    authDomain: "doctorforme-62aaf.firebaseapp.com",
-    projectId: "doctorforme-62aaf",
-    storageBucket: "doctorforme-62aaf.appspot.com",
-    messagingSenderId: "121506902078",
-    appId: "1:121506902078:web:7f15e8da771bd973a96cef" // هتظهرلك كاملة لما تضغط على الويب
-};
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", 
+            authDomain: "doctorforme-62aaf.firebaseapp.com",
+            projectId: "doctorforme-62aaf",
+            storageBucket: "doctorforme-62aaf.appspot.com",
+            messagingSenderId: "121506902078",
+            appId: "1:121506902078:web:7f15e8da771bd973a96cef" 
+        };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // التأكد من أن الداخل هو الأدمن فعلاً
-        const currentRole = localStorage.getItem('user_role');
-        if (currentRole !== 'admin') {
-            alert("عذراً، أنت لا تملك صلاحية لدخول هذه الصفحة!");
-            window.location.href = 'login.html';
-        } else {
-            document.getElementById('adminName').innerText = localStorage.getItem('user_name') || 'الأدمن';
+        const requestsContainer = document.getElementById('requestsContainer');
+
+        // دالة تحويل روابط درايف لرابط مباشر ومستقر تماماً
+        function convertDriveUrl(url) {
+            if (!url) return "";
+            if (url.includes("drive.google.com")) {
+                let id = "";
+                if (url.includes("/d/")) {
+                    id = url.split('/d/')[1].split('/')[0].split('?')[0];
+                } else if (url.includes("id=")) {
+                    id = url.split('id=')[1].split('&')[0];
+                }
+                if (id) {
+                    return `https://docs.google.com/uc?export=view&id=${id}`;
+                }
+            }
+            return url;
         }
 
-        const tableBody = document.querySelector('#requestsTable tbody');
-        const noDataMsg = document.getElementById('noDataMsg');
-
-        // الاستماع للأطباء المعلقين لحظياً
-        function listenToPendingDoctors() {
-            db.collection("users")
-              .where("role", "==", "doctor")
-              .where("status", "==", "pending")
-              .onSnapshot((snapshot) => {
-                tableBody.innerHTML = '';
+        // جلب الأطباء بحالة pending لحظة بلحظة للمراجعة والتفعيل
+        function listenToDoctorRequests() {
+            db.collection("doctors").where("status", "==", "pending").onSnapshot((snapshot) => {
+                requestsContainer.innerHTML = '';
                 
                 if (snapshot.empty) {
-                    noDataMsg.style.display = 'block';
-                    document.getElementById('requestsTable').style.display = 'none';
+                    requestsContainer.innerHTML = '<p class="no-requests">🎉 لا توجد طلبات انضمام معلقة حالياً. كل الحسابات مراجعة ومفعلة!</p>';
                     return;
                 }
 
-                noDataMsg.style.display = 'none';
-                document.getElementById('requestsTable').style.display = 'table';
-
                 snapshot.forEach((doc) => {
-                    const docData = doc.data();
-                    const row = `
-                        <tr>
-                            <td>${docData.name}</td>
-                            <td>${docData.phone}</td>
-                            <td>${docData.specialty || 'غير محدد'}</td>
-                            <td>${docData.address || 'غير محدد'}</td>
-                            <td><span class="badge badge-pending">قيد المراجعة</span></td>
-                            <td>
-                                <button class="btn-approve" onclick="approveDoctor('${doc.id}', '${docData.name}', '${docData.specialty}', '${docData.address}')">موافقة وتفعيل</button>
-                            </td>
-                        </tr>
+                    const doctor = doc.data();
+                    
+                    // تجميع كتل العيادات المتعددة المسجلة بواسطة الطبيب
+                    let clinicsHTML = '';
+                    if (doctor.clinics && doctor.clinics.length > 0) {
+                        doctor.clinics.forEach((clinic, index) => {
+                            clinicsHTML += `
+                                <div class="clinic-item">
+                                    <strong>العيادة (${index + 1}):</strong> ${clinic.address} <br>
+                                    <strong>مواعيد العمل:</strong> ${clinic.working_hours}
+                                </div>
+                            `;
+                        });
+                    } else {
+                        clinicsHTML = '<p style="color:red; font-size:13px;">لم يقم الطبيب بإدخال عيادات.</p>';
+                    }
+
+                    const card = `
+                        <div class="doctor-request-card" id="card_${doc.id}">
+                            <h3>👨‍⚕️ الطبيب: ${doctor.name}</h3>
+                            <p><strong>التخصص:</strong> ${doctor.specialty}</p>
+                            <p><strong>رقم الهاتف للاتصال والتحقق:</strong> ${doctor.phone}</p>
+                            
+                            <h4>🏥 العيادات والفروع المسجلة:</h4>
+                            ${clinicsHTML}
+                            
+                            <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 20px 0;">
+                            
+                            <label for="img_${doc.id}">رابط صورة الطبيب من Google Drive (الإدارة):</label>
+                            <input type="text" id="img_${doc.id}" placeholder="ضع رابط مشاركة ملف الصورة من الدرايف هنا...">
+                            <span class="hint">* ستتولى الإدارة رفع وتأكيد رابط الصورة وتفعيل الحساب فوراً.</span>
+                            
+                            <button onclick="approveAndActivateDoctor('${doc.id}')">✅ اعتماد تفعيل الحساب ورفع الصورة</button>
+                        </div>
                     `;
-                    tableBody.innerHTML += row;
+                    requestsContainer.innerHTML += card;
                 });
             });
         }
 
-        // دالة تفعيل حساب الدكتور ونقله لكولكشن الأطباء ليظهر للمرضى
-        window.approveDoctor = async function(userId, name, specialty, address) {
-            if(!confirm(`هل أنت متأكد من تفعيل حساب الدكتور: ${name}؟`)) return;
+        // دالة تفعيل حساب الطبيب وإضافة الصورة وتغيير الحالة لـ approved
+        window.approveAndActivateDoctor = async function(docId) {
+            const rawImageUrl = document.getElementById(`img_${docId}`).value.trim();
+            
+            if (!rawImageUrl) {
+                alert("برجاء وضع رابط صورة الطبيب من الجوجل درايف أولاً قبل تفعيل الحساب.");
+                return;
+            }
+
+            const finalImageUrl = convertDriveUrl(rawImageUrl);
 
             try {
-                // 1. تحديث حالته في كولكشن المستخدمين لـ active
-                await db.collection("users").doc(userId).update({
-                    status: 'active'
+                await db.collection("doctors").doc(docId).update({
+                    image_url: finalImageUrl,
+                    status: "approved" // تحويل الحالة لمفعل ليظهر للمرضى في البحث
                 });
 
-                // 2. إضافته تلقائياً لكولكشن الـ doctors عشان يظهر للمرضى في البحث
-                await db.collection("doctors").add({
-                    name: "د. " + name,
-                    specialty: specialty,
-                    clinic_address: {
-                        full_address: address,
-                        map_url: ""
-                    },
-                    image_url: "https://via.placeholder.com/150", // صورة افتراضية لحين تحديثها
-                    rating: "5.0",
-                    working_days: ["السبت", "الأحد", "الإثنين"],
-                    working_hours: { start: "14:00", end: "22:00" }
-                });
-
-                alert(`تم تفعيل حساب الدكتور ${name} بنجاح وإضافته لدليل الأطباء!`);
-
+                alert("تم تفعيل حساب الطبيب بنجاح، ورفع الصورة الشخصية المباشرة له! سيتلقى الطبيب الآن إشعارات حجز المرضى بنجاح.");
             } catch (error) {
-                alert("حدث خطأ أثناء التفعيل: " + error.message);
+                alert("حدث خطأ أثناء تفعيل الحساب: " + error.message);
             }
         }
 
-        // تشغيل الجلب فوراً
-        listenToPendingDoctors();
+        // تشغيل الاستماع فور فتح الصفحة
+        listenToDoctorRequests();
     </script>
 </body>
 </html>
