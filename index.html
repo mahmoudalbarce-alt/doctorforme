@@ -149,6 +149,43 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
+        // 1. الفحص التلقائي لتسجيل الدخول عند فتح الصفحة
+document.addEventListener("DOMContentLoaded", () => {
+    const currentRole = localStorage.getItem('user_role');
+    const patientName = localStorage.getItem('user_name');
+    const patientPhone = localStorage.getItem('user_phone');
+
+    // لو مش مسجل دخول خالص أو الحساب مش مريض، حوّله لصفحة اللوجن
+    if (!currentRole || currentRole !== 'patient') {
+        alert("برجاء تسجيل الدخول أولاً كمريض للاستفادة من خدمات الحجز.");
+        window.location.href = 'login.html';
+        return;
+    }
+
+    console.log(`مرحباً بالمريض: ${patientName} - رقم الهاتف: ${phone}`);
+});
+
+// 2. تعديل الجزء الخاص بفتح نافذة الحجز (المودال)
+// ابحث عن الدالة اللي بتفتح المودال (غالباً اسمها openBookingModal أو ما يشابهها) 
+// واجعلها تقرأ البيانات المحفوظة مباشرة بدلاً من ترك الحقول فارغة:
+window.openBookingModal = function(doctorId, doctorName) {
+    selectedDoctorId = doctorId;
+    selectedDoctorName = doctorName;
+    
+    // إظهار المودال
+    document.getElementById('bookingModal').style.display = 'flex';
+    
+    // التعبئة التلقائية لبيانات المريض المحفوظة من جلسة تسجيل الدخول
+    if (document.getElementById('patientNameInput')) {
+        document.getElementById('patientNameInput').value = localStorage.getItem('user_name') || '';
+        document.getElementById('patientNameInput').disabled = true; // اختياري: قفل الحقل عشان المريض مغيرش اسمه في الحجز عن حسابه
+    }
+    
+    if (document.getElementById('patientPhoneInput')) {
+        document.getElementById('patientPhoneInput').value = localStorage.getItem('user_phone') || '';
+        document.getElementById('patientPhoneInput').disabled = true; // قفل الحقل لضمان الحجز بنفس الرقم المسجل
+    }
+};
         // !!! ضع هنا بيانات مشروعك الحقيقية !!!
          const firebaseConfig = {
     apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", // دي الوحيدة اللي هتلاقيها مكتوبة واضحة أول ما تضغط على DoctorForMe Web
