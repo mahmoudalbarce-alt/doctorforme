@@ -98,17 +98,15 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-    <script>
-        // الـ config الخاصة بمشروعك
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
+     <script>
+     const firebaseConfig = {
+    apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", // دي الوحيدة اللي هتلاقيها مكتوبة واضحة أول ما تضغط على DoctorForMe Web
+    authDomain: "doctorforme-62aaf.firebaseapp.com",
+    projectId: "doctorforme-62aaf",
+    storageBucket: "doctorforme-62aaf.appspot.com",
+    messagingSenderId: "121506902078",
+    appId: "1:121506902078:web:7f15e8da771bd973a96cef" // هتظهرلك كاملة لما تضغط على الويب
+};
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
