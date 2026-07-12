@@ -99,9 +99,12 @@
                     <option value="جلدية">جلدية</option>
                 </select>
 
-                <label for="docAddress">عنوان العيادة الرئيسية:</label>
-                <input type="text" id="docAddress" placeholder="عنوان العيادة بالتفصيل">
+              <label for="docAddress">عنوان العيادة الرئيسية:</label>
+<input type="text" id="docAddress" placeholder="عنوان العيادة الرئيسية بالتفصيل">
 
+<div id="additionalClinicsContainer"></div>
+
+<button type="button" id="addClinicBtn" onclick="addClinicField()" style="background-color: #e2e8f0; color: #4a5568; margin-top: 10px; padding: 8px; font-size: 14px; border-radius: 6px;">➕ إضافة عيادة أخرى</button>
                 <label>أيام العمل بالعيادة:</label>
                 <div class="days-container">
                     <div class="day-checkbox"><input type="checkbox" name="workDays" value="السبت"> السبت</div>
@@ -134,15 +137,15 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // ضع هنا الـ config الخاصة بمشروعك
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+     const firebaseConfig = {
+    apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", // دي الوحيدة اللي هتلاقيها مكتوبة واضحة أول ما تضغط على DoctorForMe Web
+    authDomain: "doctorforme-62aaf.firebaseapp.com",
+    projectId: "doctorforme-62aaf",
+    storageBucket: "doctorforme-62aaf.appspot.com",
+    messagingSenderId: "121506902078",
+    appId: "1:121506902078:web:7f15e8da771bd973a96cef" // هتظهرلك كاملة لما تضغط على الويب
+};
+
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -162,7 +165,23 @@
                 }
             }
         });
+function addClinicField() {
+    const container = document.getElementById('additionalClinicsContainer');
+    
+    // إنشاء div جديد يحتوي على حقل الإدخال وزرار الحذف
+    const clinicWrapper = document.createElement('div');
+    clinicWrapper.style.display = 'flex';
+    clinicWrapper.style.gap = '10px';
+    clinicWrapper.style.marginTop = '10px';
+    clinicWrapper.className = 'additional-clinic-row';
 
+    clinicWrapper.innerHTML = `
+        <input type="text" class="extra-clinic-input" placeholder="عنوان العيادة الإضافية بالتفصيل" required>
+        <button type="button" onclick="this.parentElement.remove()" style="background-color: #e53e3e; color: white; width: auto; padding: 0 15px; margin: 0; border-radius: 8px;">حذف</button>
+    `;
+    
+    container.appendChild(clinicWrapper);
+}
         // التبديل بين تسجيل الدخول وحساب جديد
         function switchTab(type) {
             if(type === 'login') {
@@ -217,26 +236,31 @@
                     role: role,
                     created_at: new Date().toISOString()
                 };
-
-                if(role === 'doctor') {
-                    userData.status = 'pending'; // الطبيب ينتظر موافقة الأدمن
-                    userData.specialty = document.getElementById('docSpecialty').value;
-                    userData.address = document.getElementById('docAddress').value.trim();
-                    
-                    // تجميع الأيام المختارة
-                    const checkedDays = [];
-                    document.querySelectorAll('input[name="workDays"]:checked').forEach(cb => {
-                        checkedDays.push(cb.value);
-                    });
-                    userData.working_days = checkedDays;
-                    userData.working_hours = {
-                        start: document.getElementById('docWorkStart').value || "14:00",
-                        end: document.getElementById('docWorkEnd').value || "22:00"
-                    };
-                } else {
-                    userData.status = 'active'; // المريض نشط تلقائياً
-                    userData.address = document.getElementById('patientAddress').value.trim();
-                }
+if(role === 'doctor') {
+    userData.status = 'pending';
+    userData.specialty = document.getElementById('docSpecialty').value;
+    userData.address = document.getElementById('docAddress').value.trim(); // العيادة الرئيسية
+    
+    // تجميع العيادات الإضافية إن وُجدت
+    const extraClinics = [];
+    document.querySelectorAll('.extra-clinic-input').forEach(input => {
+        if(input.value.trim() !== "") {
+            extraClinics.push(input.value.trim());
+        }
+    });
+    userData.additional_clinics = extraClinics; // هتروح للفايبريز كـ Array
+    
+    // تجميع الأيام المختارة
+    const checkedDays = [];
+    document.querySelectorAll('input[name="workDays"]:checked').forEach(cb => {
+        checkedDays.push(cb.value);
+    });
+    userData.working_days = checkedDays;
+    userData.working_hours = {
+        start: document.getElementById('docWorkStart').value || "14:00",
+        end: document.getElementById('docWorkEnd').value || "22:00"
+    };
+}
 
                 await db.collection("users").add(userData);
                 alert(role === 'doctor' ? "تم تسجيل حسابك بنجاح! حسابك حالياً قيد مراجعة الإدارة للتفعيل." : "تم إنشاء حسابك بنجاح! يمكنك الآن تسجيل الدخول.");
