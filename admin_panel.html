@@ -47,10 +47,9 @@
     <div class="admin-container">
         <h2>لوحة الإدارة الشاملة - التحكم بالأطباء</h2>
         
-        <!-- أزرار الفلترة للتبديل بين الحسابات الجديدة والقديمة المفعلة -->
         <div class="tabs">
             <button class="tab-btn active" id="btnPending" onclick="switchTab('pending')">⏳ طلبات معلقة</button>
-            <button class="tab-btn" id="btnApproved" onclick="switchTab('approved')">✅ أطباء نشطون (القدامى والجدد)</button>
+            <button class="tab-btn" id="btnApproved" onclick="switchTab('approved')">✅ أطباء نشطون</button>
         </div>
 
         <div id="requestsContainer">
@@ -75,7 +74,7 @@
         const db = firebase.firestore();
 
         const requestsContainer = document.getElementById('requestsContainer');
-        let currentStatusFilter = 'pending'; // الفلتر الافتراضي عند فتح الصفحة
+        let currentStatusFilter = 'pending'; 
 
         function convertDriveUrl(url) {
             if (!url) return "";
@@ -93,108 +92,99 @@
             return url;
         }
 
-        // التبديل بين التبويبات
         window.switchTab = function(status) {
             currentStatusFilter = status;
             document.getElementById('btnPending').classList.toggle('active', status === 'pending');
             document.getElementById('btnApproved').classList.toggle('active', status === 'approved');
-            listenToDoctors();
+            listenToDoctorRequests();
         }
 
-        // دالة جلب الأطباء الحية الذكية والمتوافقة مع الهيكلين (القديم والحديث)
-// دالة جلب الأطباء الشاملة بدون شروط فايربيز (الفرز يتم داخل المتصفح)
-function listenToDoctors() {
-    // جلب الكولكشن بالكامل بدون فلاتر لتفادي مشاكل الفهرسة وحقول البيانات الناقصة
-    db.collection("doctors").onSnapshot((snapshot) => {
-        requestsContainer.innerHTML = '';
-        
-        if (snapshot.empty) {
-            requestsContainer.innerHTML = '<p class="no-requests">👤 لا يوجد أي أطباء في قاعدة البيانات حالياً.</p>';
-            return;
-        }
+        // جلب لحظي من كولكشن users الموحد لفرز الأطباء الجدد والقدامى بشكل صحيح
+        function listenToDoctorRequests() {
+            db.collection("users").where("role", "==", "doctor").onSnapshot((snapshot) => {
+                requestsContainer.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    requestsContainer.innerHTML = '<p class="no-requests">👤 لا يوجد أي أطباء مسجلين في النظام حالياً.</p>';
+                    return;
+                }
 
-        let count = 0; // عداد للتأكد هل تم عرض أي طبيب في التبويب الحالي أم لا
+                let count = 0;
 
-        snapshot.forEach((doc) => {
-            const doctor = doc.data();
-            
-            // تحديد حالة الطبيب بدقة (إذا لم يكن هناك حقل status، نعتبره approved تلقائياً لأنه قديم)
-            const doctorStatus = doctor.status ? doctor.status.toLowerCase() : 'approved';
-            const isPending = doctorStatus === 'pending';
-            
-            // الفرز الفعلي بناءً على التبويب النشط
-            if (currentStatusFilter === 'pending' && !isPending) return;
-            if (currentStatusFilter === 'approved' && isPending) return;
+                snapshot.forEach((doc) => {
+                    const doctor = doc.data();
+                    const doctorStatus = doctor.status ? doctor.status.toLowerCase() : 'active';
+                    const isPending = doctorStatus === 'pending';
+                    
+                    if (currentStatusFilter === 'pending' && !isPending) return;
+                    if (currentStatusFilter === 'approved' && isPending) return;
 
-            // زيادة العداد لأننا وجدنا طبيب يطابق التبويب الحالي
-            count++;
-            
-            // قراءة ذكية متوافقة مع نظام العيادات الجديد والقديم
-            let clinicsHTML = '';
-            if (doctor.clinics && Array.isArray(doctor.clinics) && doctor.clinics.length > 0) {
-                doctor.clinics.forEach((clinic, index) => {
-                    clinicsHTML += `
+                    count++;
+                    
+                    // بناء هيكل العيادات بطريقة ديناميكية متوافقة مع التحديث الأخير
+                    let clinicsHTML = `
                         <div class="clinic-item">
-                            <strong>العيادة (${index + 1}):</strong> ${clinic.address} <br>
-                            <strong>مواعيد العمل:</strong> ${clinic.working_hours || (clinic.working_days ? clinic.working_days.join(' - ') : 'غير محدد')}
+                            <strong>العيادة الرئيسية:</strong> ${doctor.address || 'غير محدد'} <br>
+                            <strong>أيام العمل:</strong> ${doctor.working_days && doctor.working_days.length > 0 ? doctor.working_days.join(' - ') : 'غير محدد'} <br>
+                            <strong>ساعات العمل:</strong> من ${doctor.working_hours?.start || 'غير محدد'} إلى ${doctor.working_hours?.end || 'غير محدد'}
                         </div>
                     `;
+
+                    // إضافة العيادات الإضافية إن وُجدت
+                    if (doctor.additional_clinics && Array.isArray(doctor.additional_clinics) && doctor.additional_clinics.length > 0) {
+                        doctor.additional_clinics.forEach((clinicAddress, index) => {
+                            clinicsHTML += `
+                                <div class="clinic-item" style="border-right-color: #2ecc71;">
+                                    <strong>عيادة إضافية (${index + 1}):</strong> ${clinicAddress}
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    const card = `
+                        <div class="doctor-request-card" id="card_${doc.id}">
+                            <span class="badge ${isPending ? 'badge-pending' : 'badge-approved'}">
+                                ${isPending ? 'معلق ⏳' : 'نشط ومفعل ✅'}
+                            </span>
+                            <h3>👨‍⚕️ الطبيب: ${doctor.name}</h3>
+                            <p><strong>التخصص:</strong> ${doctor.specialty || 'غير محدد'}</p>
+                            <p><strong>رقم الهاتف:</strong> ${doctor.phone || 'غير مسجل'}</p>
+                            
+                            <h4>🏥 تفاصيل المقرات والعيادات:</h4>
+                            ${clinicsHTML}
+                            
+                            <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 20px 0;">
+                            
+                            ${isPending ? `
+                                <label for="img_${doc.id}">رابط صورة الطبيب من Google Drive (الإدارة):</label>
+                                <input type="text" id="img_${doc.id}" placeholder="ضع رابط مشاركة ملف الصورة من الدرايف هنا...">
+                                <span class="hint">* ستتولى الإدارة رفع وتأكيد رابط الصورة وتفعيل الحساب فوراً.</span>
+                            ` : `
+                                <p style="font-size:14px; color:#4a5568;">🔗 <strong>رابط الصورة الحالي:</strong> <a href="${doctor.image_url || '#'}" target="_blank" style="color:var(--primary-color)">عرض الصورة الشخصية 🖼️</a></p>
+                            `}
+                            
+                            <div class="actions-container">
+                                ${isPending ? `<button class="btn-approve" onclick="approveAndActivateDoctor('${doc.id}')">✅ اعتماد وتفعيل الحساب</button>` : ''}
+                                <button class="btn-delete" style="${!isPending ? 'flex:1;' : ''}" onclick="deleteDoctor('${doc.id}', '${doctor.name}')">
+                                    🗑️ ${isPending ? 'رفض وحذف الطلب' : 'حذف الطبيب نهائياً من المنصة'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    requestsContainer.innerHTML += card;
                 });
-            } else if (doctor.clinic_address) {
-                clinicsHTML = `
-                    <div class="clinic-item">
-                        <strong>العنوان القديم:</strong> ${doctor.clinic_address.full_address || 'غير محدد'} <br>
-                        <strong>أيام العمل:</strong> ${doctor.working_days ? doctor.working_days.join(' - ') : 'غير محدد'}
-                    </div>
-                `;
-            } else {
-                clinicsHTML = '<p style="color:red; font-size:13px;">لم يتم العثور على عيادات مسجلة.</p>';
-            }
-            
-            const card = `
-                <div class="doctor-request-card" id="card_${doc.id}">
-                    <span class="badge ${isPending ? 'badge-pending' : 'badge-approved'}">
-                        ${isPending ? 'معلق ⏳' : 'نشط ومفعل ✅'}
-                    </span>
-                    <h3>👨‍⚕️ الطبيب: ${doctor.name}</h3>
-                    <p><strong>التخصص:</strong> ${doctor.specialty}</p>
-                    <p><strong>رقم الهاتف:</strong> ${doctor.phone || 'غير مسجل'}</p>
-                    
-                    <h4>🏥 تفاصيل المقرات والعيادات:</h4>
-                    ${clinicsHTML}
-                    
-                    <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 20px 0;">
-                    
-                    ${isPending ? `
-                        <label for="img_${doc.id}">رابط صورة الطبيب من Google Drive (الإدارة):</label>
-                        <input type="text" id="img_${doc.id}" placeholder="ضع رابط مشاركة ملف الصورة من الدرايف هنا...">
-                        <span class="hint">* ستتولى الإدارة رفع وتأكيد رابط الصورة وتفعيل الحساب فوراً.</span>
-                    ` : `
-                        <p style="font-size:14px; color:#4a5568;">🔗 <strong>رابط الصورة الحالي:</strong> <a href="${doctor.image_url || '#'}" target="_blank" style="color:var(--primary-color)">عرض الصورة الشخصية 🖼️</a></p>
-                    `}
-                    
-                    <div class="actions-container">
-                        ${isPending ? `<button class="btn-approve" onclick="approveAndActivateDoctor('${doc.id}', '${doctor.name}')">✅ اعتماد وتفعيل الحساب</button>` : ''}
-                        <button class="btn-delete" style="${!isPending ? 'flex:1;' : ''}" onclick="deleteDoctor('${doc.id}', '${doctor.name}')">
-                            🗑️ ${isPending ? 'رفض وحذف الطلب' : 'حذف الطبيب نهائياً من المنصة'}
-                        </button>
-                    </div>
-                </div>
-            `;
-            requestsContainer.innerHTML += card;
-        });
 
-        // إذا كان العداد صفر، نكتب الرسالة التنبيهية المناسبة للتبويب
-        if (count === 0) {
-            requestsContainer.innerHTML = currentStatusFilter === 'pending' 
-                ? '<p class="no-requests">🎉 لا توجد طلبات انضمام معلقة حالياً.</p>'
-                : '<p class="no-requests">👤 لا يوجد أطباء مفعلون حالياً في قاعدة البيانات.</p>';
+                if (count === 0) {
+                    requestsContainer.innerHTML = currentStatusFilter === 'pending' 
+                        ? '<p class="no-requests">🎉 لا توجد طلبات انضمام معلقة حالياً.</p>'
+                        : '<p class="no-requests">👤 لا يوجد أطباء مفعلون حالياً في قاعدة البيانات.</p>';
+                }
+            });
         }
-    });
-}
 
-        window.approveAndActivateDoctor = async function(docId, doctorName) {
-            const rawImageUrl = document.getElementById(`img_${docId}`).value.trim();
+        // دالة الاعتماد والتفعيل الذكية الشاملة للسيستم بالكامل
+        window.approveAndActivateDoctor = async function(userId) {
+            const rawImageUrl = document.getElementById(`img_${userId}`).value.trim();
             if (!rawImageUrl) {
                 alert("برجاء وضع رابط صورة الطبيب من الجوجل درايف أولاً قبل تفعيل الحساب.");
                 return;
@@ -202,33 +192,68 @@ function listenToDoctors() {
             const finalImageUrl = convertDriveUrl(rawImageUrl);
 
             try {
-                await db.collection("doctors").doc(docId).update({
-                    image_url: finalImageUrl,
-                    status: "approved" 
+                // 1. جلب بيانات الطبيب الحالية من كولكشن users
+                const userDoc = await db.collection("users").doc(userId).get();
+                if (!userDoc.exists) {
+                    alert("خطأ: لم يتم العثور على بيانات الطبيب.");
+                    return;
+                }
+                const doctorData = userDoc.data();
+
+                // 2. تحديث حالته في كولكشن المستخدمين لـ active وصورته لكي يسجل دخول بنجاح
+                await db.collection("users").doc(userId).update({
+                    status: "active",
+                    image_url: finalImageUrl
                 });
-                alert(`تم تفعيل حساب الطبيب "${doctorName}" بنجاح!`);
+
+                // 3. إضافته فوراً لكولكشن الأطباء الرئيسي (doctors) ليظهر للمرضى في البحث بكامل تفاصيله
+                await db.collection("doctors").add({
+                    user_id: userId, // ربط المستندين ببعض
+                    name: "د. " + doctorData.name,
+                    phone: doctorData.phone,
+                    specialty: doctorData.specialty,
+                    image_url: finalImageUrl,
+                    rating: "5.0",
+                    clinic_address: {
+                        full_address: doctorData.address,
+                        map_url: ""
+                    },
+                    additional_clinics: doctorData.additional_clinics || [], 
+                    working_days: doctorData.working_days || [],
+                    working_hours: doctorData.working_hours || { start: "14:00", end: "22:00" }
+                });
+
+                alert(`تم تفعيل حساب الطبيب "${doctorData.name}" بنجاح ونقله لدليل الأطباء للمرضى!`);
             } catch (error) {
                 alert("حدث خطأ أثناء تفعيل الحساب: " + error.message);
             }
         }
 
-        // دالة الحذف الشاملة لأي طبيب (قديم ومفعل أو جديد معلق)
-        window.deleteDoctor = async function(docId, doctorName) {
-            const isConfirmed = confirm(`تنبيه حرج للإدارة 🚨\n\nهل أنت متأكد تماماً من حذف الطبيب "${doctorName}" بشكل نهائي ومطلق من قاعدة البيانات؟\n(هذا الإجراء سيمسح الحساب نهائياً ولن يتمكن الطبيب أو المرضى من رؤيته مجدداً)`);
-            
+        // دالة الحذف الشاملة للطبيب من كولكشن الحسابات والدليل معاً
+        window.deleteDoctor = async function(userId, doctorName) {
+            const isConfirmed = confirm(`تنبيه حرج للإدارة 🚨\n\nهل أنت متأكد تماماً من حذف الطبيب "${doctorName}" بشكل نهائي ومطلق من قاعدة البيانات؟\n(هذا الإجراء سيمسح حسابه من الدليل ومن لوحة الدخول تماماً)`);
             if (!isConfirmed) return;
 
             try {
-                // الحذف الفعلي المبني على الـ ID الخاص بالمستند
-                await db.collection("doctors").doc(docId).delete();
-                alert(`تم حذف "${doctorName}" تماماً وتحديث اللوحة بنجاح.`);
+                // 1. مسحه من كولكشن المستخدمين (users) لقطع صلاحية الدخول
+                await db.collection("users").doc(userId).delete();
+                
+                // 2. مسحه من كولكشن الأطباء (doctors) لكي يختفي من دليل البحث عند المرضى
+                const doctorQuery = await db.collection("doctors").where("phone", "==", phone).get();
+                // في حال لم يكن الـ phone متوفراً، نمسح بناءً على الـ user_id المربوط
+                const altQuery = await db.collection("doctors").where("user_id", "==", userId).get();
+                
+                doctorQuery.forEach(async (doc) => { await db.collection("doctors").doc(doc.id).delete(); });
+                altQuery.forEach(async (doc) => { await db.collection("doctors").doc(doc.id).delete(); });
+
+                alert(`تم حذف "${doctorName}" تماماً من السيستم وتحديث اللوحة بنجاح.`);
             } catch (error) {
                 alert("حدث خطأ تقني أثناء عملية الحذف: " + error.message);
             }
         }
 
         // تشغيل الجلب التلقائي لأول مرة
-        listenToDoctors();
+        listenToDoctorRequests();
     </script>
 </body>
 </html>
