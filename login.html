@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة DoctorForMe الطبية - دخول / تسجيل</title>
+    <title>تسجيل الدخول / إنشاء حساب - DoctorForMe</title>
     <style>
         :root {
             --primary-color: #2a85ff;
@@ -16,11 +16,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             margin: 0; padding: 20px;
-            display: flex; justify-content: center; align-items: center; min-height: 90vh;
+            display: flex; justify-content: center; align-items: center; min-height: 95vh;
         }
 
         .auth-container {
-            width: 100%; max-width: 400px;
+            width: 100%; max-width: 420px;
             background: var(--card-bg); padding: 30px;
             border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
@@ -28,15 +28,22 @@
         h2 { text-align: center; color: var(--primary-color); margin-top: 0; }
         
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #718096; border-radius: 8px; transition: all 0.2s; }
-        .tab-btn.active { color: white; background-color: var(--primary-color); }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #718096; }
+        .tab-btn.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
 
         label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #4a5568; }
         input, select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 15px; }
         input:focus, select:focus { border-color: var(--primary-color); }
 
-        button[type="submit"] { width: 100%; background-color: var(--primary-color); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 25px; transition: background-color 0.2s; }
-        button[type="submit"]:hover { background-color: var(--primary-hover); }
+        /* ستايل مخصص لاختيار أيام العمل (Checkboxes) */
+        .days-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 5px; }
+        .day-checkbox { display: flex; align-items: center; gap: 5px; font-size: 14px; }
+        .day-checkbox input { width: auto; }
+
+        .time-range { display: flex; gap: 10px; }
+
+        button { width: 100%; background-color: var(--primary-color); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 25px; transition: background-color 0.2s; }
+        button:hover { background-color: var(--primary-hover); }
         
         .hidden { display: none; }
     </style>
@@ -46,16 +53,16 @@
     <div class="auth-container">
         <div class="tabs">
             <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">🔑 تسجيل الدخول</button>
-            <button class="tab-btn" id="registerTab" onclick="switchTab('register')">👤 إنشاء حساب جديد</button>
+            <button class="tab-btn" id="registerTab" onclick="switchTab('register')">👤 حساب جديد</button>
         </div>
 
         <form id="loginForm">
             <h2>مرحباً بك مجدداً</h2>
             <label for="loginPhone">رقم الهاتف:</label>
-            <input type="tel" id="loginPhone" placeholder="مثال: 01xxxxxxxxx" required>
+            <input type="tel" id="loginPhone" placeholder="مثال: 010xxxxxxx" required>
 
             <label for="loginPassword">كلمة السر:</label>
-            <input type="password" id="loginPassword" placeholder="********" required>
+            <input type="password" id="loginPassword" placeholder="******" required>
 
             <button type="submit">تسجيل الدخول الفوري</button>
         </form>
@@ -66,19 +73,24 @@
             <input type="text" id="regName" placeholder="اكتب اسمك الثلاثي" required>
 
             <label for="regPhone">رقم الهاتف:</label>
-            <input type="tel" id="regPhone" placeholder="مثال: 01xxxxxxxxx" required>
+            <input type="tel" id="regPhone" placeholder="مثال: 010xxxxxxx" required>
 
-            <label for="regPassword">كلمة السر:</label>
-            <input type="password" id="regPassword" placeholder="اكتب كلمة سر قوية" required>
+            <label for="regPassword">كلمة المرور:</label>
+            <input type="password" id="regPassword" placeholder="كلمة مرور قوية" required>
 
             <label for="userRole">نوع الحساب:</label>
-            <select id="userRole" onchange="toggleDoctorFields()">
+            <select id="userRole" onchange="toggleFieldsBasedOnRole()">
                 <option value="patient">مريض (حجز فوري)</option>
                 <option value="doctor">طبيب (انضمام للمنصة)</option>
             </select>
 
+            <div id="patientFields">
+                <label for="patientAddress">العنوان الحالي بالتفصيل:</label>
+                <input type="text" id="patientAddress" placeholder="المحافظة - المدينة - اسم الشارع">
+            </div>
+
             <div id="doctorFields" class="hidden">
-                <label for="docSpecialty">التخصص:</label>
+                <label for="docSpecialty">التخصص الطبي:</label>
                 <select id="docSpecialty">
                     <option value="أطفال">أطفال</option>
                     <option value="أسنان">أسنان</option>
@@ -87,47 +99,71 @@
                     <option value="جلدية">جلدية</option>
                 </select>
 
-                <label for="docAddress">عنوان العيادة بالتفصيل:</label>
-                <input type="text" id="docAddress" placeholder="مثال: المحلة - شارع البحر">
+                <label for="docAddress">عنوان العيادة الرئيسية:</label>
+                <input type="text" id="docAddress" placeholder="عنوان العيادة بالتفصيل">
+
+                <label>أيام العمل بالعيادة:</label>
+                <div class="days-container">
+                    <div class="day-checkbox"><input type="checkbox" name="workDays" value="السبت"> السبت</div>
+                    <div class="day-checkbox"><input type="checkbox" name="workDays" value="الأحد"> الأحد</div>
+                    <div class="day-checkbox"><input type="checkbox" name="workDays" value="الإثنين"> الإثنين</div>
+                    <div class="day-checkbox"><input type="checkbox" name="workDays" value="الثلاثاء"> الثلاثاء</div>
+                    <div class="day-checkbox"><input type="checkbox" name="workDays" value="الأربعاء"> الأربعاء</div>
+                    <div class="day-checkbox"><input type="checkbox" name="workDays" value="الخميس"> الخميس</div>
+                    <div class="day-checkbox"><input type="checkbox" name="workDays" value="الجمعة"> الجمععة</div>
+                </div>
+
+                <label>ساعات العمل بالعيادة:</label>
+                <div class="time-range">
+                    <div>
+                        <span style="font-size: 12px; color: #718096;">من:</span>
+                        <input type="time" id="docWorkStart">
+                    </div>
+                    <div>
+                        <span style="font-size: 12px; color: #718096;">إلى:</span>
+                        <input type="time" id="docWorkEnd">
+                    </div>
+                </div>
             </div>
 
-            <button type="submit">تسجيل الحساب وتفعيله</button>
+            <button type="submit">تسجيل الحساب</button>
         </form>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-     <script>
-     const firebaseConfig = {
-    apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", // دي الوحيدة اللي هتلاقيها مكتوبة واضحة أول ما تضغط على DoctorForMe Web
-    authDomain: "doctorforme-62aaf.firebaseapp.com",
-    projectId: "doctorforme-62aaf",
-    storageBucket: "doctorforme-62aaf.appspot.com",
-    messagingSenderId: "121506902078",
-    appId: "1:121506902078:web:7f15e8da771bd973a96cef" // هتظهرلك كاملة لما تضغط على الويب
-};
+    <script>
+        // ضع هنا الـ config الخاصة بمشروعك
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 1. ميزة الدخول التلقائي (Auto-Login) بمجرد فتح الصفحة
+        // 1. نظام الدخول التلقائي الفوري (Auto-Login) بمجرد فتح الصفحة
         document.addEventListener("DOMContentLoaded", () => {
             const currentRole = localStorage.getItem('user_role');
             const currentPhone = localStorage.getItem('user_phone');
 
-            // لو الهاتف مسجل دخول مسبقاً، يوجهه لصفحته فوراً بدون فورم
             if (currentRole && currentPhone) {
                 if (currentRole === 'admin') {
                     window.location.href = 'admin_panel.html';
                 } else if (currentRole === 'doctor') {
-                    window.location.href = 'doctor_dashboard.html';
+                    window.location.href = 'doctor.html'; // تعديل المسار لاسم ملفك الحالي
                 } else if (currentRole === 'patient') {
-                    window.location.href = 'index.html'; 
+                    window.location.href = 'index.html';
                 }
             }
         });
 
-        // التبديل السلس بين التبويبات
+        // التبديل بين تسجيل الدخول وحساب جديد
         function switchTab(type) {
             if(type === 'login') {
                 document.getElementById('loginForm').classList.remove('hidden');
@@ -139,22 +175,26 @@
                 document.getElementById('registerForm').classList.remove('hidden');
                 document.getElementById('loginTab').classList.remove('active');
                 document.getElementById('registerTab').classList.add('active');
-                toggleDoctorFields(); // للتأكد من حالة الحقول
+                toggleFieldsBasedOnRole();
             }
         }
 
-        // إظهار/إخفاء حقول الطبيب بناءً على الاختيار داخل القائمة
-        function toggleDoctorFields() {
+        // إظهار وإخفاء الحقول حسب (مريض / طبيب)
+        function toggleFieldsBasedOnRole() {
             const role = document.getElementById('userRole').value;
             const docFields = document.getElementById('doctorFields');
+            const patientFields = document.getElementById('patientFields');
+            
             if(role === 'doctor') {
                 docFields.classList.remove('hidden');
+                patientFields.classList.add('hidden');
             } else {
                 docFields.classList.add('hidden');
+                patientFields.classList.remove('hidden');
             }
         }
 
-        // منطق إنشاء حساب جديد (مريض أو طبيب)
+        // منطق إنشاء حساب جديد
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('regName').value.trim();
@@ -163,10 +203,10 @@
             const role = document.getElementById('userRole').value;
 
             try {
-                // التأكد من عدم تكرار رقم التليفون في السيستم
+                // التأكد من عدم تكرار رقم الهاتف في السيستم
                 const userCheck = await db.collection("users").where("phone", "==", phone).get();
                 if(!userCheck.empty) {
-                    alert("رقم الهاتف هذا مسجل بالفعل لحساب آخر!");
+                    alert("رقم الهاتف هذا مسجل بالفعل لـ حساب آخر!");
                     return;
                 }
 
@@ -182,12 +222,24 @@
                     userData.status = 'pending'; // الطبيب ينتظر موافقة الأدمن
                     userData.specialty = document.getElementById('docSpecialty').value;
                     userData.address = document.getElementById('docAddress').value.trim();
+                    
+                    // تجميع الأيام المختارة
+                    const checkedDays = [];
+                    document.querySelectorAll('input[name="workDays"]:checked').forEach(cb => {
+                        checkedDays.push(cb.value);
+                    });
+                    userData.working_days = checkedDays;
+                    userData.working_hours = {
+                        start: document.getElementById('docWorkStart').value || "14:00",
+                        end: document.getElementById('docWorkEnd').value || "22:00"
+                    };
                 } else {
-                    userData.status = 'active'; // المريض شغال ومفعّل تلقائياً
+                    userData.status = 'active'; // المريض نشط تلقائياً
+                    userData.address = document.getElementById('patientAddress').value.trim();
                 }
 
                 await db.collection("users").add(userData);
-                alert(role === 'doctor' ? "تم تسجيل حسابك كطبيب! وهو قيد مراجعة الإدارة حالياً للتفعيل." : "تم إنشاء حسابك كمريض بنجاح! يمكنك الآن تسجيل الدخول.");
+                alert(role === 'doctor' ? "تم تسجيل حسابك بنجاح! حسابك حالياً قيد مراجعة الإدارة للتفعيل." : "تم إنشاء حسابك بنجاح! يمكنك الآن تسجيل الدخول.");
                 switchTab('login');
 
             } catch (error) {
@@ -195,7 +247,7 @@
             }
         });
 
-        // منطق تسجيل الدخول وحفظ الجلسة
+        // منطق تسجيل الدخول
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const phone = document.getElementById('loginPhone').value.trim();
@@ -208,31 +260,31 @@
                                               .get();
 
                 if(querySnapshot.empty) {
-                    alert("رقم الهاتف أو كلمة السر غير صحيحة!");
+                    alert("رقم الهاتف أو كلمة المرور غير صحيحة!");
                     return;
                 }
 
                 let userDoc = null;
                 querySnapshot.forEach(doc => userDoc = doc.data());
 
-                // التحقق لو كان طبيب وحسابه لسه متفعلش
+                // فحص حالة الطبيب قبل الدخول
                 if(userDoc.role === 'doctor' && userDoc.status === 'pending') {
-                    alert("عذراً، حسابك كطبيب ما زال قيد المراجعة من قِبل الإدارة وسيتفعل قريباً.");
+                    alert("عذراً، حسابك كطبيب ما زال قيد المراجعة من قِبل الإدارة. سيتم تفعيله قريباً.");
                     return;
                 }
 
-                // حفظ بيانات الجلسة محلياً على الهاتف لعدم تكرار الدخول
+                // حفظ الجلسة محلياً بالمتصفح
                 localStorage.setItem('user_name', userDoc.name);
                 localStorage.setItem('user_phone', userDoc.phone);
                 localStorage.setItem('user_role', userDoc.role);
 
-                // التوجيه الفوري حسب نوع الحساب
+                // التوجيه التلقائي المباشر لملفات الـ GitHub الخاصة بك
                 if(userDoc.role === 'admin') {
                     window.location.href = 'admin_panel.html';
                 } else if(userDoc.role === 'doctor') {
-                    window.location.href = 'doctor.html';
+                    window.location.href = 'doctor.html'; // يوجه لـ doctor.html مباشرة
                 } else {
-                    window.location.href = 'index.html'; 
+                    window.location.href = 'index.html';
                 }
 
             } catch (error) {
