@@ -289,7 +289,7 @@
                             </tr>
                         </thead>
                         <tbody id="allUsersTable">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -322,15 +322,15 @@
 
     <script>
         // تكوين Firebase الخاص بمشروعك
-   const firebaseConfig = {
-  apiKey: "AIzaSyBYasEz-4b-f4xsG3V8O5oQ-aOhDqS1Ue0",
-  authDomain: "doctorforme-62aaf.firebaseapp.com",
-  projectId: "doctorforme-62aaf",
-  storageBucket: "doctorforme-62aaf.firebasestorage.app",
-  messagingSenderId: "121506902078",
-  appId: "1:121506902078:web:f60f680810614cbe88e16f",
-  measurementId: "G-CYNKCJH6KB"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYasEz-4b-f4xsG3V8O5oQ-aOhDqS1Ue0",
+            authDomain: "doctorforme-62aaf.firebaseapp.com",
+            projectId: "doctorforme-62aaf",
+            storageBucket: "doctorforme-62aaf.firebasestorage.app",
+            messagingSenderId: "121506902078",
+            appId: "1:121506902078:web:f60f680810614cbe88e16f",
+            measurementId: "G-CYNKCJH6KB"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
@@ -401,6 +401,9 @@
                 loadBookings();
             } else if (tabName === 'users') {
                 document.getElementById('usersTab').classList.add('active');
+                if (isSuperAdmin) {
+                    loadAllUsers();
+                }
             } else if (tabName === 'logs') {
                 document.getElementById('logsTab').classList.add('active');
                 loadActivityLogs();
@@ -410,35 +413,52 @@
         // ================= 1. جلب طلبات تسجيل الأطباء المعلقة =================
         function loadPendingDoctors() {
             const tableBody = document.getElementById('pendingDoctorsTable');
+            
+            // تعديل الاستعلام للبحث عن "pending" لتوافق قاعدة البيانات وتجنب مشاكل الـ Index والتاريخ
             db.collection("users")
                 .where("role", "==", "doctor")
-                .where("status", "==", "pending_admin")
+                .where("status", "==", "pending")
                 .get()
                 .then(snapshot => {
                     if (snapshot.empty) {
-                        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد طلبات تسجيل جديدة حالياً.</td></tr>';
+                        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #718096;">لا توجد طلبات تسجيل جديدة حالياً.</td></tr>';
                         return;
                     }
                     tableBody.innerHTML = '';
+                    
+                    // تحويل الطلبات لمصفوفة لترتيبها برمجياً لتجنب الحاجة للـ Index المعقد
+                    let doctorsArray = [];
                     snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const docId = doc.id;
+                        doctorsArray.push({ id: doc.id, ...doc.data() });
+                    });
 
-                        let clinicsText = data.clinics ? data.clinics.map(c => c.clinic_address).join(" | ") : "لا يوجد";
+                    // الترتيب من الأحدث للأقدم بشكل آمن
+                    doctorsArray.sort((a, b) => {
+                        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return timeB - timeA;
+                    });
 
+                    doctorsArray.forEach(doctor => {
+                        let clinicsText = doctor.clinics ? doctor.clinics.map(c => c.clinic_address).join(" | ") : "لم تحدد بعد";
+                        
+                        // تعديل الأزرار لتستدعي دوال التفعيل والرفض الخاصة بالطبيب بشكل صحيح مع تمرير الـ id والاسم
                         tableBody.innerHTML += `
                             <tr>
-                                <td><b>د. ${data.name}</b></td>
-                                <td>${data.phone}</td>
-                                <td><span class="status-badge status-approved">${data.specialty}</span></td>
-                                <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clinicsText}</td>
-                             <td>
-    <button class="btn btn-success" onclick="updateBookingStatus('${id}', 'confirmed', '${data.patient_name}', '${data.doctor_name}')">تأكيد حجز ✅</button>
-    <button class="btn btn-danger" onclick="updateBookingStatus('${id}', 'rejected', '${data.patient_name}', '${data.doctor_name}')">إلغاء ❌</button>
-</td>
+                                <td><b>د. ${doctor.name}</b></td>
+                                <td>${doctor.phone}</td>
+                                <td><span class="status-badge status-approved">${doctor.specialty || 'غير محدد'}</span></td>
+                                <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${clinicsText}">${clinicsText}</td>
+                                <td>
+                                    <button class="btn btn-success" onclick="approveDoctor('${doctor.id}', '${doctor.name}')">موافقة وتفعيل ✅</button>
+                                    <button class="btn btn-danger" onclick="rejectDoctor('${doctor.id}', '${doctor.name}')">رفض وتجاهل ❌</button>
+                                </td>
                             </tr>
                         `;
                     });
+                }).catch(err => {
+                    console.error("Error loading pending doctors: ", err);
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الطلبات. راجع الـ Console.</td></tr>';
                 });
         }
 
@@ -450,9 +470,10 @@
                 status: "approved"
             }).then(() => {
                 alert(`تم تفعيل حساب د. ${docName} بنجاح!`);
-                // تسجيل العملية باسم الأدمن النشط
                 logActivity("قبول حساب طبيب", `الموافقة على تفعيل الحساب وتدشينه للطبيب د. ${docName}`);
                 loadPendingDoctors();
+            }).catch(err => {
+                alert("حدث خطأ أثناء التفعيل: " + err.message);
             });
         }
 
@@ -466,6 +487,8 @@
                 alert(`تم رفض الطلب بنجاح.`);
                 logActivity("رفض حساب طبيب", `رفض تسجيل الطبيب د. ${docName} وإيقاف حسابه`);
                 loadPendingDoctors();
+            }).catch(err => {
+                alert("حدث خطأ أثناء معالجة الطلب: " + err.message);
             });
         }
 
@@ -486,29 +509,28 @@
                         const id = doc.id;
                         const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleString('ar-EG') : 'قيد المعالجة';
                         
-                    let statusBadge = '';
-let actionButtons = '';
+                        let statusBadge = '';
+                        let actionButtons = '';
 
-if (data.status === 'confirmed') {
-    statusBadge = `<span class="badge badge-confirmed" style="background:#d1fae5; color:#065f46; padding:4px 8px; border-radius:4px; font-weight:bold;">مؤكد نهائياً ✅</span>`;
-    actionButtons = `<span style="color:gray; font-size:12px;">تم التأكيد بنجاح</span>`;
-} 
-else if (data.status === 'doctor_approved') {
-    statusBadge = `<span class="badge badge-approved" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-weight:bold;">مقبول من الدكتور (بانتظار الإدارة) 📞</span>`;
-    actionButtons = `
-        <button class="btn btn-success" onclick="updateBookingStatus('${id}', 'confirmed', '${data.patient_name}', '${data.doctor_name}')" style="background:#2ecc71; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">تأكيد حجز ✅</button>
-        <button class="btn btn-danger" onclick="updateBookingStatus('${id}', 'rejected', '${data.patient_name}', '${data.doctor_name}')" style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold; margin-right:5px;">إلغاء ❌</button>
-    `;
-} 
-else if (data.status === 'rejected') {
-    statusBadge = `<span class="badge badge-rejected" style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:4px; font-weight:bold;">مرفوض / ملغي ❌</span>`;
-    actionButtons = `<span style="color:gray; font-size:12px;">تم اتخاذ القرار</span>`;
-} 
-else {
-    // حالة الـ pending الافتراضية
-    statusBadge = `<span class="badge badge-pending" style="background:#fef3c7; color:#92400e; padding:4px 8px; border-radius:4px; font-weight:bold;">قيد الانتظار عند الدكتور ⏳</span>`;
-    actionButtons = `<span style="color:#718096; font-size:11px; font-style:italic;">بانتظار قبول الطبيب أولاً</span>`;
-}
+                        if (data.status === 'confirmed') {
+                            statusBadge = `<span class="badge badge-confirmed" style="background:#d1fae5; color:#065f46; padding:4px 8px; border-radius:4px; font-weight:bold;">مؤكد نهائياً ✅</span>`;
+                            actionButtons = `<span style="color:gray; font-size:12px;">تم التأكيد بنجاح</span>`;
+                        } 
+                        else if (data.status === 'doctor_approved') {
+                            statusBadge = `<span class="badge badge-approved" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-weight:bold;">مقبول من الدكتور (بانتظار الإدارة) 📞</span>`;
+                            actionButtons = `
+                                <button class="btn btn-success" onclick="updateBookingStatus('${id}', 'confirmed', '${data.patient_name}', '${data.doctor_name}')" style="background:#2ecc71; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">تأكيد حجز ✅</button>
+                                <button class="btn btn-danger" onclick="updateBookingStatus('${id}', 'rejected', '${data.patient_name}', '${data.doctor_name}')" style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold; margin-right:5px;">إلغاء ❌</button>
+                            `;
+                        } 
+                        else if (data.status === 'rejected') {
+                            statusBadge = `<span class="badge badge-rejected" style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:4px; font-weight:bold;">مرفوض / ملغي ❌</span>`;
+                            actionButtons = `<span style="color:gray; font-size:12px;">تم اتخاذ القرار</span>`;
+                        } 
+                        else {
+                            statusBadge = `<span class="badge badge-pending" style="background:#fef3c7; color:#92400e; padding:4px 8px; border-radius:4px; font-weight:bold;">قيد الانتظار عند الدكتور ⏳</span>`;
+                            actionButtons = `<span style="color:#718096; font-size:11px; font-style:italic;">بانتظار قبول الطبيب أولاً</span>`;
+                        }
 
                         tableBody.innerHTML += `
                             <tr>
@@ -519,8 +541,7 @@ else {
                                 <td>${dateStr}</td>
                                 <td>${statusBadge}</td>
                                 <td>
-                                    <button class="btn btn-success" onclick="updateBookingStatus('${id}', 'approved', '${data.patient_name}', '${data.doctor_name}')">تأكيد حجز ✅</button>
-                                    <button class="btn btn-danger" onclick="updateBookingStatus('${id}', 'rejected', '${data.patient_name}', '${data.doctor_name}')">إلغاء ❌</button>
+                                    ${actionButtons}
                                 </td>
                             </tr>
                         `;
@@ -531,48 +552,35 @@ else {
                 });
         }
 
-        // تحديث حالة الحجز (أدمن عادي أو سوبر أدمن)
-   // ================= تحديث حالة الحجز (متوافق مع صفحة الإدارة والطبيب) =================
-function updateBookingStatus(bookingId, newStatus, patientName, docName) {
-    // 1. تحديد النصوص البرمجية والرسائل بناءً على الحالات المتوافقة مع كود الطبيب
-    let stateText = '';
-    let dbStatus = '';
-    
-    if (newStatus === 'approved' || newStatus === 'confirmed') {
-        stateText = 'تأكيد وقبول نهائي';
-        dbStatus = 'confirmed'; // الحالة التي ينتظرها كود الدكتور ليعرض "تم التأكيد النهائي"
-    } else {
-        stateText = 'إلغاء ورفض';
-        dbStatus = 'rejected'; // الحالة التي ينتظرها كود الدكتور ليعرض "مرفوض"
-    }
+        // ================= تحديث حالة الحجز (متوافق مع صفحة الإدارة والطبيب) =================
+        function updateBookingStatus(bookingId, newStatus, patientName, docName) {
+            let stateText = '';
+            let dbStatus = '';
+            
+            if (newStatus === 'approved' || newStatus === 'confirmed') {
+                stateText = 'تأكيد وقبول نهائي';
+                dbStatus = 'confirmed'; 
+            } else {
+                stateText = 'إلغاء ورفض';
+                dbStatus = 'rejected'; 
+            }
 
-    // 2. التحقق قبل الإجراء (حماية من الضغط بالخطأ)
-    if (!confirm(`هل أنت متأكد من ${stateText} هذا الحجز؟`)) return;
+            if (!confirm(`هل أنت متأكد من ${stateText} هذا الحجز؟`)) return;
 
-    // تأمين المتغيرات لو متبعتتش بشكل صحيح في الـ HTML
-    const pName = patientName || "مريض";
-    const dName = docName || "طبيب";
+            const pName = patientName || "مريض";
+            const dName = docName || "طبيب";
 
-    // 3. التحديث في Firestore
-    db.collection("bookings").doc(bookingId).update({
-        status: dbStatus
-    }).then(() => {
-        alert(`تم تحديث حالة الحجز بنجاح إلى [${stateText}]!`);
-        
-        // تسجيل النشاط في السجل الخاص بك
-        if (typeof logActivity === "function") {
-            logActivity(`${stateText} حجز مريض`, `تعديل حالة الحجز للمريض (${pName}) مع د. (${dName}) إلى [${dbStatus}]`);
+            db.collection("bookings").doc(bookingId).update({
+                status: dbStatus
+            }).then(() => {
+                alert(`تم تحديث حالة الحجز بنجاح إلى [${stateText}]!`);
+                logActivity(`${stateText} حجز مريض`, `تعديل حالة الحجز للمريض (${pName}) مع د. (${dName}) إلى [${dbStatus}]`);
+                loadBookings();
+            }).catch((error) => {
+                console.error("Error updating booking status:", error);
+                alert("حدث خطأ أثناء تحديث الحجز: " + error.message);
+            });
         }
-        
-        // إعادة تحميل البيانات لتنعكس في الجدول
-        if (typeof loadBookings === "function") {
-            loadBookings();
-        }
-    }).catch((error) => {
-        console.error("Error updating booking status:", error);
-        alert("حدث خطأ أثناء تحديث الحجز: " + error.message);
-    });
-}
 
         // ================= 3. جلب وإدارة قاعدة بيانات المستخدمين كاملة (Super Admin فقط) =================
         function loadAllUsers() {
@@ -585,7 +593,15 @@ function updateBookingStatus(bookingId, newStatus, patientName, docName) {
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         const uid = doc.id;
-                        const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG') : 'غير متوفر';
+                        let dateStr = 'غير متوفر';
+                        
+                        if (data.created_at) {
+                            if (data.created_at.seconds) {
+                                dateStr = new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG');
+                            } else {
+                                dateStr = new Date(data.created_at).toLocaleDateString('ar-EG');
+                            }
+                        }
                         
                         let roleText = data.role === 'doctor' ? '👨‍⚕️ دكتور' : (data.role === 'patient' ? '🧑‍🦽 مريض' : '🔑 مشرف');
 
@@ -601,6 +617,8 @@ function updateBookingStatus(bookingId, newStatus, patientName, docName) {
                             </tr>
                         `;
                     });
+                }).catch(err => {
+                    console.error("Error loading users: ", err);
                 });
         }
 
@@ -633,43 +651,4 @@ function updateBookingStatus(bookingId, newStatus, patientName, docName) {
             db.collection("activity_logs").add(logData);
         }
 
-        function loadActivityLogs() {
-            const tableBody = document.getElementById('activityLogsTable');
-            db.collection("activity_logs")
-                .orderBy("timestamp", "desc")
-                .get()
-                .then(snapshot => {
-                    if (snapshot.empty) {
-                        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد أنشطة مسجلة في السجل حالياً.</td></tr>';
-                        return;
-                    }
-                    tableBody.innerHTML = '';
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const timeStr = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString('ar-EG') : 'الآن';
-                        
-                        tableBody.innerHTML += `
-                            <tr>
-                                <td><b>${data.admin_name} 👤</b></td>
-                                <td><span style="color:var(--primary); font-weight:bold;">${data.action}</span></td>
-                                <td style="font-size:13px;">${data.details}</td>
-                                <td class="log-time">${timeStr}</td>
-                            </tr>
-                        `;
-                    });
-                }).catch(err => {
-                    console.error(err);
-                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">بانتظار بناء الـ Index الخاص بسجل العمليات في الفايربيز للترتيب الزمني.</td></tr>';
-                });
-        }
-
-        // ================= تسجيل الخروج =================
-        function handleLogout() {
-            auth.signOut().then(() => {
-                localStorage.clear();
-                window.location.href = 'login.html';
-            });
-        }
-    </script>
-</body>
-</html>
+        function
