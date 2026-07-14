@@ -284,90 +284,109 @@
         // الاحتفاظ بوقت فتح الصفحة كـ timestamp رقمي لضمان مقارنة سليمة
         let pageOpenTimeMs = new Date().getTime(); 
 
-        function listenToBookings() {
-            db.collection("bookings")
-              .where("doctor_id", "==", doctorId) 
-              .orderBy("created_at", "desc")
-              .onSnapshot((snapshot) => {
-                  tableBody.innerHTML = '';
-                  
-                  if (snapshot.empty) {
-                      tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
-                      stopAlertSound();
-                      return;
-                  }
+     // جلب الحجوزات الموجهة لهذا الطبيب بالتحديد لحظة بلحظة
+function listenToBookings() {
+    // لمنع مشاكل الفهارس (Indexes) إذا لم تكن مفعلة بعد، سنكتفي بفلترة الطبيب برمجياً أو بالاستعلام البسيط
+    db.collection("bookings")
+      .where("doctor_id", "==", doctorId)
+      .onSnapshot((snapshot) => {
+          tableBody.innerHTML = '';
+          
+          if (snapshot.empty) {
+              tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
+              stopAlertSound();
+              return;
+          }
 
-                  let triggerVoiceAlert = false;
+          let triggerVoiceAlert = false;
+          
+          // تحويل الوثائق إلى مصفوفة وترتيبها برمجياً بالـ JavaScript 
+          // لتجنب الحاجة الإجبارية لعمل الـ Index في الفايربيز وتسهيل التشغيل فوراً
+          const bookingsArray = [];
+          snapshot.forEach(doc => {
+              bookingsArray.push({ id: doc.id, ...doc.data() });
+          });
 
-                  snapshot.forEach((doc) => {
-                      const booking = doc.data();
-                      let statusBadge = '';
-                      let actionButtons = '';
+          // الترتيب من الأحدث إلى الأقدم برمجياً
+          bookingsArray.sort((a, b) => {
+              let timeA = 0, timeB = 0;
+              if (a.created_at) {
+                  timeA = typeof a.created_at.toDate === 'function' ? a.created_at.toDate().getTime() : new Date(a.created_at).getTime();
+              }
+              if (b.created_at) {
+                  timeB = typeof b.created_at.toDate === 'function' ? b.created_at.toDate().getTime() : new Date(b.created_at).getTime();
+              }
+              return timeB - timeA;
+          });
 
-                      // 🛠️ حل مشكلة التواريخ لضمان سلامة جلب وقراءة الحجوزات وتفعيل الرنين:
-                      let bookingTimeMs = 0;
-                      if (booking.created_at) {
-                          if (typeof booking.created_at.toDate === 'function') {
-                              bookingTimeMs = booking.created_at.toDate().getTime();
-                          } else {
-                              bookingTimeMs = new Date(booking.created_at).getTime();
-                          }
-                      }
+          bookingsArray.forEach((booking) => {
+              let statusBadge = '';
+              let actionButtons = '';
 
-                      // التحقق مما إذا كان الحجز معلقاً وجديداً بعد فتح الصفحة
-                      if (booking.status === 'pending' && bookingTimeMs >= pageOpenTimeMs) {
-                          triggerVoiceAlert = true;
-                      }
-
-                      if (booking.status === 'confirmed') {
-                          statusBadge = `<span class="badge badge-confirmed">تم التأكيد النهائي من الإدارة ✅</span>`;
-                          actionButtons = `<span style="color:gray; font-size:12px; font-weight:bold;">مؤكد نهائياً</span>`;
-                      } 
-                      else if (booking.status === 'doctor_approved') {
-                          statusBadge = `<span class="badge badge-approved">جاري تأكيد الحجز بواسطة الإدارة 📞</span>`;
-                          actionButtons = `<span style="color:#2a85ff; font-size:12px; font-weight:bold;">بانتظار مكالمة الإدارة</span>`;
-                      } 
-                      else if (booking.status === 'rejected') {
-                          statusBadge = `<span class="badge badge-rejected">مرفوض ❌</span> <br> <small style="color:red; font-weight:bold;">السبب: ${booking.rejection_reason || 'غير حدد'}</small>`;
-                          actionButtons = `<span style="color:gray; font-size:12px; font-weight:bold;">تم اتخاذ القرار</span>`;
-                      } 
-                      else {
-                          statusBadge = `<span class="badge badge-pending">قيد الانتظار ⏳</span>`;
-                          actionButtons = `
-                              <button class="btn btn-confirm" onclick="updateToDoctorApproved('${doc.id}')">قبول مبدئي</button>
-                              <button class="btn btn-reject" onclick="openRejectModal('${doc.id}')">رفض</button>
-                          `;
-                      }
-
-                      const bookingDate = booking.created_at 
-                          ? (typeof booking.created_at.toDate === 'function' ? booking.created_at.toDate().toLocaleString('ar-EG') : new Date(booking.created_at).toLocaleString('ar-EG'))
-                          : 'غير محدد';
-                      
-                      const selectedClinic = booking.clinic_address || "العيادة الرئيسية / غير محدد";
-
-                      const row = `
-                          <tr>
-                              <td><strong>${booking.patient_name}</strong></td>
-                              <td><a href="tel:${booking.patient_phone}" style="text-decoration:none; color:inherit; font-weight:bold;">${booking.patient_phone}</a></td>
-                              <td><span class="clinic-tag">🏥 ${selectedClinic}</span></td>
-                              <td style="font-size:12px; color:#718096; direction: ltr;">${bookingDate}</td>
-                              <td>${statusBadge}</td>
-                              <td>${actionButtons}</td>
-                          </tr>
-                      `;
-                      tableBody.innerHTML += row;
-                  });
-
-                  if (triggerVoiceAlert) {
-                      playAlertSound();
+              let bookingTimeMs = 0;
+              if (booking.created_at) {
+                  if (typeof booking.created_at.toDate === 'function') {
+                      bookingTimeMs = booking.created_at.toDate().getTime();
                   } else {
-                      stopAlertSound();
+                      bookingTimeMs = new Date(booking.created_at).getTime();
                   }
-              }, (error) => {
-                  console.error("Firestore Error: ", error);
-                  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red; padding: 20px;">حدث خطأ أثناء جلب البيانات، يرجى مراجعة الصلاحيات أو الـ Index في الكونسول.</td></tr>';
-              });
-        }
+              }
+
+              // تشغيل التنبيه الصوتي للحجوزات الجديدة فقط
+              if (booking.status === 'pending' && bookingTimeMs >= pageOpenTimeMs) {
+                  triggerVoiceAlert = true;
+              }
+
+              // الحالات والقرارات
+              if (booking.status === 'confirmed') {
+                  statusBadge = `<span class="badge badge-confirmed">تم التأكيد النهائي من الإدارة ✅</span>`;
+                  actionButtons = `<span style="color:gray; font-size:12px; font-weight:bold;">مؤكد نهائياً</span>`;
+              } 
+              else if (booking.status === 'doctor_approved') {
+                  statusBadge = `<span class="badge badge-approved">جاري تأكيد الحجز بواسطة الإدارة 📞</span>`;
+                  actionButtons = `<span style="color:#2a85ff; font-size:12px; font-weight:bold;">تمت موافقتك وبانتظار الإدارة</span>`;
+              } 
+              else if (booking.status === 'rejected') {
+                  statusBadge = `<span class="badge badge-rejected">مرفوض ❌</span> <br> <small style="color:red; font-weight:bold;">السبب: ${booking.rejection_reason || 'غير محدد'}</small>`;
+                  actionButtons = `<span style="color:gray; font-size:12px; font-weight:bold;">تم اتخاذ القرار</span>`;
+              } 
+              else {
+                  statusBadge = `<span class="badge badge-pending">قيد الانتظار ⏳</span>`;
+                  actionButtons = `
+                      <button class="btn btn-confirm" onclick="updateToDoctorApproved('${booking.id}')">قبول مبدئي</button>
+                      <button class="btn btn-reject" onclick="openRejectModal('${booking.id}')">رفض</button>
+                  `;
+              }
+
+              const bookingDate = booking.created_at 
+                  ? (typeof booking.created_at.toDate === 'function' ? booking.created_at.toDate().toLocaleString('ar-EG') : new Date(booking.created_at).toLocaleString('ar-EG'))
+                  : 'غير محدد';
+              
+              const selectedClinic = booking.clinic_address || "العيادة الرئيسية / غير محدد";
+
+              const row = `
+                  <tr>
+                      <td><strong>${booking.patient_name}</strong></td>
+                      <td><a href="tel:${booking.patient_phone}" style="text-decoration:none; color:inherit; font-weight:bold;">${booking.patient_phone}</a></td>
+                      <td><span class="clinic-tag">🏥 ${selectedClinic}</span></td>
+                      <td style="font-size:12px; color:#718096; direction: ltr;">${bookingDate}</td>
+                      <td>${statusBadge}</td>
+                      <td>${actionButtons}</td>
+                  </tr>
+              `;
+              tableBody.innerHTML += row;
+          });
+
+          if (triggerVoiceAlert) {
+              playAlertSound();
+          } else {
+              stopAlertSound();
+          }
+      }, (error) => {
+          console.error("Firestore Error: ", error);
+          tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding: 20px;">حدث خطأ: ${error.message}</td></tr>`;
+      });
+}
 
         window.updateToDoctorApproved = async function(id) {
             try {
