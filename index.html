@@ -75,31 +75,29 @@
         .doctor-card {
             background-color: var(--card-bg); border-radius: 16px; padding: 25px; text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.3s, box-shadow 0.3s; border: 1px solid #edf2f7;
-            display: flex; flex-direction: column; justify-content: space-between;
         }
 
         .doctor-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
 
         .doctor-card img {
             width: 110px; height: 110px; border-radius: 50%;
-            object-fit: cover; margin: 0 auto 15px auto; border: 3px solid #f0f4f8;
+            object-fit: cover; margin-bottom: 15px; border: 3px solid #f0f4f8;
         }
 
         .doctor-card h3 { margin: 10px 0 5px 0; font-size: 18px; color: #2d3748; }
         .doctor-card .specialty {
-            color: var(--primary-color); font-weight: 600; margin: 0 auto 15px auto; font-size: 14px;
-            background: #eef5ff; display: inline-block; padding: 4px 12px; border-radius: 20px; width: fit-content;
+            color: var(--primary-color); font-weight: 600; margin: 0 0 15px 0; font-size: 14px;
+            background: #eef5ff; display: inline-block; padding: 4px 12px; border-radius: 20px;
         }
 
         .doctor-card .doctor-details { text-align: right; margin-top: 15px; margin-bottom: 20px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
-        .doctor-card .doctor-details p { margin: 8px 0; font-size: 13px; color: #4a5568; line-height: 1.5; }
+        .doctor-card .doctor-details p { margin: 6px 0; font-size: 13px; color: #4a5568; line-height: 1.4; }
         .doctor-card .doctor-details strong { color: #2d3748; }
-        .clinic-divider { border-top: 1px dashed #cbd5e1; margin: 8px 0; padding-top: 8px; }
 
         .doctor-card button {
             background-color: var(--primary-color); color: white; border: none;
             padding: 12px; border-radius: 25px; font-size: 15px; font-weight: bold;
-            cursor: pointer; width: 100%; transition: background-color 0.2s; margin-top: auto;
+            cursor: pointer; width: 100%; transition: background-color 0.2s;
         }
         .doctor-card button:hover { background-color: var(--primary-hover); }
 
@@ -120,7 +118,7 @@
 
         .modal-content h2 { margin-top: 0; color: #2d3748; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #f0f4f8; padding-bottom: 10px; }
         .modal-content label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: #4a5568; }
-        .modal-content input {
+        .modal-content input, .modal-content select {
             width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e0e0e0; border-radius: 8px;
             box-sizing: border-box; outline: none; font-size: 15px; background-color: #f8fafc;
         }
@@ -137,7 +135,6 @@
         .booking-item p { margin: 4px 0; font-size: 14px; }
         .badge-status { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; }
         .status-pending { background-color: #fef3c7; color: #d97706; }
-        .status-approved { background-color: #e0f2fe; color: #0369a1; }
         .status-confirmed { background-color: #dcfce7; color: #15803d; }
         .status-rejected { background-color: #fee2e2; color: #b91c1c; }
     </style>
@@ -193,6 +190,9 @@
             
             <label for="patientPhone">رقم الهاتف المسجل:</label>
             <input type="tel" id="patientPhone" disabled>
+
+            <label for="bookingClinic">اختر العيادة المراد الحجز بها:</label>
+            <select id="bookingClinic"></select>
             
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
@@ -251,7 +251,7 @@
             document.getElementById('patientGreeting').innerText = `مرحباً، ${patientName.split(' ')[0]} 👋`;
         });
 
-        // بيانات مشروع Firebase الحقيقية
+        // بيانات مشروع Firebase الحقيقية الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyAzXXXXXXXXXXXXXXX", 
             authDomain: "doctorforme-62aaf.firebaseapp.com",
@@ -267,7 +267,7 @@
         const doctorsListContainer = document.getElementById('doctorsList');
         const bookingModal = document.getElementById('bookingModal');
         
-        let selectedDoctorId = '';
+        let selectedDoctorUserId = ''; // الـ ID الفعلي المعتمد للطبيب بكولكشن users
         let selectedDoctorName = '';
 
         // فتح وإغلاق مودال الشكاوى والمقترحات
@@ -281,7 +281,6 @@
             document.getElementById('feedbackText').value = ''; 
         }
 
-        // كود إرسال الشكوى أو المقترح
         document.getElementById('submitFeedbackBtn').addEventListener('click', async () => {
             const feedbackType = document.getElementById('feedbackType').value;
             const feedbackText = document.getElementById('feedbackText').value.trim();
@@ -301,18 +300,18 @@
                     type: feedbackType,
                     text: feedbackText,
                     status: "unread", 
-                    created_at: new Date().toISOString()
+                    created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 alert("تم إرسال رسالتك بنجاح! شكراً جزيلاً لاهتمامك بمساعدتنا على التطوير. ❤️");
                 closeFeedbackModal();
+
             } catch (error) {
                 alert("حدث خطأ أثناء إرسال الرسالة، برجاء المحاولة مرة أخرى.");
-                console.error("Feedback Error: ", error);
             }
         });
 
-        // نظام البحث الذكي الشامل والمطور لدعم العيادات المتعددة وهيكل البيانات الجديد والقديم
+        // نظام البحث الذكي الشامل (اسم، تخصص، منطقة)
         async function fetchDoctors(searchText = '', specialtyFilter = 'الكل') {
             doctorsListContainer.innerHTML = '<div class="status-message">جاري تحميل قائمة الأطباء الحالية...</div>';
 
@@ -338,85 +337,38 @@
                     const doctor = doc.data();
                     const doctorName = doctor.name.toLowerCase();
                     const doctorSpecialty = doctor.specialty.toLowerCase();
+                    const doctorAddress = doctor.clinic_address?.full_address ? doctor.clinic_address.full_address.toLowerCase() : '';
 
-                    // إنشاء نصوص العناوين والمواعيد للتحقق منها في البحث ولدعم الهيكلين معاً
-                    let addressesHTML = "";
-                    let searchAddressesText = "";
-                    let searchDaysText = "";
-                    let searchHoursText = "";
-
-                    // الحالة الأولى: لو الطبيب مسجل بنظام العيادات المتعددة الحديث (مصفوفة clinics)
-                    if (doctor.clinics && Array.isArray(doctor.clinics) && doctor.clinics.length > 0) {
-                        doctor.clinics.forEach((clinic, index) => {
-                            const mapUrl = clinic.map_url;
-                            const addressLink = mapUrl 
-                                ? `<a href="${mapUrl}" target="_blank" style="color: #2a85ff; text-decoration: underline; font-weight: bold;">${clinic.address} (الخريطة 🗺️)</a>`
-                                : clinic.address;
-                                
-                            const days = clinic.working_days ? clinic.working_days.join(' - ') : 'غير محدد';
-                            const hours = (clinic.working_hours && clinic.working_hours.start) 
-                                ? `من ${clinic.working_hours.start} إلى ${clinic.working_hours.end}` 
-                                : 'غير محدد';
-
-                            addressesHTML += `
-                                <div class="${index > 0 ? 'clinic-divider' : ''}">
-                                    <p>🏥 <strong>العيادة ${doctor.clinics.length > 1 ? (index + 1) : ''}:</strong> ${addressLink}</p>
-                                    <p>📅 <strong>الأيام:</strong> ${days}</p>
-                                    <p>⏰ <strong>المواعيد:</strong> ${hours}</p>
-                                </div>
-                            `;
-
-                            searchAddressesText += " " + clinic.address.toLowerCase();
-                            searchDaysText += " " + days.toLowerCase();
-                            searchHoursText += " " + hours.toLowerCase();
-                        });
-                    } 
-                    // الحالة الثانية: التوافق الرجعي مع الهيكل القديم لقاعدة البيانات (كائن clinic_address منفرد)
-                    else {
-                        const oldAddress = doctor.clinic_address?.full_address || 'غير محدد';
-                        const mapUrl = doctor.clinic_address?.map_url;
-                        const addressLink = mapUrl 
-                            ? `<a href="${mapUrl}" target="_blank" style="color: #2a85ff; text-decoration: underline; font-weight: bold;">${oldAddress} (الخريطة 🗺️)</a>`
-                            : oldAddress;
-
-                        const days = doctor.working_days ? doctor.working_days.join(' - ') : 'غير محدد';
-                        const hours = doctor.working_hours ? `من ${doctor.working_hours.start} إلى ${doctor.working_hours.end}` : 'غير محدد';
-
-                        addressesHTML = `
-                            <div>
-                                <p>📍 <strong>العنوان:</strong> ${addressLink}</p>
-                                <p>📅 <strong>أيام العمل:</strong> ${days}</p>
-                                <p>⏰ <strong>المواعيد:</strong> ${hours}</p>
-                            </div>
-                        `;
-
-                        searchAddressesText = oldAddress.toLowerCase();
-                        searchDaysText = days.toLowerCase();
-                        searchHoursText = hours.toLowerCase();
-                    }
-
-                    // تفعيل الفلترة والبحث الذكي الشامل
-                    if (search && 
-                        !doctorName.includes(search) && 
-                        !doctorSpecialty.includes(search) && 
-                        !searchAddressesText.includes(search)) {
+                    if (search && !doctorName.includes(search) && !doctorSpecialty.includes(search) && !doctorAddress.includes(search)) {
                         return; 
                     }
 
                     hasVisibleDoctors = true;
+                    const daysText = doctor.working_days ? doctor.working_days.join(' - ') : 'غير محدد';
+                    const hoursText = doctor.working_hours ? `من ${doctor.working_hours.start} إلى ${doctor.working_hours.end}` : 'غير محدد';
+                    const mapUrl = doctor.clinic_address?.map_url;
+                    
+                    const addressHTML = mapUrl 
+                        ? `<a href="${mapUrl}" target="_blank" style="color: #2a85ff; text-decoration: underline; font-weight: bold;">${doctor.clinic_address.full_address} (عرض على الخريطة 🗺️)</a>`
+                        : (doctor.clinic_address?.full_address || 'غير محدد');
+
+                    // حفظ بيانات العيادات بالكامل بداخل كارت الطبيب لسهولة استدعائها عند الحجز
+                    const additionalClinicsJson = JSON.stringify(doctor.additional_clinics || []);
+                    const mainAddress = doctor.clinic_address?.full_address || 'العيادة الرئيسية';
 
                     const card = `
                         <div class="doctor-card">
-                            <div>
-                                <img src="${doctor.image_url || 'https://via.placeholder.com/150'}" alt="${doctor.name}" onerror="this.src='https://via.placeholder.com/150'">
-                                <h3>${doctor.name}</h3>
-                                <span class="specialty">${doctor.specialty}</span>
-                                
-                                <div class="doctor-details">
-                                    ${addressesHTML}
-                                </div>
+                            <img src="${doctor.image_url || 'https://via.placeholder.com/150'}" alt="${doctor.name}" onerror="this.src='https://via.placeholder.com/150'">
+                            <h3>${doctor.name}</h3>
+                            <span class="specialty">${doctor.specialty}</span>
+                            
+                            <div class="doctor-details">
+                                <p>📍 <strong>العنوان:</strong> ${addressHTML}</p>
+                                <p>📅 <strong>أيام العمل:</strong> ${daysText}</p>
+                                <p>⏰ <strong>المواعيد:</strong> ${hoursText}</p>
                             </div>
-                            <button onclick="openBookingModal('${doc.id}', '${doctor.name}')">احجز الآن</button>
+
+                            <button onclick='openBookingModal("${doctor.user_id}", "${doctor.name}", "${mainAddress}", ${additionalClinicsJson})'>احجز الآن</button>
                         </div>
                     `;
                     doctorsListContainer.innerHTML += card;
@@ -439,13 +391,30 @@
             overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
         }
 
-        window.openBookingModal = function(doctorId, doctorName) {
-            selectedDoctorId = doctorId;
+        // فتح مودال الحجز وملء خيارات العيادات المتاحة
+        window.openBookingModal = function(doctorUserId, doctorName, mainAddress, additionalClinics) {
+            // نتحقق أولاً من ربط الـ user_id بكود الدكتور
+            if(!doctorUserId || doctorUserId === "undefined") {
+                alert("عذراً، هذا الطبيب لديه حساب قديم غير متوافق. سيقوم المسؤولون بتحديث بياناته قريباً.");
+                return;
+            }
+            
+            selectedDoctorUserId = doctorUserId;
             selectedDoctorName = doctorName;
             document.getElementById('modalTitle').innerText = `حجز موعد فوري مع ${doctorName}`;
             
             document.getElementById('patientName').value = localStorage.getItem('user_name') || '';
             document.getElementById('patientPhone').value = localStorage.getItem('user_phone') || '';
+            
+            // ملء قائمة العيادات بالعيادة الرئيسية والفرعية
+            const clinicSelect = document.getElementById('bookingClinic');
+            clinicSelect.innerHTML = `<option value="${mainAddress}">الرئيسية: ${mainAddress}</option>`;
+            
+            if (additionalClinics && additionalClinics.length > 0) {
+                additionalClinics.forEach((clinic, index) => {
+                    clinicSelect.innerHTML += `<option value="${clinic}">فرعية (${index+1}): ${clinic}</option>`;
+                });
+            }
             
             bookingModal.style.display = 'flex';
         }
@@ -454,23 +423,27 @@
             bookingModal.style.display = 'none';
         }
 
+        // تأكيد وإرسال طلب الحجز للـ Firestore
         document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
             const name = localStorage.getItem('user_name');
             const phone = localStorage.getItem('user_phone');
+            const selectedClinic = document.getElementById('bookingClinic').value;
 
             try {
                 const docRef = await db.collection("bookings").add({
-                    doctor_id: selectedDoctorId,
+                    doctor_id: selectedDoctorUserId, // إرسال الـ user_id الصحيح
                     doctor_name: selectedDoctorName,
                     patient_name: name,
                     patient_phone: phone,
+                    clinic_address: selectedClinic, // إرسال العيادة المحددة بالتحديد
                     status: "pending", 
-                    created_at: new Date().toISOString()
+                    created_at: firebase.firestore.FieldValue.serverTimestamp() // إرسال تايمستامب حقيقي
                 });
 
                 alert(`تم إرسال طلب حجزك بنجاح للطبيب! يمكنك متابعة حالة طلبك من قائمة "حجوزاتي" في القائمة الجانبية.`);
                 closeModal();
 
+                // الإنصات اللحظي للتعديل الفوري
                 db.collection("bookings").doc(docRef.id).onSnapshot((docSnapshot) => {
                     const currentData = docSnapshot.data();
                     if (!currentData) return;
@@ -485,14 +458,14 @@
                 });
 
             } catch (error) {
-                alert("حدث خطأ تقني أثناء معالجة حجزك المباشر.");
+                alert("حدث خطأ تقني أثناء معالجة حجزك المباشر: " + error.message);
             }
         });
 
+        // عرض حجوزات المريض بلحظتها
         function openMyBookingsModal() {
             toggleSidebar();
             const listContainer = document.getElementById('myBookingsList');
-            listContainer.innerHTML = 'جاري تحميل حجوزاتك...'; // تفريغ القائمة القديمة فوراً قبل تحميل الجديد
             document.getElementById('myBookingsModal').style.display = 'flex';
             const userPhone = localStorage.getItem('user_phone');
 
@@ -510,7 +483,7 @@
                       let statusText = 'قيد انتظار موافقة الدكتور ⏳';
                       
                       if(data.status === 'doctor_approved') { 
-                          statusClass = 'status-approved'; 
+                          statusClass = 'status-pending'; 
                           statusText = 'وافق الدكتور وفي انتظار مكالمة الإدارة 📞'; 
                       }
                       if(data.status === 'confirmed') { 
@@ -522,12 +495,23 @@
                           statusText = 'مرفوض ❌'; 
                       }
 
+                      // معالجة مرنة للتاريخ
+                      let bookingDate = 'غير محدد';
+                      if (data.created_at) {
+                          if (typeof data.created_at.toDate === 'function') {
+                              bookingDate = data.created_at.toDate().toLocaleString('ar-EG');
+                          } else {
+                              bookingDate = new Date(data.created_at).toLocaleString('ar-EG');
+                          }
+                      }
+
                       const item = `
                           <div class="booking-item">
                               <p><strong>الطبيب:</strong> ${data.doctor_name}</p>
+                              <p><strong>العيادة:</strong> ${data.clinic_address || 'الرئيسية'}</p>
                               <p><strong>الحالة:</strong> <span class="badge-status ${statusClass}">${statusText}</span></p>
                               ${data.rejection_reason ? `<p style="color:var(--danger-color); font-size:13px;"><strong>السبب:</strong> ${data.rejection_reason}</p>` : ''}
-                              <p style="font-size:11px; color:#a0aec0;">تاريخ الطلب: ${new Date(data.created_at).toLocaleString('ar-EG')}</p>
+                              <p style="font-size:11px; color:#a0aec0;">تاريخ الطلب: ${bookingDate}</p>
                           </div>
                       `;
                       listContainer.innerHTML += item;
@@ -561,7 +545,6 @@
             fetchDoctors(document.getElementById('searchQuery').value, e.target.value);
         });
 
-        // جلب البيانات فور التحميل الأساسي
         fetchDoctors();
     </script>
 </body>
