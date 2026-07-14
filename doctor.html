@@ -17,56 +17,80 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
-            margin: 0; padding: 20px; direction: rtl;
+            margin: 0; padding: 15px; direction: rtl;
         }
 
         .dashboard-container {
             max-width: 1200px;
-            margin: 20px auto;
+            margin: 10px auto;
             background: var(--card-bg);
-            padding: 30px;
+            padding: 20px;
             border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid #edf2f7; padding-bottom: 15px; margin-bottom: 30px;
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px;
+            border-bottom: 2px solid #edf2f7; 
+            padding-bottom: 15px; 
+            margin-bottom: 20px;
         }
-        h2 { margin: 0; color: var(--primary-color); }
+        
+        @media(min-width: 768px) {
+            header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        h2 { margin: 0; color: var(--primary-color); font-size: 20px; text-align: center; }
+        @media(min-width: 768px) { h2 { font-size: 24px; text-align: right; } }
         
         .header-actions {
-            display: flex; gap: 10px; align-items: center;
+            display: flex; gap: 10px; justify-content: center; width: 100%;
         }
+        @media(min-width: 768px) { .header-actions { width: auto; } }
 
-        .logout-btn {
-            background-color: #718096; color: white; border: none; padding: 8px 16px;
+        .logout-btn, .password-btn {
+            padding: 10px 18px;
             border-radius: 20px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+            border: none; font-size: 13px; flex: 1; text-align: center;
         }
+        @media(min-width: 768px) { .logout-btn, .password-btn { flex: none; } }
+
+        .logout-btn { background-color: #718096; color: white; }
         .logout-btn:hover { background-color: #4a5568; }
 
-        .password-btn {
-            background-color: var(--primary-color); color: white; border: none; padding: 8px 16px;
-            border-radius: 20px; font-weight: bold; cursor: pointer; transition: background 0.2s;
-        }
+        .password-btn { background-color: var(--primary-color); color: white; }
         .password-btn:hover { opacity: 0.9; }
 
         /* تنبيه تفعيل الصوت */
         .audio-notice {
-            background-color: #eef5ff; color: #2a85ff; padding: 10px 15px; 
-            border-radius: 8px; font-size: 14px; text-align: center; margin-bottom: 20px;
+            background-color: #eef5ff; color: #2a85ff; padding: 12px 15px; 
+            border-radius: 8px; font-size: 13px; text-align: center; margin-bottom: 20px;
             font-weight: 600; border: 1px dashed var(--primary-color);
+            line-height: 1.5;
+        }
+
+        /* تنسيق الجداول المستجيب */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
         }
 
         table {
-            width: 100%; border-collapse: collapse; margin-top: 20px; text-align: right;
+            width: 100%; border-collapse: collapse; margin-top: 15px; text-align: right;
         }
 
-        th, td { padding: 15px; border-bottom: 1px solid #edf2f7; }
-        th { background-color: #f8fafc; color: #4a5568; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #edf2f7; }
+        th { background-color: #f8fafc; color: #4a5568; font-weight: bold; }
 
         .badge {
-            padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; display: inline-block;
+            padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block;
+            text-align: center;
         }
         .badge-pending { background-color: #fef3c7; color: #d97706; }
         .badge-approved { background-color: #e0f2fe; color: #0369a1; }
@@ -74,18 +98,21 @@
         .badge-rejected { background-color: #fee2e2; color: #991b1b; }
 
         .btn {
-            padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 5px;
+            padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; 
+            margin: 5px 2px; transition: opacity 0.2s;
         }
         .btn-confirm { background-color: var(--success-color); color: white; }
         .btn-reject { background-color: var(--danger-color); color: white; }
+        .btn:hover { opacity: 0.9; }
 
         /* النوافذ المنبثقة الشاملة */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+            background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; padding: 15px;
+            box-sizing: border-box;
         }
         .modal-content {
-            background-color: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: right;
+            background-color: #fff; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; text-align: right;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .modal-content textarea { width: 100%; height: 100px; padding: 10px; margin-top: 10px; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; resize: none; box-sizing: border-box; }
@@ -93,14 +120,81 @@
         .modal-content input[type="password"]:focus { border-color: var(--primary-color); }
         .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
         
-        .clinic-tag { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .clinic-tag { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; }
+
+        /* 📱 تحويل الجدول إلى كروت للهواتف الذكية */
+        @media screen and (max-width: 768px) {
+            table, thead, tbody, th, td, tr { 
+                display: block; 
+            }
+            
+            thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr { 
+                background: #fff;
+                border: 1px solid #edf2f7;
+                border-radius: 12px;
+                margin-bottom: 15px;
+                padding: 15px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            }
+            
+            td { 
+                border: none;
+                border-bottom: 1px dashed #f1f5f9; 
+                position: relative;
+                padding-left: 50%; 
+                text-align: left;
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+            
+            td:last-child {
+                border-bottom: none;
+            }
+
+            td::before { 
+                position: absolute;
+                top: 50%;
+                right: 0;
+                transform: translateY(-50%);
+                width: 45%; 
+                padding-right: 10px; 
+                white-space: nowrap;
+                font-weight: bold;
+                color: #718096;
+                text-align: right;
+            }
+            
+            /* تسمية الحقول في وضع الجوال */
+            td:nth-of-type(1)::before { content: "اسم المريض"; }
+            td:nth-of-type(2)::before { content: "رقم الهاتف"; }
+            td:nth-of-type(3)::before { content: "العيادة / المقر"; }
+            td:nth-of-type(4)::before { content: "تاريخ الطلب"; }
+            td:nth-of-type(5)::before { content: "الحالة"; }
+            td:nth-of-type(6)::before { content: "الإجراء"; }
+
+            td strong, td span, td button {
+                display: inline-block;
+            }
+            
+            .btn {
+                width: 100%;
+                box-sizing: border-box;
+                margin: 5px 0;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
         <header>
-            <h2 id="doctorWelcome">لوحة تحكم الطبيب - استلام الطلبات الحالية</h2>
+            <h2 id="doctorWelcome">لوحة تحكم الطبيب - جاري التحقق...</h2>
             <div class="header-actions">
                 <button class="password-btn" onclick="openPasswordModal()">🔑 تغيير كلمة السر</button>
                 <button class="logout-btn" onclick="logout()">🚪 خروج</button>
@@ -111,21 +205,23 @@
             📢 نظام الإشعار الصوتي نشط تلقائياً. يرجى الضغط في أي مكان داخل الصفحة لضمان عمل رنين التنبيه فور وصول حجز جديد.
         </div>
         
-        <table id="bookingsTable">
-            <thead>
-                <tr>
-                    <th>اسم المريض</th>
-                    <th>رقم الهاتف</th>
-                    <th>العيادة / الفرع المحجوز</th>
-                    <th>تاريخ الطلب</th>
-                    <th>الحالة الحالية</th>
-                    <th>القرار والإجراء</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="6" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="bookingsTable">
+                <thead>
+                    <tr>
+                        <th>اسم المريض</th>
+                        <th>رقم الهاتف</th>
+                        <th>العيادة / الفرع المحجوز</th>
+                        <th>تاريخ الطلب</th>
+                        <th>الحالة الحالية</th>
+                        <th>القرار والإجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="6" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div id="rejectModal" class="modal">
@@ -155,7 +251,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // التحقق من أن المستخدم طبيب ومسجل دخول بالكامل
         const currentRole = localStorage.getItem('user_role');
         const doctorId = localStorage.getItem('user_id'); 
         const doctorName = localStorage.getItem('user_name');
@@ -182,14 +277,13 @@
         const tableBody = document.querySelector('#bookingsTable tbody');
         let activeBookingId = '';
 
-        // إعدادات كائن الصوت للإشعار اللحظي المستمر (رنة متكررة)
         const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
         alertSound.loop = true; 
 
         let isSoundPlaying = false;
-        let pageOpenTime = new Date().toISOString(); 
+        // الاحتفاظ بوقت فتح الصفحة كـ timestamp رقمي لضمان مقارنة سليمة
+        let pageOpenTimeMs = new Date().getTime(); 
 
-        // جلب الحجوزات الموجهة لهذا الطبيب بالتحديد لحظة بلحظة
         function listenToBookings() {
             db.collection("bookings")
               .where("doctor_id", "==", doctorId) 
@@ -198,7 +292,7 @@
                   tableBody.innerHTML = '';
                   
                   if (snapshot.empty) {
-                      tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
+                      tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
                       stopAlertSound();
                       return;
                   }
@@ -210,23 +304,32 @@
                       let statusBadge = '';
                       let actionButtons = '';
 
-                      // التحقق إذا كان هناك حجز جديد "pending" دخل بعد فتح الصفحة لتشغيل الرنين
-                      if (booking.status === 'pending' && booking.created_at >= pageOpenTime) {
+                      // 🛠️ حل مشكلة التواريخ لضمان سلامة جلب وقراءة الحجوزات وتفعيل الرنين:
+                      let bookingTimeMs = 0;
+                      if (booking.created_at) {
+                          if (typeof booking.created_at.toDate === 'function') {
+                              bookingTimeMs = booking.created_at.toDate().getTime();
+                          } else {
+                              bookingTimeMs = new Date(booking.created_at).getTime();
+                          }
+                      }
+
+                      // التحقق مما إذا كان الحجز معلقاً وجديداً بعد فتح الصفحة
+                      if (booking.status === 'pending' && bookingTimeMs >= pageOpenTimeMs) {
                           triggerVoiceAlert = true;
                       }
 
-                      // منطق عرض الحالات طبقاً للسيناريو المشترك (مريض - دكتور - إدارة)
                       if (booking.status === 'confirmed') {
                           statusBadge = `<span class="badge badge-confirmed">تم التأكيد النهائي من الإدارة ✅</span>`;
-                          actionButtons = `<span style="color:gray; font-size:12px;">مؤكد نهائياً</span>`;
+                          actionButtons = `<span style="color:gray; font-size:12px; font-weight:bold;">مؤكد نهائياً</span>`;
                       } 
                       else if (booking.status === 'doctor_approved') {
                           statusBadge = `<span class="badge badge-approved">جاري تأكيد الحجز بواسطة الإدارة 📞</span>`;
                           actionButtons = `<span style="color:#2a85ff; font-size:12px; font-weight:bold;">بانتظار مكالمة الإدارة</span>`;
                       } 
                       else if (booking.status === 'rejected') {
-                          statusBadge = `<span class="badge badge-rejected">مرفوض ❌</span> <br> <small style="color:red;">السبب: ${booking.rejection_reason || 'غير محدد'}</small>`;
-                          actionButtons = `<span style="color:gray; font-size:12px;">تم اتخاذ القرار</span>`;
+                          statusBadge = `<span class="badge badge-rejected">مرفوض ❌</span> <br> <small style="color:red; font-weight:bold;">السبب: ${booking.rejection_reason || 'غير حدد'}</small>`;
+                          actionButtons = `<span style="color:gray; font-size:12px; font-weight:bold;">تم اتخاذ القرار</span>`;
                       } 
                       else {
                           statusBadge = `<span class="badge badge-pending">قيد الانتظار ⏳</span>`;
@@ -236,17 +339,18 @@
                           `;
                       }
 
-                      const bookingDate = booking.created_at ? new Date(booking.created_at).toLocaleString('ar-EG') : 'غير محدد';
+                      const bookingDate = booking.created_at 
+                          ? (typeof booking.created_at.toDate === 'function' ? booking.created_at.toDate().toLocaleString('ar-EG') : new Date(booking.created_at).toLocaleString('ar-EG'))
+                          : 'غير محدد';
                       
-                      // قراءة عنوان العيادة المحجوزة المبعوث من شاشة المريض
                       const selectedClinic = booking.clinic_address || "العيادة الرئيسية / غير محدد";
 
                       const row = `
                           <tr>
                               <td><strong>${booking.patient_name}</strong></td>
-                              <td>${booking.patient_phone}</td>
+                              <td><a href="tel:${booking.patient_phone}" style="text-decoration:none; color:inherit; font-weight:bold;">${booking.patient_phone}</a></td>
                               <td><span class="clinic-tag">🏥 ${selectedClinic}</span></td>
-                              <td style="font-size:12px; color:#718096;">${bookingDate}</td>
+                              <td style="font-size:12px; color:#718096; direction: ltr;">${bookingDate}</td>
                               <td>${statusBadge}</td>
                               <td>${actionButtons}</td>
                           </tr>
@@ -254,7 +358,6 @@
                       tableBody.innerHTML += row;
                   });
 
-                  // إدارة تشغيل أو إيقاف صوت الرنين فوراً
                   if (triggerVoiceAlert) {
                       playAlertSound();
                   } else {
@@ -262,30 +365,28 @@
                   }
               }, (error) => {
                   console.error("Firestore Error: ", error);
-                  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">يرجى تفعيل الـ Index في الفايربيز للـ Queries المركبة.</td></tr>';
+                  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red; padding: 20px;">حدث خطأ أثناء جلب البيانات، يرجى مراجعة الصلاحيات أو الـ Index في الكونسول.</td></tr>';
               });
         }
 
-        // دالة قبول الحجز وتحويله لـ "موافق عليه من الدكتور" وبانتظار مكالمة الإدارة
         window.updateToDoctorApproved = async function(id) {
             try {
                 stopAlertSound();
                 await db.collection("bookings").doc(id).update({
                     status: 'doctor_approved'
                 });
-                alert("تمت موافقتك بنجاح! تم إرسال الطلب الآن إلى لوحة الإدارة لإجراء التنسيق المالي والاتفاق الهاتفي مع المريض.");
+                alert("تمت موافقتك بنجاح! تم إرسال الطلب الآن إلى لوحة الإدارة لإجراء التنسيق النهائي والاتصال الهاتفي مع المريض.");
             } catch (error) {
                 alert("حدث خطأ أثناء التحديث: " + error.message);
             }
         }
 
-        // التحكم الصوتي الصارم
         function playAlertSound() {
             if (!isSoundPlaying) {
                 alertSound.play().then(() => {
                     isSoundPlaying = true;
                 }).catch(err => {
-                    console.log("بانتظار تفاعل المستخدم الصريح لتفعيل نغمة الإشعار...");
+                    console.log("بانتظار تفاعل المستخدم الصريح لتشغيل الرنين التلقائي...");
                 });
             }
         }
@@ -296,7 +397,6 @@
             isSoundPlaying = false;
         }
 
-        // فتح وإغلاق نافذة الرفض
         window.openRejectModal = function(id) {
             activeBookingId = id;
             document.getElementById('rejectModal').style.display = 'flex';
@@ -307,7 +407,6 @@
             document.getElementById('rejectReasonInput').value = '';
         }
 
-        // تأكيد الرفض التام من الطبيب مع ذكر السبب
         document.getElementById('submitRejectBtn').addEventListener('click', async () => {
             const reason = document.getElementById('rejectReasonInput').value.trim();
             if (!reason) {
@@ -328,7 +427,6 @@
             }
         });
 
-        // دالات التحكم في نافذة تغيير كلمة السر
         window.openPasswordModal = function() {
             document.getElementById('passwordModal').style.display = 'flex';
             document.getElementById('newPasswordInput').value = '';
@@ -338,7 +436,6 @@
             document.getElementById('passwordModal').style.display = 'none';
         }
 
-        // دالة تحديث الباسورد الفعلي في كولكشن المستخدمين (users)
         window.updateDoctorPassword = async function() {
             const newPassword = document.getElementById('newPasswordInput').value.trim();
             
@@ -348,30 +445,34 @@
             }
 
             if (!doctorId) {
-                alert("خطأ: لم نتمكن من تحديد هويتك التقنية، برجاء إعادة تسجيل الدخول.");
+                alert("خطأ: لم نتمكن من تحديد هويتك، برجاء إعادة تسجيل الدخول.");
                 return;
             }
 
             try {
-                // تحديث حقل الباسورد في كولكشن الحسابات الموحد لكي يطبق عند الـ Login
                 await db.collection("users").doc(doctorId).update({
                     password: newPassword
                 });
 
-                alert("🎉 تم تحديث كلمة السر بنجاح! سيُطلب منك استخدامها في المرة القادمة لتسجيل الدخول.");
+                alert("🎉 تم تحديث كلمة السر بنجاح!");
                 closePasswordModal();
             } catch (error) {
                 alert("حدث خطأ غير متوقع أثناء الحفظ: " + error.message);
             }
         }
 
-        // خروج مأمن
         function logout() {
             localStorage.clear();
             window.location.href = 'login.html';
         }
 
-        // بدء الاستماع والعمل الفوري
+        // تفاعل تفاعلي نشط لتأمين تشغيل الصوت في المتصفحات الحديثة
+        document.body.addEventListener('click', function() {
+            if (isSoundPlaying) {
+                alertSound.play().catch(e => console.log(e));
+            }
+        }, { once: false });
+
         listenToBookings();
     </script>
 </body>
