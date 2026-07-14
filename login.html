@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الدخول والتسجيل | DoctorForMe</title>
+    <style>
+        :root {
+            --primary: #2a85ff;
+            --primary-hover: #0066eb;
+            --success: #2ecc71;
+            --bg: #f4f7f9;
+            --text-dark: #2d3748;
+            --border-color: #cbd5e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        .auth-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            margin: 20px;
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo-area h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .logo-area p {
+            color: #718096;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #edf2f7;
+            padding: 5px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            border: none;
+            background: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            color: #4a5568;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        form {
+            display: none;
+        }
+
+        form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .password-toggle {
+            position: absolute;
+            left: 15px;
+            top: 38px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #718096;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .role-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .role-option {
+            flex: 1;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .role-option.selected {
+            border-color: var(--primary);
+            background-color: #ebf8ff;
+            color: var(--primary);
+        }
+
+        .dynamic-section {
+            display: none;
+            border-top: 1px solid #edf2f7;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .dynamic-section.active {
+            display: block;
+        }
+
+        .clinic-block {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .remove-clinic-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #fed7d7;
+            color: #e53e3e;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .add-clinic-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .add-clinic-btn:hover {
+            background: #cbd5e0;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .alert-info {
+            background-color: #ebf8ff;
+            border-right: 4px solid var(--primary);
+            color: #2b6cb0;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="logo-area">
+            <h1>DoctorForMe 🏥</h1>
+            <p>منصتك الطبية المتكاملة لحجز العيادات وتسهيل التواصل</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">تسجيل الدخول</button>
+            <button class="tab-btn" onclick="switchTab('register')">حساب جديد</button>
+        </div>
+
+        <form id="loginForm" class="active" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>رقم الهاتف</label>
+                <input type="tel" id="loginPhone" class="form-control" placeholder="مثال: 01234567890" required pattern="[0-9]{11}">
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="أدخل كلمة المرور" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">👁️ عرض</button>
+            </div>
+            <button type="submit" class="submit-btn">دخول</button>
+        </form>
+
+        <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label>نوع الحساب</label>
+                <div class="role-selector">
+                    <div class="role-option selected" id="rolePatient" onclick="selectRole('patient')">🧑‍🦽 حساب مريض</div>
+                    <div class="role-option" id="roleDoctor" onclick="selectRole('doctor')">👨‍⚕️ حساب دكتور</div>
+                </div>
+                <input type="hidden" id="selectedRole" value="patient">
+            </div>
+
+            <div class="form-group">
+                <label>الاسم الكامل</label>
+                <input type="text" id="regName" class="form-control" placeholder="أدخل الاسم ثلاثي أو رباعي" required>
+            </div>
+            <div class="form-group">
+                <label>رقم الهاتف</label>
+                <input type="tel" id="regPhone" class="form-control" placeholder="مثال: 01234567890" required pattern="[0-9]{11}">
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="regPassword" class="form-control" placeholder="لا تقل عن 6 أحرف" required minlength="6">
+                <button type="button" class="password-toggle" onclick="togglePassword('regPassword')">👁️ عرض</button>
+            </div>
+
+            <div id="patientSection" class="dynamic-section active">
+                <div class="form-group">
+                    <label>المحافظة</label>
+                    <select id="patientGov" class="form-control" onchange="populateCities(this.value)" required>
+                        <option value="">اختر المحافظة...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المدينة / المركز</label>
+                    <select id="patientCity" class="form-control" required>
+                        <option value="">اختر المدينة...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>القرية / الشارع (كتابة يدوية)</label>
+                    <input type="text" id="patientVillage" class="form-control" placeholder="اكتب القرية أو اسم المنطقة بالتفصيل">
+                </div>
+            </div>
+
+            <div id="doctorSection" class="dynamic-section">
+                <div class="alert-info">
+                    💡 يرجى العلم أنه عند إتمام تسجيل الحساب، سيتم إرساله للإدارة للمراجعة والموافقة، ولن تتمكن من الدخول للوحة التحكم حتى تكتمل الموافقة الإدارية.
+                </div>
+                <div class="form-group">
+                    <label>التخصص الطبي</label>
+                    <select id="doctorSpecialty" class="form-control">
+                        <option value="">اختر التخصص...</option>
+                        <option value="أسنان">أسنان 🦷</option>
+                        <option value="باطنة">باطنة 🩺</option>
+                        <option value="أطفال">أطفال 👶</option>
+                        <option value="جلدية">جلدية ✨</option>
+                        <option value="نساء وتوليد">نساء وتوليد 🤰</option>
+                        <option value="عظام">عظام 🦴</option>
+                        <option value="رمد">رمد / عيون 👁️</option>
+                        <option value="مخ وأعصاب">مخ وأعصاب 🧠</option>
+                        <option value="أخرى">تخصصات أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الصورة الشخصية</label>
+                    <input type="file" id="doctorImage" class="form-control" accept="image/*" onchange="convertImageToBase64()">
+                    <input type="hidden" id="doctorImageBase64" value="">
+                </div>
+
+                <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 معلومات العيادات ومواعيد العمل</h3>
+                <div id="clinicsContainer">
+                    </div>
+                <button type="button" class="add-clinic-btn" onclick="addClinicBlock()">➕ إضافة عيادة أخرى</button>
+            </div>
+
+            <button type="submit" class="submit-btn">إنشاء الحساب</button>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+      <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBYasEz-4b-f4xsG3V8O5oQ-aOhDqS1Ue0",
+  authDomain: "doctorforme-62aaf.firebaseapp.com",
+  projectId: "doctorforme-62aaf",
+  storageBucket: "doctorforme-62aaf.firebasestorage.app",
+  messagingSenderId: "121506902078",
+  appId: "1:121506902078:web:f60f680810614cbe88e16f",
+  measurementId: "G-CYNKCJH6KB"
+};
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const egyptData = {
+            "القاهرة": ["مصر الجديدة", "مدينة نصر", "شبرا", "المعادي", "حلوان", "التجمع الخامس", "وسط البلد"],
+            "الجيزة": ["الدقي", "المهندسين", "الهرم", "فيصل", "6 أكتوبر", "الشيخ زايد", "العجوزة", "الوراق"],
+            "الإسكندرية": ["سموحة", "المنتزه", "الرمل", "العجمي", "وسط البلد", "سيدي بشر"],
+            "القليوبية": ["بنها", "شبرا الخيمة", "قليوب", "الخانكة", "الخصوص", "قها", "طوخ"],
+            "الشرقية": ["الزقازيق", "العاشر من رمضان", "بلبيس", "منيا القمح", "أبو حماد", "فاقوس"],
+            "الغربية": ["طنطا", "المحلة الكبرى", "كفر الزيات", "زفتى", "بسيون", "سمنود"],
+            "الدقهلية": ["المنصورة", "ميت غمر", "السنبلاوين", "دكرنس", "طلخا", "بلقاس"],
+            "المنوفية": ["شبين الكوم", "أشمون", "منوف", "مدينة السادات", "قويسنا", "الباجور"],
+            "البحيرة": ["دمنهور", "كفر الدوار", "كوم حمادة", "إيتاي البارود", "رشيد", "أبو المطامير"],
+            "كفر الشيخ": ["كفر الشيخ", "دسوق", "قلين", "فوه", "مطوبس", "سيدي سالم"],
+            "دمياط": ["دمياط", "دمياط الجديدة", "رأس البر", "فارسكور", "الزرقا"],
+            "بورسعيد": ["حي الشرق", "حي العرب", "بورفؤاد", "حي الضواحي"],
+            "الإسماعيلية": ["الإسماعيلية", "التل الكبير", "فايد", "القنطرة شرق", "القنطرة غرب"],
+            "السويس": ["حي السويس", "حي الأربعين", "حي فيصل", "حي عتاقة"],
+            "الفيوم": ["الفيوم", "سنورس", "طامية", "إطسا", "أبشواي"],
+            "بني سويف": ["بني سويف", "الواسطى", "ببا", "الفشن", "ناصر", "سمسطا"],
+            "المنيا": ["المنيا", "ملوي", "بني مزار", "مغاغة", "سمالوط", "أبو قرقاص"],
+            "أسيوط": ["أسيوط", "ديروط", "منفلوط", "القوصية", "أبو تيج", "صدفا"],
+            "سوهاج": ["سوهاج", "طهطا", "جرجا", "أخميم", "البلينا", "المراغة"],
+            "قنا": ["قنا", "نجع حمادي", "دشنا", "أبو تشت", "قوص", "نقادة"],
+            "الأقصر": ["الأقصر", "إسنا", "أرمنت", "القرنة"],
+            "أسوان": ["أسوان", "كوم أمبو", "إدفو", "نصر النوبة"],
+            "البحر الأحمر": ["الغردقة", "سفاجا", "القصير", "مرسى علم", "شلاتين"],
+            "الوادي الجديد": ["الخارجة", "الداخلة", "الفرافرة", "باريس"],
+            "مطروح": ["مرسى مطروح", "الضبعة", "العلمين", "سيوة"],
+            "شمال سيناء": ["العريش", "الشيخ زويد", "رفح", "بئر العبد"],
+            "جنوب سيناء": ["شرم الشيخ", "طور سيناء", "دهب", "نويبع", "رأس سدر"]
+        };
+
+        window.onload = function() {
+            const govSelect = document.getElementById('patientGov');
+            for (let gov in egyptData) {
+                let opt = document.createElement('option');
+                opt.value = gov;
+                opt.innerHTML = gov;
+                govSelect.appendChild(opt);
+            }
+            addClinicBlock();
+            toggleRequiredFields('patient'); // تفعيل متطلبات المريض فقط في البداية
+        };
+
+        function populateCities(govValue) {
+            const citySelect = document.getElementById('patientCity');
+            citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
+            if (govValue && egyptData[govValue]) {
+                egyptData[govValue].forEach(city => {
+                    let opt = document.createElement('option');
+                    opt.value = city;
+                    opt.innerHTML = city;
+                    citySelect.appendChild(opt);
+                });
+            }
+        }
+
+        function switchTab(mode) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('form').forEach(form => form.classList.remove('active'));
+
+            if (mode === 'login') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function selectRole(role) {
+            document.getElementById('rolePatient').classList.remove('selected');
+            document.getElementById('roleDoctor').classList.remove('selected');
+            document.getElementById('patientSection').classList.remove('active');
+            document.getElementById('doctorSection').classList.remove('active');
+
+            document.getElementById('selectedRole').value = role;
+
+            if (role === 'patient') {
+                document.getElementById('rolePatient').classList.add('selected');
+                document.getElementById('patientSection').classList.add('active');
+                toggleRequiredFields('patient');
+            } else {
+                document.getElementById('roleDoctor').classList.add('selected');
+                document.getElementById('doctorSection').classList.add('active');
+                toggleRequiredFields('doctor');
+            }
+        }
+
+        // دالة هامة لتعطيل الـ required عن الحقول المخفية لضمان عمل الزرار فوراً
+        function toggleRequiredFields(role) {
+            if (role === 'patient') {
+                document.getElementById('patientGov').required = true;
+                document.getElementById('patientCity').required = true;
+
+                document.getElementById('doctorSpecialty').required = false;
+                document.querySelectorAll('.clinic-address').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-hours').forEach(el => el.required = false);
+            } else {
+                document.getElementById('patientGov').required = false;
+                document.getElementById('patientCity').required = false;
+
+                document.getElementById('doctorSpecialty').required = true;
+                document.querySelectorAll('.clinic-address').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-hours').forEach(el => el.required = true);
+            }
+        }
+
+        let clinicCount = 0;
+        function addClinicBlock() {
+            clinicCount++;
+            const container = document.getElementById('clinicsContainer');
+            const block = document.createElement('div');
+            block.className = 'clinic-block';
+            block.id = `clinic_block_${clinicCount}`;
+            
+            // جعل حقول العيادة إجبارية فقط لو الحساب الحالي "دكتور"
+            const isDoctor = document.getElementById('selectedRole').value === 'doctor';
+            const reqAttr = isDoctor ? 'required' : '';
+
+            block.innerHTML = `
+                ${clinicCount > 1 ? `<button type="button" class="remove-clinic-btn" onclick="removeClinicBlock(${clinicCount})">حذف ❌</button>` : ''}
+                <div style="font-weight: bold; margin-bottom: 10px; color: #718096;">العيادة رقم (${clinicCount})</div>
+                <div class="form-group">
+                    <label>العنوان بالتفصيل</label>
+                    <input type="text" class="form-control clinic-address" placeholder="مثال: شارع الجلاء بجوار صيدلية النيل" ${reqAttr}>
+                </div>
+                <div class="form-group">
+                    <label>رابط موقع العيادة على خرائط جوجل (اختياري)</label>
+                    <input type="url" class="form-control clinic-map" placeholder="ضع رابط مشاركة الموقع الجغرافي">
+                </div>
+                <div class="form-group">
+                    <label>مواعيد العمل</label>
+                    <input type="text" class="form-control clinic-hours" placeholder="مثال: السبت والإثنين من 5 م لـ 10 م" ${reqAttr}>
+                </div>
+            `;
+            container.appendChild(block);
+        }
+
+        function removeClinicBlock(id) {
+            const block = document.getElementById(`clinic_block_${id}`);
+            if (block) block.remove();
+        }
+
+        function convertImageToBase64() {
+            const file = document.getElementById('doctorImage').files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                document.getElementById('doctorImageBase64').value = reader.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ================= معالجة عملية إنشاء الحساب (Register) =================
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const role = document.getElementById('selectedRole').value;
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            const email = `${phone}@doctorforme.com`;
+
+            try {
+                // 1. إنشاء حساب المصادقة في Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const uid = userCredential.user.uid;
+
+                // تحضير كائن البيانات الأساسية
+                let userData = {
+                    uid: uid,
+                    name: name,
+                    phone: phone,
+                    role: role,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (role === 'patient') {
+                    userData.governorate = document.getElementById('patientGov').value;
+                    userData.city = document.getElementById('patientCity').value;
+                    userData.village = document.getElementById('patientVillage').value.trim();
+                } 
+                else if (role === 'doctor') {
+                    userData.specialty = document.getElementById('doctorSpecialty').value;
+                    userData.image_url = document.getElementById('doctorImageBase64').value || "";
+                    userData.status = "pending_admin";
+
+                    const clinics = [];
+                    const blocks = document.querySelectorAll('.clinic-block');
+                    blocks.forEach(block => {
+                        const addr = block.querySelector('.clinic-address').value.trim();
+                        const mapLink = block.querySelector('.clinic-map').value.trim();
+                        const hours = block.querySelector('.clinic-hours').value.trim();
+                        clinics.push({
+                            clinic_address: addr,
+                            google_maps_link: mapLink,
+                            work_hours: hours
+                        });
+                    });
+                    userData.clinics = clinics;
+                }
+
+                // 2. الحفظ في Firestore
+                await db.collection("users").doc(uid).set(userData);
+
+                if (role === 'patient') {
+                    alert("تهانينا! تم إنشاء حسابك بنجاح كمريض.");
+                    localStorage.setItem('user_id', uid);
+                    localStorage.setItem('user_name', name);
+                    localStorage.setItem('user_role', 'patient');
+                    window.location.href = 'patient.html'; 
+                } else {
+                    alert("تم تسجيل حسابك بنجاح! حسابك بانتظار موافقة الإدارة لتتمكن من تسجيل الدخول.");
+                    auth.signOut();
+                    switchTab('login');
+                }
+
+            } catch (error) {
+                console.error(error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert("رقم الهاتف هذا مسجل به حساب بالفعل!");
+                } else {
+                    alert("حدث خطأ أثناء التسجيل: " + error.message);
+                }
+            }
+        }
+
+        // ================= معالجة عملية تسجيل الدخول (Login) =================
+       // ================= معالجة عملية تسجيل الدخول (Login) المحدثة =================
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const email = `${phone}@doctorforme.com`;
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const uid = userCredential.user.uid;
+
+                // جلب بيانات المستخدم من Firestore للتحقق من الرول
+                const docSnap = await db.collection("users").doc(uid).get();
+
+                if (docSnap.exists) {
+                    const userData = docSnap.data();
+
+                    // حفظ البيانات محلياً في المتصفح لتسهيل التنقل
+                    localStorage.setItem('user_id', uid);
+                    localStorage.setItem('user_name', userData.name);
+
+                    // 1. التحقق لو الحساب "أدمن"
+                    if (userData.role === 'admin') {
+                        localStorage.setItem('user_role', 'admin');
+                        alert("أهلاً بك يا سيادة المدير! جاري التوجيه للوحة التحكم...");
+                        window.location.href = 'admin.html';
+                    } 
+                    // 2. التحقق لو الحساب "دكتور"
+                    else if (userData.role === 'doctor') {
+                        if (userData.status === 'pending_admin') {
+                            alert("عذراً، حسابك لا يزال قيد مراجعة وتفعيل الإدارة.");
+                            auth.signOut();
+                            return;
+                        }
+                        localStorage.setItem('user_role', 'doctor');
+                        window.location.href = 'doctor.html';
+                    } 
+                    // 3. التحقق لو الحساب "مريض"
+                    else if (userData.role === 'patient') {
+                        localStorage.setItem('user_role', 'patient');
+                        window.location.href = 'patient.html';
+                    }
+                } else {
+                    // حماية إضافية في حال لم يجد المستند في Firestore
+                    alert("تم تسجيل الدخول بنجاح، ولكن لم يتم العثور على بيانات الصلاحيات الخاصة بك في قاعدة البيانات.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("بيانات الدخول غير صحيحة، يرجى التأكد من الهاتف وكلمة المرور.");
+            }
+        }
+    </script>
+</body>
+</html>
