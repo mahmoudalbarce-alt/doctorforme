@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الطبيب - إدارة الحجوزات</title>
+    <style>
+        :root {
+            --primary-color: #2a85ff;
+            --success-color: #2ecc71;
+            --warning-color: #e67e22;
+            --danger-color: #e74c3c;
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0; padding: 20px; direction: rtl;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #edf2f7; padding-bottom: 15px; margin-bottom: 30px;
+        }
+        h2 { margin: 0; color: var(--primary-color); }
+        
+        .header-actions {
+            display: flex; gap: 10px; align-items: center;
+        }
+
+        .logout-btn {
+            background-color: #718096; color: white; border: none; padding: 8px 16px;
+            border-radius: 20px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+        }
+        .logout-btn:hover { background-color: #4a5568; }
+
+        .password-btn {
+            background-color: var(--primary-color); color: white; border: none; padding: 8px 16px;
+            border-radius: 20px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+        }
+        .password-btn:hover { opacity: 0.9; }
+
+        /* تنبيه تفعيل الصوت */
+        .audio-notice {
+            background-color: #eef5ff; color: #2a85ff; padding: 10px 15px; 
+            border-radius: 8px; font-size: 14px; text-align: center; margin-bottom: 20px;
+            font-weight: 600; border: 1px dashed var(--primary-color);
+        }
+
+        table {
+            width: 100%; border-collapse: collapse; margin-top: 20px; text-align: right;
+        }
+
+        th, td { padding: 15px; border-bottom: 1px solid #edf2f7; }
+        th { background-color: #f8fafc; color: #4a5568; }
+
+        .badge {
+            padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; display: inline-block;
+        }
+        .badge-pending { background-color: #fef3c7; color: #d97706; }
+        .badge-approved { background-color: #e0f2fe; color: #0369a1; }
+        .badge-confirmed { background-color: #d1fae5; color: #065f46; }
+        .badge-rejected { background-color: #fee2e2; color: #991b1b; }
+
+        .btn {
+            padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: 5px;
+        }
+        .btn-confirm { background-color: var(--success-color); color: white; }
+        .btn-reject { background-color: var(--danger-color); color: white; }
+
+        /* النوافذ المنبثقة الشاملة */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: right;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .modal-content textarea { width: 100%; height: 100px; padding: 10px; margin-top: 10px; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; resize: none; box-sizing: border-box; }
+        .modal-content input[type="password"] { width: 100%; padding: 12px; margin-top: 10px; border: 2px solid #edf2f7; border-radius: 8px; outline: none; box-sizing: border-box; font-size: 15px; }
+        .modal-content input[type="password"]:focus { border-color: var(--primary-color); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
+        .modal-content label { display: block; font-weight: bold; color: #4a5568; margin-top: 10px; }
+        
+        .clinic-tag { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <header>
+            <h2 id="doctorWelcome">لوحة تحكم الطبيب - استلام الطلبات الحالية</h2>
+            <div class="header-actions">
+                <button class="password-btn" onclick="openPasswordModal()">🔑 تغيير كلمة السر</button>
+                <button class="logout-btn" onclick="logout()">🚪 خروج</button>
+            </div>
+        </header>
+
+        <div class="audio-notice">
+            📢 نظام الإشعار الصوتي نشط تلقائياً. يرجى الضغط في أي مكان داخل الصفحة لضمان عمل رنين التنبيه فور وصول حجز جديد.
+        </div>
+        
+        <table id="bookingsTable">
+            <thead>
+                <tr>
+                    <th>اسم المريض</th>
+                    <th>رقم الهاتف</th>
+                    <th>العيادة / الفرع المحجوز</th>
+                    <th>تاريخ الطلب</th>
+                    <th>الحالة الحالية</th>
+                    <th>القرار والإجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="6" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <h3>سبب رفض الحجز:</h3>
+            <textarea id="rejectReasonInput" placeholder="اكتب سبب الرفض هنا ليظهر للمريض وللإدارة..."></textarea>
+            <div class="modal-actions">
+                <button class="btn" style="background:#edf2f7; color:#333;" onclick="closeRejectModal()">إلغاء</button>
+                <button class="btn btn-reject" id="submitRejectBtn">تأكيد الرفض</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h3>🔑 تغيير كلمة السر للحساب</h3>
+            <label for="currentPasswordInput">كلمة السر الحالية:</label>
+            <input type="password" id="currentPasswordInput" placeholder="أدخل كلمة السر الحالية">
+            <label for="newPasswordInput">كلمة السر الجديدة:</label>
+            <input type="password" id="newPasswordInput" placeholder="أدخل كلمة السر الجديدة (6 خانات على الأقل)">
+            <div class="modal-actions">
+                <button class="btn" style="background:#edf2f7; color:#333;" onclick="closePasswordModal()">إلغاء</button>
+                <button class="btn" style="background: var(--success-color); color: white;" onclick="updateDoctorPassword()">حفظ التعديل</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // التحقق من أن المستخدم طبيب ومسجل دخول بالكامل
+        const currentRole = localStorage.getItem('user_role');
+        const doctorId = localStorage.getItem('user_id'); 
+        const doctorName = localStorage.getItem('user_name');
+
+        if (!currentRole || currentRole !== 'doctor') {
+            alert("برجاء تسجيل الدخول أولاً كطبيب للوصول للوحة التحكم.");
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('doctorWelcome').innerText = `دكتور: ${doctorName} - الحجوزات الواردة`;
+        }
+
+        // تكوين Firebase (موحّد مع باقي صفحات المشروع)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYasEz-4b-f4xsG3V8O5oQ-aOhDqS1Ue0",
+            authDomain: "doctorforme-62aaf.firebaseapp.com",
+            projectId: "doctorforme-62aaf",
+            storageBucket: "doctorforme-62aaf.firebasestorage.app",
+            messagingSenderId: "121506902078",
+            appId: "1:121506902078:web:f60f680810614cbe88e16f",
+            measurementId: "G-CYNKCJH6KB"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const tableBody = document.querySelector('#bookingsTable tbody');
+        let activeBookingId = '';
+
+        // إعدادات كائن الصوت للإشعار اللحظي المستمر (رنة متكررة)
+        const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
+        alertSound.loop = true; 
+
+        let isSoundPlaying = false;
+        // وقت فتح الصفحة بالثواني (نفس وحدة Firestore Timestamp.seconds) لمقارنة صحيحة
+        let pageOpenTimeSeconds = Math.floor(Date.now() / 1000);
+
+        // جلب الحجوزات الموجهة لهذا الطبيب بالتحديد لحظة بلحظة
+        // ملحوظة: تم حذف .orderBy() لتفادي طلب Index مركب في Firestore (نفس نهج باقي الصفحات)، والترتيب بيتم برمجياً بعد الجلب
+        function listenToBookings() {
+            db.collection("bookings")
+              .where("doctor_id", "==", doctorId)
+              .onSnapshot((snapshot) => {
+                  if (snapshot.empty) {
+                      tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
+                      stopAlertSound();
+                      return;
+                  }
+
+                  // تحويل وترتيب برمجي (الأحدث أولاً)
+                  let bookingsList = [];
+                  snapshot.forEach(doc => {
+                      bookingsList.push({ id: doc.id, ...doc.data() });
+                  });
+
+                  bookingsList.sort((a, b) => {
+                      const tA = a.created_at ? (a.created_at.seconds || 0) : 0;
+                      const tB = b.created_at ? (b.created_at.seconds || 0) : 0;
+                      return tB - tA;
+                  });
+
+                  tableBody.innerHTML = '';
+                  let triggerVoiceAlert = false;
+
+                  bookingsList.forEach((booking) => {
+                      let statusBadge = '';
+                      let actionButtons = '';
+
+                      // التحقق إذا كان هناك حجز جديد "pending" دخل بعد فتح الصفحة لتشغيل الرنين
+                      const bookingSeconds = booking.created_at ? (booking.created_at.seconds || 0) : 0;
+                      if (booking.status === 'pending' && bookingSeconds >= pageOpenTimeSeconds) {
+                          triggerVoiceAlert = true;
+                      }
+
+                      // منطق عرض الحالات طبقاً للسيناريو المشترك (مريض - دكتور - إدارة)
+                      if (booking.status === 'confirmed') {
+                          statusBadge = `<span class="badge badge-confirmed">تم التأكيد النهائي من الإدارة ✅</span>`;
+                          actionButtons = `<span style="color:gray; font-size:12px;">مؤكد نهائياً</span>`;
+                      } 
+                      else if (booking.status === 'doctor_approved') {
+                          statusBadge = `<span class="badge badge-approved">جاري تأكيد الحجز بواسطة الإدارة 📞</span>`;
+                          actionButtons = `<span style="color:#2a85ff; font-size:12px; font-weight:bold;">بانتظار مكالمة الإدارة</span>`;
+                      } 
+                      else if (booking.status === 'rejected') {
+                          statusBadge = `<span class="badge badge-rejected">مرفوض ❌</span> <br> <small style="color:red;">السبب: ${booking.rejection_reason || 'غير محدد'}</small>`;
+                          actionButtons = `<span style="color:gray; font-size:12px;">تم اتخاذ القرار</span>`;
+                      } 
+                      else {
+                          statusBadge = `<span class="badge badge-pending">قيد الانتظار ⏳</span>`;
+                          actionButtons = `
+                              <button class="btn btn-confirm" onclick="updateToDoctorApproved('${booking.id}')">قبول مبدئي</button>
+                              <button class="btn btn-reject" onclick="openRejectModal('${booking.id}')">رفض</button>
+                          `;
+                      }
+                      const bookingDate = booking.created_at ? (booking.created_at.seconds ? new Date(booking.created_at.seconds * 1000).toLocaleString('ar-EG') : new Date(booking.created_at).toLocaleString('ar-EG')) : 'غير محدد';  
+                      // قراءة عنوان العيادة المحجوزة المبعوث من شاشة المريض
+                      const selectedClinic = booking.clinic_address || "العيادة الرئيسية / غير محدد";
+
+                      const row = `
+                          <tr>
+                              <td><strong>${booking.patient_name}</strong></td>
+                              <td>${booking.patient_phone}</td>
+                              <td><span class="clinic-tag">🏥 ${selectedClinic}</span></td>
+                              <td style="font-size:12px; color:#718096;">${bookingDate}</td>
+                              <td>${statusBadge}</td>
+                              <td>${actionButtons}</td>
+                          </tr>
+                      `;
+                      tableBody.innerHTML += row;
+                  });
+
+                  // إدارة تشغيل أو إيقاف صوت الرنين فوراً
+                  if (triggerVoiceAlert) {
+                      playAlertSound();
+                  } else {
+                      stopAlertSound();
+                  }
+              }, (error) => {
+                  console.error("Firestore Error: ", error);
+                  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الحجوزات: ' + error.message + '</td></tr>';
+              });
+        }
+
+        // دالة قبول الحجز وتحويله لـ "موافق عليه من الدكتور" وبانتظار مكالمة الإدارة
+        window.updateToDoctorApproved = async function(id) {
+            try {
+                stopAlertSound();
+                await db.collection("bookings").doc(id).update({
+                    status: 'doctor_approved'
+                });
+                alert("تمت موافقتك بنجاح! تم إرسال الطلب الآن إلى لوحة الإدارة لإجراء التنسيق المالي والاتفاق الهاتفي مع المريض.");
+            } catch (error) {
+                alert("حدث خطأ أثناء التحديث: " + error.message);
+            }
+        }
+
+        // التحكم الصوتي الصارم
+        function playAlertSound() {
+            if (!isSoundPlaying) {
+                alertSound.play().then(() => {
+                    isSoundPlaying = true;
+                }).catch(err => {
+                    console.log("بانتظار تفاعل المستخدم الصريح لتفعيل نغمة الإشعار...");
+                });
+            }
+        }
+
+        function stopAlertSound() {
+            alertSound.pause();
+            alertSound.currentTime = 0;
+            isSoundPlaying = false;
+        }
+
+        // فتح وإغلاق نافذة الرفض
+        window.openRejectModal = function(id) {
+            activeBookingId = id;
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+
+        window.closeRejectModal = function() {
+            document.getElementById('rejectModal').style.display = 'none';
+            document.getElementById('rejectReasonInput').value = '';
+        }
+
+        // تأكيد الرفض التام من الطبيب مع ذكر السبب
+        document.getElementById('submitRejectBtn').addEventListener('click', async () => {
+            const reason = document.getElementById('rejectReasonInput').value.trim();
+            if (!reason) {
+                alert("برجاء إدخال سبب الرفض أولاً.");
+                return;
+            }
+
+            try {
+                stopAlertSound();
+                await db.collection("bookings").doc(activeBookingId).update({
+                    status: 'rejected',
+                    rejection_reason: reason
+                });
+                closeRejectModal();
+                alert("تم رفض طلب الحجز بنجاح، وتحديث شاشة المريض بالسبب.");
+            } catch (error) {
+                alert("حدث خطأ: " + error.message);
+            }
+        });
+
+        // دالات التحكم في نافذة تغيير كلمة السر
+        window.openPasswordModal = function() {
+            document.getElementById('passwordModal').style.display = 'flex';
+            document.getElementById('currentPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+        }
+
+        window.closePasswordModal = function() {
+            document.getElementById('passwordModal').style.display = 'none';
+        }
+
+        // دالة تحديث كلمة السر الفعلية عبر Firebase Auth (بدل تخزينها كنص صريح في Firestore)
+        window.updateDoctorPassword = async function() {
+            const currentPass = document.getElementById('currentPasswordInput').value;
+            const newPassword = document.getElementById('newPasswordInput').value.trim();
+
+            if (!currentPass) {
+                alert("برجاء إدخال كلمة السر الحالية للتحقق من هويتك.");
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                alert("برجاء إدخال كلمة سر صالحة وقوية لا تقل عن 6 أحرف أو أرقام.");
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert("انتهت جلسة العمل الحالية، يرجى إعادة تسجيل الدخول لتغيير كلمة السر.");
+                return;
+            }
+
+            try {
+                // إعادة المصادقة أولاً لحماية الحساب، ثم تحديث كلمة السر الحقيقية في Firebase Auth
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPassword);
+
+                alert("🎉 تم تحديث كلمة السر بنجاح! سيتم تسجيل خروجك الآن لتسجيل الدخول بكلمة السر الجديدة.");
+                closePasswordModal();
+                logout();
+            } catch (error) {
+                console.error("Change password error:", error);
+                alert("فشل التحديث: يرجى التأكد من كلمة السر الحالية. (" + error.message + ")");
+            }
+        }
+
+        // خروج مأمن
+        function logout() {
+            auth.signOut().finally(() => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+        }
+
+        // بدء الاستماع والعمل الفوري
+        listenToBookings();
+    </script>
+</body>
+</html>
