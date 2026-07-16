@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -42,8 +42,14 @@
             height: 100vh;
             right: 0;
             top: 0;
-            z-index: 100;
+            z-index: 200;
             transition: transform 0.3s ease;
+        }
+
+        html[dir="ltr"] .sidebar {
+            right: auto;
+            left: 0;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.05);
         }
 
         .sidebar-brand {
@@ -53,6 +59,18 @@
             color: var(--primary);
             border-bottom: 1px solid #edf2f7;
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-close {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #718096;
+            cursor: pointer;
         }
 
         .sidebar-menu {
@@ -75,10 +93,19 @@
             border-right: 4px solid transparent;
         }
 
+        html[dir="ltr"] .sidebar-menu li a {
+            border-right: none;
+            border-left: 4px solid transparent;
+        }
+
         .sidebar-menu li a:hover, .sidebar-menu li.active a {
             background: #ebf8ff;
             color: var(--primary);
             border-right-color: var(--primary);
+        }
+
+        html[dir="ltr"] .sidebar-menu li a:hover, html[dir="ltr"] .sidebar-menu li.active a {
+            border-left-color: var(--primary);
         }
 
         .sidebar-footer {
@@ -106,12 +133,31 @@
             background: #feb2b2;
         }
 
+        /* خلفية معتمة تظهر خلف القائمة على الموبايل */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 150;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
         /* المحتوى الرئيسي */
         .main-content {
             margin-right: var(--sidebar-width);
             flex-grow: 1;
             padding: 30px;
             min-height: 100vh;
+            width: 100%;
+        }
+
+        html[dir="ltr"] .main-content {
+            margin-right: 0;
+            margin-left: var(--sidebar-width);
         }
 
         /* الهيدر العلوي */
@@ -119,17 +165,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 15px;
             margin-bottom: 30px;
             background: white;
             padding: 15px 25px;
             border-radius: 12px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            flex-wrap: wrap;
         }
 
         .top-header h1 {
             font-size: 20px;
             margin: 0;
             color: #2d3748;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
         }
 
         .welcome-card {
@@ -161,10 +224,17 @@
             padding-right: 10px;
         }
 
+        html[dir="ltr"] .section-title {
+            border-right: none;
+            border-left: 5px solid var(--primary);
+            padding-right: 0;
+            padding-left: 10px;
+        }
+
         /* شبكة الأطباء */
         .doctors-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
@@ -174,6 +244,8 @@
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.02);
             border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
         }
 
         .doc-profile {
@@ -189,6 +261,7 @@
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--primary);
+            flex-shrink: 0;
         }
 
         .doc-info h3 {
@@ -205,49 +278,77 @@
             font-weight: bold;
         }
 
-        .clinic-item {
-            background: #f7fafc;
-            border: 1px solid #edf2f7;
-            border-radius: 8px;
+        .doc-summary-line {
+            font-size: 12px;
+            color: #718096;
+            margin: 10px 0 15px 0;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 12px;
+        }
+
+        .details-btn {
+            margin-top: auto;
+            background: var(--primary);
+            color: white;
+            border: none;
             padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+
+        .details-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        /* عناصر اختيار العيادة داخل نافذة التفاصيل */
+        .clinic-select-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
             margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .clinic-select-item:hover {
+            border-color: #cbd5e0;
+        }
+
+        .clinic-select-item.selected {
+            border-color: var(--primary);
+            background: #ebf8ff;
+        }
+
+        .clinic-select-item input[type="radio"] {
+            margin-top: 4px;
+            flex-shrink: 0;
         }
 
         .clinic-address {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             margin-bottom: 4px;
         }
 
         .clinic-hours {
-            font-size: 11px;
+            font-size: 12px;
             color: #718096;
             margin-bottom: 6px;
         }
 
-        .clinic-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .book-btn {
-            flex: 2;
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 6px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
         .map-btn {
-            flex: 1;
+            display: inline-block;
             background: #edf2f7;
             color: #4a5568;
             border: 1px solid #cbd5e0;
-            padding: 6px;
+            padding: 5px 10px;
             border-radius: 6px;
             text-align: center;
             text-decoration: none;
@@ -271,18 +372,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .booking-card.pending { border-right-color: var(--warning); }
-        .booking-card.doctor_approved { border-right-color: #3498db; }
-        .booking-card.confirmed { border-right-color: var(--success); }
-        .booking-card.rejected { border-right-color: var(--danger); }
+        html[dir="ltr"] .booking-card {
+            border-right: none;
+            border-left: 6px solid var(--primary);
+        }
+
+        .booking-card.pending { border-color: var(--warning); }
+        .booking-card.doctor_approved { border-color: #3498db; }
+        .booking-card.confirmed { border-color: var(--success); }
+        .booking-card.rejected { border-color: var(--danger); }
 
         .badge {
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: bold;
+            display: inline-block;
         }
         .badge-pending { background: #fef3c7; color: #d97706; }
         .badge-approved { background: #e0f2fe; color: #0284c7; }
@@ -298,6 +407,7 @@
             display: block;
             margin-bottom: 6px;
             font-weight: bold;
+            font-size: 14px;
         }
 
         .form-control {
@@ -306,6 +416,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             outline: none;
+            font-size: 15px;
         }
 
         .form-control:focus {
@@ -327,38 +438,231 @@
             background: var(--primary-hover);
         }
 
+        .submit-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        /* نوافذ منبثقة عامة */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            text-align: right;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        html[dir="ltr"] .modal-content {
+            text-align: left;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .modal-summary {
+            background: #f7fafc;
+            border: 1px solid #edf2f7;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 18px;
+            font-size: 13px;
+        }
+
+        .modal-note {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-top: -8px;
+            margin-bottom: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: #333;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* نافذة التفاصيل - رأس بروفايل الدكتور */
+        .details-header {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .details-header img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            flex-shrink: 0;
+        }
+
+        .details-section-title {
+            margin: 15px 0 10px;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* تنبيهات Toast مخصصة */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 420px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #2d3748;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: toastIn 0.25s ease;
+            text-align: center;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.info { background: var(--primary); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* اللغة */
+        .lang-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .lang-option {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: #f7fafc;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .lang-option.active {
+            border-color: var(--primary);
+            background: #ebf8ff;
+            color: var(--primary);
+        }
+
         /* دعم الهواتف المحمولة */
         @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
             .sidebar {
                 transform: translateX(100%);
+                width: 80%;
+                max-width: 280px;
+            }
+            html[dir="ltr"] .sidebar {
+                transform: translateX(-100%);
             }
             .sidebar.active {
                 transform: translateX(0);
             }
+            .sidebar-close {
+                display: block;
+            }
             .main-content {
                 margin-right: 0;
+                margin-left: 0;
                 padding: 15px;
+            }
+            .top-header {
+                padding: 12px 15px;
+            }
+            .top-header h1 {
+                font-size: 17px;
+            }
+            #currentDateDisplay {
+                font-size: 12px;
+            }
+            .doctors-grid {
+                grid-template-columns: 1fr;
+            }
+            .booking-card {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
 </head>
 <body>
 
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-brand">DoctorForMe 🏥</div>
+        <div class="sidebar-brand">
+            <span>DoctorForMe 🏥</span>
+            <button class="sidebar-close" onclick="toggleSidebar(false)">✕</button>
+        </div>
         <ul class="sidebar-menu">
-            <li class="active" onclick="switchTab('search-doctors', this)"><a>🔍 تصفح وحجز الأطباء</a></li>
-            <li onclick="switchTab('my-bookings', this)"><a>📅 حجوزاتي ومتابعة الحالات</a></li>
-            <li onclick="switchTab('support-tickets', this)"><a>💬 المساعدة والدعم والشكاوى</a></li>
-            <li onclick="switchTab('change-password', this)"><a>🔑 تغيير كلمة المرور</a></li>
+            <li class="active" onclick="switchTab('search-doctors', this)"><a data-i18n="menuSearch">🔍 تصفح وحجز الأطباء</a></li>
+            <li onclick="switchTab('my-bookings', this)"><a data-i18n="menuBookings">📅 حجوزاتي</a></li>
+            <li onclick="switchTab('support-tickets', this)"><a data-i18n="menuSupport">💬 المساعدة والدعم والشكاوى والمقترحات</a></li>
+            <li onclick="switchTab('language-settings', this)"><a data-i18n="menuLanguage">🌐 اللغة</a></li>
+            <li onclick="switchTab('change-password', this)"><a data-i18n="menuPassword">🔑 تغيير كلمة المرور</a></li>
         </ul>
         <div class="sidebar-footer">
-            <button class="logout-btn" onclick="handleLogout()">تسجيل الخروج 🚪</button>
+            <button class="logout-btn" onclick="handleLogout()"><span data-i18n="logout">تسجيل الخروج 🚪</span></button>
         </div>
     </div>
 
     <div class="main-content">
         <div class="top-header">
+            <button class="menu-toggle" onclick="toggleSidebar(true)">☰</button>
             <h1 id="patientNameDisplay">أهلاً بك..</h1>
             <div style="font-size: 14px; color: #718096;" id="currentDateDisplay"></div>
         </div>
@@ -366,57 +670,133 @@
         <div id="search-doctors" class="tab-content active">
             <div class="welcome-card">
                 <h2 id="welcomeText">مرحباً بك في صفحتك الطبية</h2>
-                <p>يمكنك تصفح الأطباء المعتمدين من الإدارة وحجز موعد مباشرة في العيادة المناسبة لك.</p>
+                <p data-i18n="welcomeText2">يمكنك تصفح الأطباء المعتمدين من الإدارة، والاطلاع على تفاصيل كل طبيب واختيار العيادة والفترة المناسبة لك.</p>
             </div>
-            <h2 class="section-title">الأطباء المعتمدون بالمنصة</h2>
+            <h2 class="section-title" data-i18n="approvedDoctorsTitle">الأطباء المعتمدون بالمنصة</h2>
             <div class="doctors-grid" id="doctorsGrid">
-                <div class="no-doctors" style="text-align: center; padding: 40px; color: #718096; grid-column:1/-1;">جاري تحميل الأطباء المعتمدين...</div>
+                <div class="no-doctors" style="text-align: center; padding: 40px; color: #718096; grid-column:1/-1;" data-i18n="loadingDoctors">جاري تحميل الأطباء المعتمدين...</div>
             </div>
         </div>
 
         <div id="my-bookings" class="tab-content">
-            <h2 class="section-title">قائمة حجوزاتك ومتابعة الحالات لحظياً</h2>
+            <h2 class="section-title" data-i18n="myBookingsTitle">قائمة حجوزاتك ومتابعة الحالات لحظياً</h2>
             <div class="bookings-list" id="bookingsList">
-                <div style="text-align: center; padding: 40px; color: #718096;">جاري تحميل حجوزاتك...</div>
+                <div style="text-align: center; padding: 40px; color: #718096;" data-i18n="loadingBookings">جاري تحميل حجوزاتك...</div>
             </div>
         </div>
 
         <div id="support-tickets" class="tab-content">
-            <h2 class="section-title">المساعدة والدعم والشكاوى</h2>
+            <h2 class="section-title" data-i18n="supportTitle">المساعدة والدعم والشكاوى والمقترحات</h2>
             <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); max-width: 600px;">
-                <p style="color: #718096; font-size: 14px; margin-bottom: 20px;">يسعدنا دائماً مساعدتك. قم بتقديم شكوى أو طلب دعم وسيقوم فريق الإدارة بمراجعته والرد عليك فوراً.</p>
+                <p style="color: #718096; font-size: 14px; margin-bottom: 20px;" data-i18n="supportDesc">يسعدنا دائماً مساعدتك. قم بتقديم شكوى أو طلب دعم أو مقترح وسيقوم فريق الإدارة بمراجعته والرد عليك فوراً.</p>
                 <form id="supportForm" onsubmit="submitSupportTicket(event)">
                     <div class="form-group">
-                        <label>عنوان المشكلة / الطلب</label>
+                        <label data-i18n="ticketSubjectLabel">عنوان المشكلة / الطلب / المقترح</label>
                         <input type="text" id="ticketSubject" class="form-control" placeholder="مثال: مشكلة في موعد الحجز" required>
                     </div>
                     <div class="form-group">
-                        <label>تفاصيل الشكوى أو طلب الدعم</label>
+                        <label data-i18n="ticketMessageLabel">تفاصيل الشكوى أو طلب الدعم أو المقترح</label>
                         <textarea id="ticketMessage" rows="5" class="form-control" placeholder="اكتب تفاصيل طلبك هنا بوضوح..." required></textarea>
                     </div>
-                    <button type="submit" class="submit-btn">إرسال الطلب الآن 📨</button>
+                    <button type="submit" class="submit-btn" data-i18n="sendRequest">إرسال الطلب الآن 📨</button>
                 </form>
             </div>
         </div>
 
+        <div id="language-settings" class="tab-content">
+            <h2 class="section-title" data-i18n="langTitle">اللغة / Language</h2>
+            <div style="background:white; padding:25px; border-radius:12px; max-width:400px; box-shadow:0 2px 10px rgba(0,0,0,0.02);">
+                <p style="color:#718096; font-size:14px; margin-bottom:20px;" data-i18n="langDesc">اختر لغة عرض الواجهة</p>
+                <div class="lang-options">
+                    <button class="lang-option" id="langArBtn" onclick="setLanguage('ar')">🇪🇬 العربية</button>
+                    <button class="lang-option" id="langEnBtn" onclick="setLanguage('en')">🇬🇧 English</button>
+                </div>
+            </div>
+        </div>
+
         <div id="change-password" class="tab-content">
-            <h2 class="section-title">تغيير كلمة المرور</h2>
+            <h2 class="section-title" data-i18n="changePasswordTitle">تغيير كلمة المرور</h2>
             <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); max-width: 500px;">
                 <form id="changePasswordForm" onsubmit="handleChangePassword(event)">
                     <div class="form-group">
-                        <label>كلمة المرور الحالية</label>
+                        <label data-i18n="currentPasswordLabel">كلمة المرور الحالية</label>
                         <input type="password" id="currentPassword" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>كلمة المرور الجديدة</label>
+                        <label data-i18n="newPasswordLabel">كلمة المرور الجديدة</label>
                         <input type="password" id="newPassword" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>تأكيد كلمة المرور الجديدة</label>
+                        <label data-i18n="confirmPasswordLabel">تأكيد كلمة المرور الجديدة</label>
                         <input type="password" id="confirmNewPassword" class="form-control" required>
                     </div>
-                    <button type="submit" class="submit-btn">تحديث كلمة المرور 🔑</button>
+                    <button type="submit" class="submit-btn" data-i18n="updatePasswordBtn">تحديث كلمة المرور 🔑</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تفاصيل الطبيب واختيار العيادة/الفترة -->
+    <div id="doctorDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="details-header">
+                <img id="detailsAvatar" src="" alt="Doctor">
+                <div>
+                    <h3 id="detailsName" style="margin:0 0 5px 0;"></h3>
+                    <span class="doc-specialty" id="detailsSpecialty"></span>
+                </div>
+            </div>
+            <div class="details-section-title" data-i18n="chooseClinic">اختر العيادة والفترة المناسبة لك:</div>
+            <div id="detailsClinicsList"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeDoctorDetailsModal()" data-i18n="close">إغلاق</button>
+                <button type="button" class="submit-btn" id="proceedBookingBtn" onclick="proceedToBookingForm()" disabled data-i18n="bookSelectedClinic">احجز في العيادة المختارة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تأكيد بيانات الحجز -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <h3 data-i18n="confirmBookingTitle">تأكيد بيانات الحجز 📋</h3>
+            <div class="modal-summary">
+                <div><span data-i18n="doctorLabel">👨‍⚕️ الطبيب:</span> <strong id="modalDoctorName"></strong></div>
+                <div style="margin-top:5px;"><span data-i18n="clinicLabel">🏥 العيادة:</span> <strong id="modalClinicAddress"></strong></div>
+                <div style="margin-top:5px;"><span data-i18n="hoursLabel">🕒 الفترة:</span> <strong id="modalClinicHours"></strong></div>
+            </div>
+            <form id="bookingForm" onsubmit="confirmBookingSubmit(event)">
+                <div class="form-group">
+                    <label data-i18n="nameLabel">الاسم</label>
+                    <input type="text" id="modalPatientName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="phoneLabel">رقم الهاتف</label>
+                    <input type="tel" id="modalPatientPhone" class="form-control" required pattern="[0-9]{11}">
+                </div>
+                <div class="modal-note" data-i18n="phoneNote">ملحوظة: هذا الرقم هيظهر عند الطبيب للتواصل معك بخصوص الحجز، ومش بيغيّر رقم الدخول للموقع.</div>
+                <div class="form-group">
+                    <label data-i18n="ageLabel">السن</label>
+                    <input type="number" id="modalPatientAge" class="form-control" min="0" max="120" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="addressLabel">العنوان</label>
+                    <input type="text" id="modalPatientAddress" class="form-control" placeholder="اكتب عنوانك بالتفصيل" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeBookingModal()" data-i18n="cancel">إلغاء</button>
+                    <button type="submit" class="submit-btn" data-i18n="confirmBooking">تأكيد الحجز ✅</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة تأكيد مخصصة (بديل لـ confirm الافتراضية بالمتصفح) -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width:360px; text-align:center;">
+            <p id="confirmMessage" style="font-size:15px; margin-bottom:20px;"></p>
+            <div class="modal-actions" style="justify-content:center;">
+                <button class="btn-secondary" id="confirmCancelBtn" data-i18n="cancel">إلغاء</button>
+                <button class="submit-btn" id="confirmOkBtn" data-i18n="confirmOk">تأكيد</button>
             </div>
         </div>
     </div>
@@ -443,15 +823,166 @@
         let currentPatient = null;
         const patientId = localStorage.getItem('user_id');
 
+        let currentDoctorForDetails = null; // {id, name, specialty, image_url, clinics}
+        let selectedClinicIndex = null;
+        let pendingBooking = null; // بيانات الحجز المؤقتة قبل التأكيد من النافذة
+
+        // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
+        function showToast(message, type) {
+            type = type || 'info';
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        // ================= نافذة تأكيد مخصصة بديل confirm() =================
+        function showConfirm(message) {
+            return new Promise((resolve) => {
+                document.getElementById('confirmMessage').innerText = message;
+                const modal = document.getElementById('confirmModal');
+                modal.style.display = 'flex';
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                function cleanup(result) {
+                    modal.style.display = 'none';
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        // ================= نظام اللغة =================
+        const translations = {
+            ar: {
+                menuSearch: "🔍 تصفح وحجز الأطباء",
+                menuBookings: "📅 حجوزاتي",
+                menuSupport: "💬 المساعدة والدعم والشكاوى والمقترحات",
+                menuLanguage: "🌐 اللغة",
+                menuPassword: "🔑 تغيير كلمة المرور",
+                logout: "تسجيل الخروج 🚪",
+                welcomeText2: "يمكنك تصفح الأطباء المعتمدين من الإدارة، والاطلاع على تفاصيل كل طبيب واختيار العيادة والفترة المناسبة لك.",
+                approvedDoctorsTitle: "الأطباء المعتمدون بالمنصة",
+                loadingDoctors: "جاري تحميل الأطباء المعتمدين...",
+                myBookingsTitle: "قائمة حجوزاتك ومتابعة الحالات لحظياً",
+                loadingBookings: "جاري تحميل حجوزاتك...",
+                supportTitle: "المساعدة والدعم والشكاوى والمقترحات",
+                supportDesc: "يسعدنا دائماً مساعدتك. قم بتقديم شكوى أو طلب دعم أو مقترح وسيقوم فريق الإدارة بمراجعته والرد عليك فوراً.",
+                ticketSubjectLabel: "عنوان المشكلة / الطلب / المقترح",
+                ticketMessageLabel: "تفاصيل الشكوى أو طلب الدعم أو المقترح",
+                sendRequest: "إرسال الطلب الآن 📨",
+                langTitle: "اللغة / Language",
+                langDesc: "اختر لغة عرض الواجهة",
+                changePasswordTitle: "تغيير كلمة المرور",
+                currentPasswordLabel: "كلمة المرور الحالية",
+                newPasswordLabel: "كلمة المرور الجديدة",
+                confirmPasswordLabel: "تأكيد كلمة المرور الجديدة",
+                updatePasswordBtn: "تحديث كلمة المرور 🔑",
+                chooseClinic: "اختر العيادة والفترة المناسبة لك:",
+                close: "إغلاق",
+                bookSelectedClinic: "احجز في العيادة المختارة",
+                confirmBookingTitle: "تأكيد بيانات الحجز 📋",
+                doctorLabel: "👨‍⚕️ الطبيب:",
+                clinicLabel: "🏥 العيادة:",
+                hoursLabel: "🕒 الفترة:",
+                nameLabel: "الاسم",
+                phoneLabel: "رقم الهاتف",
+                phoneNote: "ملحوظة: هذا الرقم هيظهر عند الطبيب للتواصل معك بخصوص الحجز، ومش بيغيّر رقم الدخول للموقع.",
+                ageLabel: "السن",
+                addressLabel: "العنوان",
+                cancel: "إلغاء",
+                confirmBooking: "تأكيد الحجز ✅",
+                confirmOk: "تأكيد",
+                detailsBtn: "📋 تفاصيل"
+            },
+            en: {
+                menuSearch: "🔍 Browse & Book Doctors",
+                menuBookings: "📅 My Bookings",
+                menuSupport: "💬 Support, Complaints & Suggestions",
+                menuLanguage: "🌐 Language",
+                menuPassword: "🔑 Change Password",
+                logout: "Logout 🚪",
+                welcomeText2: "Browse doctors approved by the platform, view each doctor's full details, and choose the clinic and time period that suits you.",
+                approvedDoctorsTitle: "Approved Doctors on the Platform",
+                loadingDoctors: "Loading approved doctors...",
+                myBookingsTitle: "Your bookings and live status tracking",
+                loadingBookings: "Loading your bookings...",
+                supportTitle: "Support, Complaints & Suggestions",
+                supportDesc: "We're always happy to help. Submit a complaint, support request, or suggestion and our admin team will review and respond promptly.",
+                ticketSubjectLabel: "Subject / Request / Suggestion",
+                ticketMessageLabel: "Details of your complaint, request or suggestion",
+                sendRequest: "Send Request 📨",
+                langTitle: "Language / اللغة",
+                langDesc: "Choose the interface display language",
+                changePasswordTitle: "Change Password",
+                currentPasswordLabel: "Current Password",
+                newPasswordLabel: "New Password",
+                confirmPasswordLabel: "Confirm New Password",
+                updatePasswordBtn: "Update Password 🔑",
+                chooseClinic: "Choose the clinic and time period that suits you:",
+                close: "Close",
+                bookSelectedClinic: "Book Selected Clinic",
+                confirmBookingTitle: "Confirm Booking Details 📋",
+                doctorLabel: "👨‍⚕️ Doctor:",
+                clinicLabel: "🏥 Clinic:",
+                hoursLabel: "🕒 Time:",
+                nameLabel: "Name",
+                phoneLabel: "Phone Number",
+                phoneNote: "Note: This number will be shown to the doctor to contact you about the booking, and does not change your login phone number.",
+                ageLabel: "Age",
+                addressLabel: "Address",
+                cancel: "Cancel",
+                confirmBooking: "Confirm Booking ✅",
+                confirmOk: "Confirm",
+                detailsBtn: "📋 Details"
+            }
+        };
+
+        function setLanguage(lang) {
+            localStorage.setItem('preferred_lang', lang);
+            applyLanguage(lang);
+        }
+
+        function applyLanguage(lang) {
+            const dict = translations[lang] || translations.ar;
+            document.getElementById('htmlRoot').lang = lang;
+            document.getElementById('htmlRoot').dir = (lang === 'en') ? 'ltr' : 'rtl';
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) el.innerText = dict[key];
+            });
+
+            document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
+            document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+
+            // إعادة رسم أزرار "تفاصيل" في كروت الأطباء بلغة العرض الحالية
+            document.querySelectorAll('.details-btn').forEach(btn => {
+                btn.innerText = dict.detailsBtn;
+            });
+        }
+
         // عند فتح الصفحة
         window.onload = async function() {
             const userRole = localStorage.getItem('user_role');
 
             if (!patientId || userRole !== 'patient') {
-                alert("برجاء تسجيل الدخول أولاً.");
-                window.location.href = 'login.html';
+                showToast('برجاء تسجيل الدخول أولاً.', 'error');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1200);
                 return;
             }
+
+            const savedLang = localStorage.getItem('preferred_lang') || 'ar';
+            applyLanguage(savedLang);
 
             // عرض التاريخ الحالي
             document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -463,7 +994,7 @@
                     document.getElementById('patientNameDisplay').innerText = `المريض: ${currentPatient.name} 🧑‍🦽`;
                     document.getElementById('welcomeText').innerText = `مرحباً، أستاذ ${currentPatient.name}`;
                 } else {
-                    alert("فشل التحقق من بيانات الحساب.");
+                    showToast('فشل التحقق من بيانات الحساب.', 'error');
                     handleLogout();
                 }
             } catch (err) {
@@ -474,6 +1005,16 @@
             listenToMyBookings(); // استماع لحظي للحجوزات الخاصة بهذا المريض
         };
 
+        // ================= التحكم في القائمة الجانبية على الموبايل =================
+        function toggleSidebar(open) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const shouldOpen = (typeof open === 'boolean') ? open : !sidebar.classList.contains('active');
+
+            sidebar.classList.toggle('active', shouldOpen);
+            overlay.classList.toggle('active', shouldOpen);
+        }
+
         // تبديل التبويبات بنعومة وسرعة
         function switchTab(tabId, menuItem) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -481,11 +1022,17 @@
             
             document.getElementById(tabId).classList.add('active');
             menuItem.classList.add('active');
+
+            // إغلاق القائمة تلقائياً بعد اختيار تبويب على الموبايل
+            toggleSidebar(false);
         }
 
         // جلب الأطباء المعتمدين من الإدارة
         async function loadApprovedDoctors() {
             const grid = document.getElementById('doctorsGrid');
+            const lang = localStorage.getItem('preferred_lang') || 'ar';
+            const dict = translations[lang];
+
             try {
                 const snapshot = await db.collection("users")
                     .where("role", "==", "doctor")
@@ -502,28 +1049,7 @@
                     const data = doc.data();
                     const docId = doc.id;
                     const avatarSrc = data.image_url ? data.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
-
-                    let clinicsHTML = '';
-                    if (data.clinics && data.clinics.length > 0) {
-                        data.clinics.forEach((clinic, idx) => {
-                            const mapButton = clinic.google_maps_link 
-                                ? `<a href="${clinic.google_maps_link}" target="_blank" class="map-btn">📍 موقعنا</a>` 
-                                : '';
-
-                            clinicsHTML += `
-                                <div class="clinic-item">
-                                    <div class="clinic-address">📍 ${clinic.clinic_address}</div>
-                                    <div class="clinic-hours">🕒 مواعيد العمل: ${clinic.work_hours}</div>
-                                    <div class="clinic-actions">
-                                        <button class="book-btn" onclick="bookAppointment('${docId}', '${data.name}', '${clinic.clinic_address}', ${idx})">احجز موعد الآن</button>
-                                        ${mapButton}
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    } else {
-                        clinicsHTML = '<p style="font-size:12px; color:#a0aec0;">لا توجد عيادات مسجلة لهذا الطبيب حالياً.</p>';
-                    }
+                    const clinicsCount = data.clinics ? data.clinics.length : 0;
 
                     grid.innerHTML += `
                         <div class="doctor-card">
@@ -534,50 +1060,165 @@
                                     <span class="doc-specialty">${data.specialty}</span>
                                 </div>
                             </div>
-                            <div class="clinics-section" style="border-top:1px dashed #e2e8f0; margin-top:15px; padding-top:15px;">
-                                <h4 style="margin: 0 0 10px 0; font-size: 13px; color: var(--primary);">العيادات ومواعيد الحجز:</h4>
-                                ${clinicsHTML}
-                            </div>
+                            <div class="doc-summary-line">🏥 عدد العيادات المتاحة: ${clinicsCount}</div>
+                            <button class="details-btn" onclick='openDoctorDetails(${JSON.stringify(docId)})'>${dict.detailsBtn}</button>
                         </div>
                     `;
                 });
+
+                // نخزن بيانات الأطباء في متغير عام سهل الوصول له عند فتح التفاصيل
+                window._doctorsCache = {};
+                snapshot.forEach(doc => {
+                    window._doctorsCache[doc.id] = doc.data();
+                });
+
             } catch (error) {
                 console.error("Error loading doctors:", error);
                 grid.innerHTML = '<div class="no-doctors">حدث خطأ أثناء تحميل بيانات الأطباء.</div>';
             }
         }
 
-        // ================= حجز الموعد =================
-        async function bookAppointment(doctorId, doctorName, clinicAddress, clinicIndex) {
-            if (!currentPatient) {
-                alert("بيانات المريض لم تكتمل بعد.");
+        // ================= فتح نافذة تفاصيل الطبيب واختيار العيادة =================
+        function openDoctorDetails(doctorId) {
+            const data = window._doctorsCache ? window._doctorsCache[doctorId] : null;
+            if (!data) {
+                showToast('تعذر تحميل بيانات هذا الطبيب.', 'error');
                 return;
             }
 
-            const confirmBooking = confirm(`هل أنت متأكد من حجز موعد مع د. ${doctorName} في عيادة: (${clinicAddress})؟`);
-            if (!confirmBooking) return;
+            currentDoctorForDetails = { id: doctorId, ...data };
+            selectedClinicIndex = null;
+            document.getElementById('proceedBookingBtn').disabled = true;
+
+            const avatarSrc = data.image_url ? data.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
+            document.getElementById('detailsAvatar').src = avatarSrc;
+            document.getElementById('detailsName').innerText = `د. ${data.name}`;
+            document.getElementById('detailsSpecialty').innerText = data.specialty || '';
+
+            const listContainer = document.getElementById('detailsClinicsList');
+            listContainer.innerHTML = '';
+
+            if (!data.clinics || data.clinics.length === 0) {
+                listContainer.innerHTML = '<p style="font-size:13px; color:#a0aec0;">لا توجد عيادات مسجلة لهذا الطبيب حالياً.</p>';
+            } else {
+                data.clinics.forEach((clinic, idx) => {
+                    const item = document.createElement('label');
+                    item.className = 'clinic-select-item';
+                    item.id = `clinicOption_${idx}`;
+
+                    const mapButton = clinic.google_maps_link
+                        ? `<a href="${clinic.google_maps_link}" target="_blank" class="map-btn" onclick="event.stopPropagation()">📍 عرض الموقع على الخريطة</a>`
+                        : '';
+
+                    item.innerHTML = `
+                        <input type="radio" name="clinicChoice" value="${idx}" onchange="selectClinicOption(${idx})">
+                        <div>
+                            <div class="clinic-address">📍 ${clinic.clinic_address}</div>
+                            <div class="clinic-hours">🕒 ${clinic.work_hours}</div>
+                            ${mapButton}
+                        </div>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            }
+
+            document.getElementById('doctorDetailsModal').style.display = 'flex';
+        }
+
+        function selectClinicOption(idx) {
+            selectedClinicIndex = idx;
+            document.querySelectorAll('.clinic-select-item').forEach(el => el.classList.remove('selected'));
+            const selectedEl = document.getElementById(`clinicOption_${idx}`);
+            if (selectedEl) selectedEl.classList.add('selected');
+            document.getElementById('proceedBookingBtn').disabled = false;
+        }
+
+        function closeDoctorDetailsModal() {
+            document.getElementById('doctorDetailsModal').style.display = 'none';
+        }
+
+        // الانتقال من نافذة التفاصيل لنافذة تأكيد بيانات الحجز
+        function proceedToBookingForm() {
+            if (!currentDoctorForDetails || selectedClinicIndex === null) return;
+
+            const clinic = currentDoctorForDetails.clinics[selectedClinicIndex];
+            pendingBooking = {
+                doctorId: currentDoctorForDetails.id,
+                doctorName: currentDoctorForDetails.name,
+                clinicAddress: clinic.clinic_address,
+                clinicHours: clinic.work_hours
+            };
+
+            closeDoctorDetailsModal();
+
+            document.getElementById('modalDoctorName').innerText = `د. ${currentDoctorForDetails.name}`;
+            document.getElementById('modalClinicAddress').innerText = clinic.clinic_address;
+            document.getElementById('modalClinicHours').innerText = clinic.work_hours;
+
+            // تعبئة الحقول ببيانات المريض المحفوظة (لو موجودة) عشان يعدلها لو حاب
+            document.getElementById('modalPatientName').value = currentPatient.name || '';
+            document.getElementById('modalPatientPhone').value = currentPatient.phone || '';
+            document.getElementById('modalPatientAge').value = currentPatient.age || '';
+            document.getElementById('modalPatientAddress').value = currentPatient.address || '';
+
+            document.getElementById('bookingModal').style.display = 'flex';
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+            pendingBooking = null;
+        }
+
+        // ================= تأكيد الحجز وحفظ بيانات المريض المحدثة =================
+        async function confirmBookingSubmit(event) {
+            event.preventDefault();
+            if (!pendingBooking) return;
+
+            const name = document.getElementById('modalPatientName').value.trim();
+            const phone = document.getElementById('modalPatientPhone').value.trim();
+            const age = parseInt(document.getElementById('modalPatientAge').value, 10);
+            const address = document.getElementById('modalPatientAddress').value.trim();
+
+            if (!name || !phone || !address || isNaN(age)) {
+                showToast('برجاء استكمال جميع الحقول المطلوبة.', 'error');
+                return;
+            }
 
             try {
+                // تحديث بيانات المريض في ملفه الشخصي (لعرضها للطبيب/الإدارة ولتسهيل الحجز القادم)
+                await db.collection("users").doc(patientId).update({
+                    name: name,
+                    phone: phone,
+                    age: age,
+                    address: address
+                });
+                currentPatient = { ...currentPatient, name, phone, age, address };
+                document.getElementById('patientNameDisplay').innerText = `المريض: ${name} 🧑‍🦽`;
+
                 const bookingData = {
                     patient_id: patientId,
-                    patient_name: currentPatient.name,
-                    patient_phone: currentPatient.phone,
-                    doctor_id: doctorId,
-                    doctor_name: doctorName,
-                    clinic_address: clinicAddress,
+                    patient_name: name,
+                    patient_phone: phone,
+                    patient_age: age,
+                    patient_address: address,
+                    doctor_id: pendingBooking.doctorId,
+                    doctor_name: pendingBooking.doctorName,
+                    clinic_address: pendingBooking.clinicAddress,
+                    clinic_hours: pendingBooking.clinicHours,
                     status: "pending",
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
                 await db.collection("bookings").add(bookingData);
-                alert("تم إرسال طلب الحجز بنجاح! يمكنك تتبع حالته في تبويب (حجوزاتي).");
-                
+                closeBookingModal();
+                showToast('تم إرسال طلب الحجز بنجاح! يمكنك تتبع حالته في تبويب حجوزاتي.', 'success');
+
                 // الانتقال المباشر لتبويب المتابعة لمشاهدة الحجز الجديد
                 switchTab('my-bookings', document.querySelectorAll('.sidebar-menu li')[1]);
 
             } catch (error) {
                 console.error("Error creating booking:", error);
-                alert("حدث خطأ أثناء إتمام الحجز: " + error.message);
+                showToast('حدث خطأ أثناء إتمام الحجز: ' + error.message, 'error');
             }
         }
 
@@ -626,12 +1267,14 @@
 
                 const dateObj = booking.created_at ? (booking.created_at.seconds ? new Date(booking.created_at.seconds * 1000) : new Date(booking.created_at)) : null;
                 const dateStr = dateObj ? dateObj.toLocaleString('ar-EG') : 'غير محدد';
+                const hoursLine = booking.clinic_hours ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">🕒 ${booking.clinic_hours}</p>` : '';
 
                 listDiv.innerHTML += `
                     <div class="booking-card ${booking.status}">
                         <div>
                             <h3 style="margin:0 0 8px 0; font-size:16px;">د. ${booking.doctor_name}</h3>
                             <p style="margin:0 0 5px 0; font-size:13px; color:#4a5568;">🏥 عيادة: ${booking.clinic_address}</p>
+                            ${hoursLine}
                             <small style="color:#a0aec0;">تاريخ الطلب: ${dateStr}</small>
                         </div>
                         <div>
@@ -642,11 +1285,11 @@
             });
         }, (error) => {
             console.error("Firestore error in my bookings list:", error);
-            listDiv.innerHTML = '<div style="text-align:center; padding:40px; color:#e74c3c;">حدث خطأ أثناء تحميل الحجوزات. تأكد من الكونسول لمعرفة السبب.</div>';
+            listDiv.innerHTML = '<div style="text-align:center; padding:40px; color:#e74c3c;">حدث خطأ أثناء تحميل الحجوزات.</div>';
         });
 }
 
-        // ================= إرسال شكوى / طلب دعم =================
+        // ================= إرسال شكوى / طلب دعم / مقترح =================
         async function submitSupportTicket(event) {
             event.preventDefault();
             const subject = document.getElementById('ticketSubject').value.trim();
@@ -663,50 +1306,48 @@
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("تم إرسال شكواك / طلب الدعم بنجاح! سيتم مراجعتها من قبل الإدارة والتواصل معك.");
+                showToast('تم إرسال طلبك بنجاح! سيتم مراجعته من قبل الإدارة والتواصل معك.', 'success');
                 document.getElementById('supportForm').reset();
             } catch (error) {
-                alert("حدث خطأ أثناء إرسال الطلب: " + error.message);
+                showToast('حدث خطأ أثناء إرسال الطلب: ' + error.message, 'error');
             }
         }
 
         // ================= تغيير كلمة المرور للمريض =================
-        function handleChangePassword(event) {
+        async function handleChangePassword(event) {
             event.preventDefault();
             const currentPass = document.getElementById('currentPassword').value;
             const newPass = document.getElementById('newPassword').value;
             const confirmNewPass = document.getElementById('confirmNewPassword').value;
 
             if (newPass !== confirmNewPass) {
-                alert("كلمتا المرور الجديدتان غير متطابقتين.");
+                showToast('كلمتا المرور الجديدتان غير متطابقتين.', 'error');
                 return;
             }
 
             const user = auth.currentUser;
             if (!user) {
-                alert("انتهت جلسة العمل الحالية، يرجى إعادة تسجيل الدخول لتغيير كلمة المرور.");
+                showToast('انتهت جلسة العمل الحالية، يرجى إعادة تسجيل الدخول لتغيير كلمة المرور.', 'error');
                 return;
             }
 
-            // إعادة المصادقة أولاً لحماية الحساب
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
-            user.reauthenticateWithCredential(credential)
-                .then(() => {
-                    return user.updatePassword(newPass);
-                })
-                .then(() => {
-                    alert("تم تحديث كلمة المرور بنجاح! سيتم تسجيل خروجك الآن لتسجيل الدخول بكلمة المرور الجديدة.");
-                    handleLogout();
-                })
-                .catch((error) => {
-                    console.error("Change password error:", error);
-                    alert("فشل التحديث: يرجى التأكد من كلمة المرور الحالية.");
-                });
+            try {
+                // إعادة المصادقة أولاً لحماية الحساب
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPass);
+
+                showToast('تم تحديث كلمة المرور بنجاح! سيتم تسجيل خروجك الآن.', 'success');
+                setTimeout(() => { handleLogout(); }, 1200);
+            } catch (error) {
+                console.error("Change password error:", error);
+                showToast('فشل التحديث: يرجى التأكد من كلمة المرور الحالية.', 'error');
+            }
         }
 
         // ================= تسجيل الخروج =================
         function handleLogout() {
-            auth.signOut().then(() => {
+            auth.signOut().finally(() => {
                 localStorage.clear();
                 window.location.href = 'login.html';
             });
