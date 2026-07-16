@@ -123,6 +123,13 @@
             background: #fff;
         }
 
+        .field-hint {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 5px;
+            display: block;
+        }
+
         .password-toggle {
             position: absolute;
             left: 15px;
@@ -337,8 +344,21 @@
                     <input type="number" id="patientAge" class="form-control" placeholder="مثال: 25" min="0" max="120" required>
                 </div>
                 <div class="form-group">
-                    <label>العنوان بالتفصيل</label>
-                    <input type="text" id="patientAddress" class="form-control" placeholder="مثال: القاهرة - مدينة نصر - شارع مصطفى النحاس" required>
+                    <label>المحافظة</label>
+                    <select id="patientGov" class="form-control" onchange="populatePatientCities(this.value)" required>
+                        <option value="">اختر المحافظة...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المدينة / المركز</label>
+                    <select id="patientCity" class="form-control" required>
+                        <option value="">اختر المدينة...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>القرية / الشارع</label>
+                    <input type="text" id="patientVillage" class="form-control" placeholder="مثال: شارع مصطفى النحاس، عمارة 12" required>
+                    <span class="field-hint">💡 اكتب وصف تفصيلي للمكان (اسم الشارع، رقم العقار، أقرب علامة مميزة...) عشان يسهل الوصول لك.</span>
                 </div>
             </div>
 
@@ -367,7 +387,7 @@
                 </div>
 
                 <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 معلومات العيادات ومواعيد العمل</h3>
-                <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">اكتب عنوان عيادتك الرئيسية أولاً، وبعد كده تقدر تضيف أي عيادات إضافية، كل عيادة ليها عنوانها ومواعيدها الخاصة ورابط خريطتها بشكل منفصل تماماً عن باقي العيادات.</p>
+                <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">اكتب بيانات عيادتك الرئيسية أولاً، وبعد كده تقدر تضيف أي عيادات إضافية، كل عيادة ليها محافظتها ومدينتها وعنوانها التفصيلي ومواعيدها ورابط خريطتها بشكل منفصل تماماً عن باقي العيادات.</p>
                 <div id="clinicsContainer">
                     </div>
                 <button type="button" class="add-clinic-btn" onclick="addClinicBlock()">➕ إضافة عيادة أخرى</button>
@@ -395,6 +415,37 @@ const firebaseConfig = {
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // ================= بيانات المحافظات والمدن المصرية =================
+        const egyptData = {
+            "القاهرة": ["مصر الجديدة", "مدينة نصر", "شبرا", "المعادي", "حلوان", "التجمع الخامس", "وسط البلد"],
+            "الجيزة": ["الدقي", "المهندسين", "الهرم", "فيصل", "6 أكتوبر", "الشيخ زايد", "العجوزة", "الوراق"],
+            "الإسكندرية": ["سموحة", "المنتزه", "الرمل", "العجمي", "وسط البلد", "سيدي بشر"],
+            "القليوبية": ["بنها", "شبرا الخيمة", "قليوب", "الخانكة", "الخصوص", "قها", "طوخ"],
+            "الشرقية": ["الزقازيق", "العاشر من رمضان", "بلبيس", "منيا القمح", "أبو حماد", "فاقوس"],
+            "الغربية": ["طنطا", "المحلة الكبرى", "كفر الزيات", "زفتى", "بسيون", "سمنود"],
+            "الدقهلية": ["المنصورة", "ميت غمر", "السنبلاوين", "دكرنس", "طلخا", "بلقاس"],
+            "المنوفية": ["شبين الكوم", "أشمون", "منوف", "مدينة السادات", "قويسنا", "الباجور"],
+            "البحيرة": ["دمنهور", "كفر الدوار", "كوم حمادة", "إيتاي البارود", "رشيد", "أبو المطامير"],
+            "كفر الشيخ": ["كفر الشيخ", "دسوق", "قلين", "فوه", "مطوبس", "سيدي سالم"],
+            "دمياط": ["دمياط", "دمياط الجديدة", "رأس البر", "فارسكور", "الزرقا"],
+            "بورسعيد": ["حي الشرق", "حي العرب", "بورفؤاد", "حي الضواحي"],
+            "الإسماعيلية": ["الإسماعيلية", "التل الكبير", "فايد", "القنطرة شرق", "القنطرة غرب"],
+            "السويس": ["حي السويس", "حي الأربعين", "حي فيصل", "حي عتاقة"],
+            "الفيوم": ["الفيوم", "سنورس", "طامية", "إطسا", "أبشواي"],
+            "بني سويف": ["بني سويف", "الواسطى", "ببا", "الفشن", "ناصر", "سمسطا"],
+            "المنيا": ["المنيا", "ملوي", "بني مزار", "مغاغة", "سمالوط", "أبو قرقاص"],
+            "أسيوط": ["أسيوط", "ديروط", "منفلوط", "القوصية", "أبو تيج", "صدفا"],
+            "سوهاج": ["سوهاج", "طهطا", "جرجا", "أخميم", "البلينا", "المراغة"],
+            "قنا": ["قنا", "نجع حمادي", "دشنا", "أبو تشت", "قوص", "نقادة"],
+            "الأقصر": ["الأقصر", "إسنا", "أرمنت", "القرنة"],
+            "أسوان": ["أسوان", "كوم أمبو", "إدفو", "نصر النوبة"],
+            "البحر الأحمر": ["الغردقة", "سفاجا", "القصير", "مرسى علم", "شلاتين"],
+            "الوادي الجديد": ["الخارجة", "الداخلة", "الفرافرة", "باريس"],
+            "مطروح": ["مرسى مطروح", "الضبعة", "العلمين", "سيوة"],
+            "شمال سيناء": ["العريش", "الشيخ زويد", "رفح", "بئر العبد"],
+            "جنوب سيناء": ["شرم الشيخ", "طور سيناء", "دهب", "نويبع", "رأس سدر"]
+        };
+
         // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
         function showToast(message, type) {
             type = type || 'info';
@@ -407,9 +458,50 @@ const firebaseConfig = {
         }
 
         window.onload = function() {
+            populateGovOptions(document.getElementById('patientGov'));
             addClinicBlock();
             toggleRequiredFields('patient'); // تفعيل متطلبات المريض فقط في البداية
         };
+
+        // تعبئة قائمة المحافظات لأي عنصر select (تستخدم لحقل المريض ولكل عيادة دكتور)
+        function populateGovOptions(selectEl) {
+            for (let gov in egyptData) {
+                let opt = document.createElement('option');
+                opt.value = gov;
+                opt.innerHTML = gov;
+                selectEl.appendChild(opt);
+            }
+        }
+
+        // تعبئة مدن المريض حسب المحافظة المختارة
+        function populatePatientCities(govValue) {
+            const citySelect = document.getElementById('patientCity');
+            citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
+            if (govValue && egyptData[govValue]) {
+                egyptData[govValue].forEach(city => {
+                    let opt = document.createElement('option');
+                    opt.value = city;
+                    opt.innerHTML = city;
+                    citySelect.appendChild(opt);
+                });
+            }
+        }
+
+        // تعبئة مدن أي عيادة دكتور حسب المحافظة المختارة (كل عيادة مستقلة عن التانية)
+        function populateCitiesForClinic(govSelectEl) {
+            const block = govSelectEl.closest('.clinic-block');
+            const citySelect = block.querySelector('.clinic-city');
+            citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
+            const govValue = govSelectEl.value;
+            if (govValue && egyptData[govValue]) {
+                egyptData[govValue].forEach(city => {
+                    let opt = document.createElement('option');
+                    opt.value = city;
+                    opt.innerHTML = city;
+                    citySelect.appendChild(opt);
+                });
+            }
+        }
 
         function switchTab(mode) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -452,19 +544,27 @@ const firebaseConfig = {
         function toggleRequiredFields(role) {
             if (role === 'patient') {
                 document.getElementById('patientAge').required = true;
-                document.getElementById('patientAddress').required = true;
+                document.getElementById('patientGov').required = true;
+                document.getElementById('patientCity').required = true;
+                document.getElementById('patientVillage').required = true;
 
                 document.getElementById('doctorSpecialty').required = false;
                 document.getElementById('doctorSpecialtyOther').required = false;
-                document.querySelectorAll('.clinic-address').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-gov').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-city').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-village').forEach(el => el.required = false);
                 document.querySelectorAll('.clinic-hours').forEach(el => el.required = false);
             } else {
                 document.getElementById('patientAge').required = false;
-                document.getElementById('patientAddress').required = false;
+                document.getElementById('patientGov').required = false;
+                document.getElementById('patientCity').required = false;
+                document.getElementById('patientVillage').required = false;
 
                 document.getElementById('doctorSpecialty').required = true;
                 toggleOtherSpecialtyField();
-                document.querySelectorAll('.clinic-address').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-gov').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-city').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-village').forEach(el => el.required = true);
                 document.querySelectorAll('.clinic-hours').forEach(el => el.required = true);
             }
         }
@@ -503,8 +603,21 @@ const firebaseConfig = {
                 ${!isMain ? `<button type="button" class="remove-clinic-btn" onclick="removeClinicBlock(${clinicCount})">حذف ❌</button>` : ''}
                 <div style="font-weight: bold; margin-bottom: 10px; color: ${isMain ? 'var(--primary)' : '#718096'};">${blockTitle}</div>
                 <div class="form-group">
-                    <label>العنوان بالتفصيل</label>
-                    <input type="text" class="form-control clinic-address" placeholder="مثال: شارع الجلاء بجوار صيدلية النيل" ${reqAttr}>
+                    <label>المحافظة</label>
+                    <select class="form-control clinic-gov" onchange="populateCitiesForClinic(this)" ${reqAttr}>
+                        <option value="">اختر المحافظة...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المدينة / المركز</label>
+                    <select class="form-control clinic-city" ${reqAttr}>
+                        <option value="">اختر المدينة...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>القرية / الشارع</label>
+                    <input type="text" class="form-control clinic-village" placeholder="مثال: شارع الجلاء بجوار صيدلية النيل، الدور الثالث" ${reqAttr}>
+                    <span class="field-hint">💡 اكتب وصف تفصيلي للمكان (اسم الشارع، رقم العقار، أقرب علامة مميزة...) عشان المريض يوصلك بسهولة.</span>
                 </div>
                 <div class="form-group">
                     <label>رابط موقع العيادة على خرائط جوجل (اختياري)</label>
@@ -516,6 +629,9 @@ const firebaseConfig = {
                 </div>
             `;
             container.appendChild(block);
+
+            // تعبئة قائمة المحافظات الخاصة بالعيادة دي فور إنشائها
+            populateGovOptions(block.querySelector('.clinic-gov'));
         }
 
         function removeClinicBlock(id) {
@@ -549,8 +665,16 @@ const firebaseConfig = {
                 };
 
                 if (role === 'patient') {
+                    const gov = document.getElementById('patientGov').value;
+                    const city = document.getElementById('patientCity').value;
+                    const village = document.getElementById('patientVillage').value.trim();
+
                     userData.age = parseInt(document.getElementById('patientAge').value, 10);
-                    userData.address = document.getElementById('patientAddress').value.trim();
+                    userData.governorate = gov;
+                    userData.city = city;
+                    userData.village = village;
+                    // نص عنوان موحّد (محافظة - مدينة - تفاصيل) يستخدم في صفحة المريض وباقي الصفحات
+                    userData.address = `${gov} - ${city} - ${village}`;
                 } 
                 else if (role === 'doctor') {
                     const specialtySelect = document.getElementById('doctorSpecialty').value;
@@ -564,11 +688,18 @@ const firebaseConfig = {
                     const clinics = [];
                     const blocks = document.querySelectorAll('.clinic-block');
                     blocks.forEach(block => {
-                        const addr = block.querySelector('.clinic-address').value.trim();
+                        const gov = block.querySelector('.clinic-gov').value;
+                        const city = block.querySelector('.clinic-city').value;
+                        const village = block.querySelector('.clinic-village').value.trim();
                         const mapLink = block.querySelector('.clinic-map').value.trim();
                         const hours = block.querySelector('.clinic-hours').value.trim();
+
                         clinics.push({
-                            clinic_address: addr,
+                            governorate: gov,
+                            city: city,
+                            village: village,
+                            // نص عنوان موحّد (محافظة - مدينة - تفاصيل) يستخدم في عرض العيادة بكل الصفحات
+                            clinic_address: `${gov} - ${city} - ${village}`,
                             google_maps_link: mapLink,
                             work_hours: hours
                         });
