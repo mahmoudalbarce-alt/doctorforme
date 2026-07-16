@@ -93,6 +93,7 @@
             margin-bottom: 25px;
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 10px;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
@@ -192,6 +193,23 @@
         .status-approved { background: #d1fae5; color: #059669; }
         .status-rejected { background: #fee2e2; color: #dc2626; }
 
+        /* حقل رابط الصورة داخل جدول الطلبات */
+        .image-url-input {
+            width: 100%;
+            min-width: 180px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .image-url-hint {
+            font-size: 10px;
+            color: #a0aec0;
+            display: block;
+        }
+
         /* سجل العمليات */
         .log-table th {
             background-color: #2d3748;
@@ -207,9 +225,87 @@
         .super-admin-only {
             display: none;
         }
+
+        /* تنبيهات Toast مخصصة (بديل alert() اللي بيظهر دومين الموقع) */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 420px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #2d3748;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: toastIn 0.25s ease;
+            text-align: center;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.info { background: var(--primary); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* نافذة تأكيد مخصصة (بديل confirm()) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: #333;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
+
+    <div class="toast-container" id="toastContainer"></div>
 
     <div class="header">
         <h1>DoctorForMe 🏥 <span class="admin-badge" id="adminRoleBadge">لوحة المشرف</span></h1>
@@ -231,6 +327,7 @@
         <div id="requestsTab" class="tab-content active">
             <div class="card">
                 <h2>الأطباء بانتظار المراجعة والقبول 👨‍⚕️</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 قبل الموافقة، تقدر تحط رابط صورة الطبيب (من جوجل درايف أو أي مصدر تاني) في الخانة المخصصة. لو الرابط من جوجل درايف، تأكد إن صلاحية المشاركة "Anyone with the link" عشان الصورة تظهر لكل الزوار.</p>
                 <table>
                     <thead>
                         <tr>
@@ -238,11 +335,12 @@
                             <th>رقم الهاتف</th>
                             <th>التخصص</th>
                             <th>العيادات المسجلة</th>
+                            <th>رابط الصورة الشخصية</th>
                             <th>الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="pendingDoctorsTable">
-                        <tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>
+                        <tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -316,6 +414,17 @@
 
     </div>
 
+    <!-- نافذة تأكيد مخصصة -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <p id="confirmMessage" style="font-size:15px; margin-bottom:10px;"></p>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="confirmCancelBtn">إلغاء</button>
+                <button class="btn btn-primary" id="confirmOkBtn" style="padding:10px 18px;">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
     <!-- استدعاء مكتبات الـ SDK المتوافقة والآمنة -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -342,13 +451,61 @@
         let activeAdminName = "مسؤول النظام";
         let isSuperAdmin = false;
 
+        // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
+        function showToast(message, type) {
+            type = type || 'info';
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        // ================= نافذة تأكيد مخصصة بديل confirm() =================
+        function showConfirm(message) {
+            return new Promise((resolve) => {
+                document.getElementById('confirmMessage').innerText = message;
+                const modal = document.getElementById('confirmModal');
+                modal.style.display = 'flex';
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                function cleanup(result) {
+                    modal.style.display = 'none';
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        // ================= تحويل رابط جوجل درايف العادي لصيغة قابلة للعرض المباشر داخل <img> =================
+        function convertDriveLink(url) {
+            if (!url) return url;
+            const trimmed = url.trim();
+            const fileMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            const idParamMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            const fileId = (fileMatch && fileMatch[1]) || (idParamMatch && idParamMatch[1]);
+
+            if (fileId) {
+                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+            }
+            return trimmed; // مش رابط جوجل درايف بالصيغة المعروفة، يترجع زي ما هو
+        }
+
         window.onload = function() {
             const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role');
 
             if (!userId || userRole !== 'admin') {
-                alert("للتحقق والأمان، يرجى تسجيل الدخول بحساب مسؤول أولاً.");
-                window.location.href = 'login.html';
+                showToast("للتحقق والأمان، يرجى تسجيل الدخول بحساب مسؤول أولاً.", 'error');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1200);
                 return;
             }
 
@@ -401,7 +558,7 @@
         // ================= 1. جلب طلبات تسجيل الأطباء (نسخة مبسطة بدون ترتيب معقد لتجنب الـ Index) =================
         function loadPendingDoctors() {
             const tableBody = document.getElementById('pendingDoctorsTable');
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>';
             
             db.collection("users")
                 .where("role", "==", "doctor")
@@ -409,7 +566,7 @@
                 .get()
                 .then(snapshot => {
                     if (snapshot.empty) {
-                        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #718096;">لا توجد طلبات تسجيل جديدة حالياً.</td></tr>';
+                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #718096;">لا توجد طلبات تسجيل جديدة حالياً.</td></tr>';
                         return;
                     }
                     tableBody.innerHTML = '';
@@ -424,45 +581,58 @@
                                 <td><b>د. ${doctor.name || 'غير معروف'}</b></td>
                                 <td>${doctor.phone || 'بدون هاتف'}</td>
                                 <td><span class="status-badge status-approved">${doctor.specialty || 'عام'}</span></td>
-                                <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${clinicsText}">${clinicsText}</td>
+                                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${clinicsText}">${clinicsText}</td>
                                 <td>
-                                    <button class="btn btn-success" onclick="approveDoctor('${docId}', '${doctor.name || ''}')">موافقة وتفعيل ✅</button>
-                                    <button class="btn btn-danger" onclick="rejectDoctor('${docId}', '${doctor.name || ''}')">رفض وتجاهل ❌</button>
+                                    <input type="url" class="image-url-input" id="imgUrl_${docId}" placeholder="رابط صورة الطبيب (اختياري)">
+                                    <span class="image-url-hint">يقبل روابط جوجل درايف أو أي رابط صورة مباشر</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-success" onclick="approveDoctor('${docId}', '${(doctor.name || '').replace(/'/g, "\\'")}')">موافقة وتفعيل ✅</button>
+                                    <button class="btn btn-danger" onclick="rejectDoctor('${docId}', '${(doctor.name || '').replace(/'/g, "\\'")}')">رفض وتجاهل ❌</button>
                                 </td>
                             </tr>
                         `;
                     });
                 }).catch(err => {
                     console.error("Error loading pending doctors: ", err);
-                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الطلبات: ${err.message}</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الطلبات: ${err.message}</td></tr>`;
                 });
         }
 
-        function approveDoctor(docId, docName) {
-            if (!confirm(`هل توافق على تفعيل حساب د. ${docName} بالمنصة؟`)) return;
+        async function approveDoctor(docId, docName) {
+            const confirmed = await showConfirm(`هل توافق على تفعيل حساب د. ${docName} بالمنصة؟`);
+            if (!confirmed) return;
 
-            db.collection("users").doc(docId).update({
-                status: "approved"
-            }).then(() => {
-                alert(`تم تفعيل حساب د. ${docName} بنجاح!`);
-                logActivity("قبول حساب طبيب", `الموافقة على تفعيل حساب د. ${docName}`);
+            const imageInput = document.getElementById(`imgUrl_${docId}`);
+            const rawImageUrl = imageInput ? imageInput.value.trim() : "";
+            const finalImageUrl = convertDriveLink(rawImageUrl);
+
+            const updateData = { status: "approved" };
+            if (finalImageUrl) {
+                updateData.image_url = finalImageUrl;
+            }
+
+            db.collection("users").doc(docId).update(updateData).then(() => {
+                showToast(`تم تفعيل حساب د. ${docName} بنجاح!`, 'success');
+                logActivity("قبول حساب طبيب", `الموافقة على تفعيل حساب د. ${docName}` + (finalImageUrl ? ' مع إضافة صورة شخصية' : ''));
                 loadPendingDoctors();
             }).catch(err => {
-                alert("حدث خطأ أثناء التفعيل: " + err.message);
+                showToast("حدث خطأ أثناء التفعيل: " + err.message, 'error');
             });
         }
 
-        function rejectDoctor(docId, docName) {
-            if (!confirm(`هل أنت متأكد من رفض طلب الطبيب د. ${docName}؟`)) return;
+        async function rejectDoctor(docId, docName) {
+            const confirmed = await showConfirm(`هل أنت متأكد من رفض طلب الطبيب د. ${docName}؟`);
+            if (!confirmed) return;
 
             db.collection("users").doc(docId).update({
                 status: "rejected"
             }).then(() => {
-                alert(`تم رفض الطلب بنجاح.`);
+                showToast(`تم رفض الطلب بنجاح.`, 'success');
                 logActivity("رفض حساب طبيب", `رفض تسجيل د. ${docName}`);
                 loadPendingDoctors();
             }).catch(err => {
-                alert("حدث خطأ أثناء معالجة الطلب: " + err.message);
+                showToast("حدث خطأ أثناء معالجة الطلب: " + err.message, 'error');
             });
         }
 
@@ -506,8 +676,8 @@
                         else if (data.status === 'doctor_approved') {
                             statusBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-weight:bold;">مقبول من الدكتور 📞</span>`;
                             actionButtons = `
-                                <button class="btn btn-success" onclick="updateBookingStatus('${id}', 'confirmed', '${data.patient_name}', '${data.doctor_name}')">تأكيد حجز ✅</button>
-                                <button class="btn btn-danger" onclick="updateBookingStatus('${id}', 'rejected', '${data.patient_name}', '${data.doctor_name}')">إلغاء ❌</button>
+                                <button class="btn btn-success" onclick="updateBookingStatus('${id}', 'confirmed', '${(data.patient_name||'').replace(/'/g,"\\'")}', '${(data.doctor_name||'').replace(/'/g,"\\'")}')">تأكيد حجز ✅</button>
+                                <button class="btn btn-danger" onclick="updateBookingStatus('${id}', 'rejected', '${(data.patient_name||'').replace(/'/g,"\\'")}', '${(data.doctor_name||'').replace(/'/g,"\\'")}')">إلغاء ❌</button>
                             `;
                         } 
                         else if (data.status === 'rejected') {
@@ -524,7 +694,7 @@
                                 <td><b>${data.patient_name || 'مريض'}</b></td>
                                 <td><a href="tel:${data.patient_phone || ''}">${data.patient_phone || 'بدون هاتف'} 📞</a></td>
                                 <td>د. ${data.doctor_name || 'غير معروف'}</td>
-                                <td>${data.clinic_address || 'غير متوفر'}</td>
+                                <td>${data.clinic_address || 'غير متوفر'}${data.clinic_hours ? ' - ' + data.clinic_hours : ''}</td>
                                 <td>${dateStr}</td>
                                 <td>${statusBadge}</td>
                                 <td>${actionButtons}</td>
@@ -537,20 +707,21 @@
                 });
         }
 
-        function updateBookingStatus(bookingId, newStatus, patientName, docName) {
+        async function updateBookingStatus(bookingId, newStatus, patientName, docName) {
             let dbStatus = (newStatus === 'confirmed') ? 'confirmed' : 'rejected';
             let stateText = (newStatus === 'confirmed') ? 'تأكيد وقبول نهائي' : 'إلغاء ورفض';
 
-            if (!confirm(`هل أنت متأكد من ${stateText} هذا الحجز؟`)) return;
+            const confirmed = await showConfirm(`هل أنت متأكد من ${stateText} هذا الحجز؟`);
+            if (!confirmed) return;
 
             db.collection("bookings").doc(bookingId).update({
                 status: dbStatus
             }).then(() => {
-                alert(`تم تحديث حالة الحجز بنجاح!`);
+                showToast(`تم تحديث حالة الحجز بنجاح!`, 'success');
                 logActivity(`${stateText} حجز مريض`, `تعديل حالة الحجز للمريض (${patientName}) مع د. (${docName}) إلى [${dbStatus}]`);
                 loadBookings();
             }).catch(error => {
-                alert("حدث خطأ أثناء التحديث: " + error.message);
+                showToast("حدث خطأ أثناء التحديث: " + error.message, 'error');
             });
         }
 
@@ -586,7 +757,7 @@
                                 <td>${roleText}</td>
                                 <td>${dateStr}</td>
                                 <td>
-                                    <button class="btn btn-danger" onclick="deleteUser('${uid}', '${data.name || ''}')">حذف مستخدم 🗑️</button>
+                                    <button class="btn btn-danger" onclick="deleteUser('${uid}', '${(data.name||'').replace(/'/g,"\\'")}')">حذف مستخدم 🗑️</button>
                                 </td>
                             </tr>
                         `;
@@ -596,15 +767,16 @@
                 });
         }
 
-        function deleteUser(uid, name) {
+        async function deleteUser(uid, name) {
             if (!isSuperAdmin) return;
-            if (!confirm(`❌ هل أنت متأكد تماماً من حذف المستخدم (${name})؟`)) return;
+            const confirmed = await showConfirm(`❌ هل أنت متأكد تماماً من حذف المستخدم (${name})؟`);
+            if (!confirmed) return;
 
             db.collection("users").doc(uid).delete().then(() => {
-                alert(`تم الحذف.`);
+                showToast(`تم الحذف.`, 'success');
                 logActivity("حذف حساب مستخدم", `حذف حساب (${name})`);
                 loadAllUsers();
-            }).catch(err => alert(err.message));
+            }).catch(err => showToast(err.message, 'error'));
         }
 
         // ================= 4. سجل العمليات (ترتيب برمجي آمن) =================
@@ -660,7 +832,7 @@
         }
 
         function handleLogout() {
-            auth.signOut().then(() => {
+            auth.signOut().finally(() => {
                 localStorage.clear();
                 window.location.href = 'login.html';
             });
