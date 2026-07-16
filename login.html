@@ -9,6 +9,7 @@
             --primary: #2a85ff;
             --primary-hover: #0066eb;
             --success: #2ecc71;
+            --danger: #e74c3c;
             --bg: #f4f7f9;
             --text-dark: #2d3748;
             --border-color: #cbd5e0;
@@ -177,6 +178,11 @@
             position: relative;
         }
 
+        .clinic-block.main-clinic {
+            border-color: var(--primary);
+            background: #ebf8ff;
+        }
+
         .remove-clinic-btn {
             position: absolute;
             top: 10px;
@@ -235,9 +241,47 @@
             font-size: 14px;
             line-height: 1.5;
         }
+
+        /* تنبيهات Toast مخصصة (بديل alert() اللي بيظهر دومين الموقع) */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 420px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #2d3748;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: toastIn 0.25s ease;
+            text-align: center;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.info { background: var(--primary); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
+
+    <div class="toast-container" id="toastContainer"></div>
 
     <div class="auth-container">
         <div class="logo-area">
@@ -289,30 +333,22 @@
 
             <div id="patientSection" class="dynamic-section active">
                 <div class="form-group">
-                    <label>المحافظة</label>
-                    <select id="patientGov" class="form-control" onchange="populateCities(this.value)" required>
-                        <option value="">اختر المحافظة...</option>
-                    </select>
+                    <label>السن</label>
+                    <input type="number" id="patientAge" class="form-control" placeholder="مثال: 25" min="0" max="120" required>
                 </div>
                 <div class="form-group">
-                    <label>المدينة / المركز</label>
-                    <select id="patientCity" class="form-control" required>
-                        <option value="">اختر المدينة...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>القرية / الشارع (كتابة يدوية)</label>
-                    <input type="text" id="patientVillage" class="form-control" placeholder="اكتب القرية أو اسم المنطقة بالتفصيل">
+                    <label>العنوان بالتفصيل</label>
+                    <input type="text" id="patientAddress" class="form-control" placeholder="مثال: القاهرة - مدينة نصر - شارع مصطفى النحاس" required>
                 </div>
             </div>
 
             <div id="doctorSection" class="dynamic-section">
                 <div class="alert-info">
-                    💡 يرجى العلم أنه عند إتمام تسجيل الحساب، سيتم إرساله للإدارة للمراجعة والموافقة، ولن تتمكن من الدخول للوحة التحكم حتى تكتمل الموافقة الإدارية.
+                    💡 يرجى العلم أنه عند إتمام تسجيل الحساب، سيتم إرساله للإدارة للمراجعة والموافقة، ولن تتمكن من الدخول للوحة التحكم حتى تكتمل الموافقة الإدارية. الصورة الشخصية هيتم إضافتها بمعرفة الإدارة أثناء المراجعة.
                 </div>
                 <div class="form-group">
                     <label>التخصص الطبي</label>
-                    <select id="doctorSpecialty" class="form-control">
+                    <select id="doctorSpecialty" class="form-control" onchange="toggleOtherSpecialtyField()">
                         <option value="">اختر التخصص...</option>
                         <option value="أسنان">أسنان 🦷</option>
                         <option value="باطنة">باطنة 🩺</option>
@@ -322,16 +358,16 @@
                         <option value="عظام">عظام 🦴</option>
                         <option value="رمد">رمد / عيون 👁️</option>
                         <option value="مخ وأعصاب">مخ وأعصاب 🧠</option>
-                        <option value="أخرى">تخصصات أخرى</option>
+                        <option value="أخرى">تخصص آخر (اكتبه بنفسك) ✏️</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>الصورة الشخصية</label>
-                    <input type="file" id="doctorImage" class="form-control" accept="image/*" onchange="convertImageToBase64()">
-                    <input type="hidden" id="doctorImageBase64" value="">
+                <div class="form-group" id="otherSpecialtyGroup" style="display:none;">
+                    <label>اكتب التخصص</label>
+                    <input type="text" id="doctorSpecialtyOther" class="form-control" placeholder="مثال: طب نفسي">
                 </div>
 
                 <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 معلومات العيادات ومواعيد العمل</h3>
+                <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">اكتب عنوان عيادتك الرئيسية أولاً، وبعد كده تقدر تضيف أي عيادات إضافية، كل عيادة ليها عنوانها ومواعيدها الخاصة ورابط خريطتها بشكل منفصل تماماً عن باقي العيادات.</p>
                 <div id="clinicsContainer">
                     </div>
                 <button type="button" class="add-clinic-btn" onclick="addClinicBlock()">➕ إضافة عيادة أخرى</button>
@@ -359,60 +395,21 @@ const firebaseConfig = {
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const egyptData = {
-            "القاهرة": ["مصر الجديدة", "مدينة نصر", "شبرا", "المعادي", "حلوان", "التجمع الخامس", "وسط البلد"],
-            "الجيزة": ["الدقي", "المهندسين", "الهرم", "فيصل", "6 أكتوبر", "الشيخ زايد", "العجوزة", "الوراق"],
-            "الإسكندرية": ["سموحة", "المنتزه", "الرمل", "العجمي", "وسط البلد", "سيدي بشر"],
-            "القليوبية": ["بنها", "شبرا الخيمة", "قليوب", "الخانكة", "الخصوص", "قها", "طوخ"],
-            "الشرقية": ["الزقازيق", "العاشر من رمضان", "بلبيس", "منيا القمح", "أبو حماد", "فاقوس"],
-            "الغربية": ["طنطا", "المحلة الكبرى", "كفر الزيات", "زفتى", "بسيون", "سمنود"],
-            "الدقهلية": ["المنصورة", "ميت غمر", "السنبلاوين", "دكرنس", "طلخا", "بلقاس"],
-            "المنوفية": ["شبين الكوم", "أشمون", "منوف", "مدينة السادات", "قويسنا", "الباجور"],
-            "البحيرة": ["دمنهور", "كفر الدوار", "كوم حمادة", "إيتاي البارود", "رشيد", "أبو المطامير"],
-            "كفر الشيخ": ["كفر الشيخ", "دسوق", "قلين", "فوه", "مطوبس", "سيدي سالم"],
-            "دمياط": ["دمياط", "دمياط الجديدة", "رأس البر", "فارسكور", "الزرقا"],
-            "بورسعيد": ["حي الشرق", "حي العرب", "بورفؤاد", "حي الضواحي"],
-            "الإسماعيلية": ["الإسماعيلية", "التل الكبير", "فايد", "القنطرة شرق", "القنطرة غرب"],
-            "السويس": ["حي السويس", "حي الأربعين", "حي فيصل", "حي عتاقة"],
-            "الفيوم": ["الفيوم", "سنورس", "طامية", "إطسا", "أبشواي"],
-            "بني سويف": ["بني سويف", "الواسطى", "ببا", "الفشن", "ناصر", "سمسطا"],
-            "المنيا": ["المنيا", "ملوي", "بني مزار", "مغاغة", "سمالوط", "أبو قرقاص"],
-            "أسيوط": ["أسيوط", "ديروط", "منفلوط", "القوصية", "أبو تيج", "صدفا"],
-            "سوهاج": ["سوهاج", "طهطا", "جرجا", "أخميم", "البلينا", "المراغة"],
-            "قنا": ["قنا", "نجع حمادي", "دشنا", "أبو تشت", "قوص", "نقادة"],
-            "الأقصر": ["الأقصر", "إسنا", "أرمنت", "القرنة"],
-            "أسوان": ["أسوان", "كوم أمبو", "إدفو", "نصر النوبة"],
-            "البحر الأحمر": ["الغردقة", "سفاجا", "القصير", "مرسى علم", "شلاتين"],
-            "الوادي الجديد": ["الخارجة", "الداخلة", "الفرافرة", "باريس"],
-            "مطروح": ["مرسى مطروح", "الضبعة", "العلمين", "سيوة"],
-            "شمال سيناء": ["العريش", "الشيخ زويد", "رفح", "بئر العبد"],
-            "جنوب سيناء": ["شرم الشيخ", "طور سيناء", "دهب", "نويبع", "رأس سدر"]
-        };
+        // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
+        function showToast(message, type) {
+            type = type || 'info';
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
 
         window.onload = function() {
-            const govSelect = document.getElementById('patientGov');
-            for (let gov in egyptData) {
-                let opt = document.createElement('option');
-                opt.value = gov;
-                opt.innerHTML = gov;
-                govSelect.appendChild(opt);
-            }
             addClinicBlock();
             toggleRequiredFields('patient'); // تفعيل متطلبات المريض فقط في البداية
         };
-
-        function populateCities(govValue) {
-            const citySelect = document.getElementById('patientCity');
-            citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
-            if (govValue && egyptData[govValue]) {
-                egyptData[govValue].forEach(city => {
-                    let opt = document.createElement('option');
-                    opt.value = city;
-                    opt.innerHTML = city;
-                    citySelect.appendChild(opt);
-                });
-            }
-        }
 
         function switchTab(mode) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -454,19 +451,37 @@ const firebaseConfig = {
         // دالة هامة لتعطيل الـ required عن الحقول المخفية لضمان عمل الزرار فوراً
         function toggleRequiredFields(role) {
             if (role === 'patient') {
-                document.getElementById('patientGov').required = true;
-                document.getElementById('patientCity').required = true;
+                document.getElementById('patientAge').required = true;
+                document.getElementById('patientAddress').required = true;
 
                 document.getElementById('doctorSpecialty').required = false;
+                document.getElementById('doctorSpecialtyOther').required = false;
                 document.querySelectorAll('.clinic-address').forEach(el => el.required = false);
                 document.querySelectorAll('.clinic-hours').forEach(el => el.required = false);
             } else {
-                document.getElementById('patientGov').required = false;
-                document.getElementById('patientCity').required = false;
+                document.getElementById('patientAge').required = false;
+                document.getElementById('patientAddress').required = false;
 
                 document.getElementById('doctorSpecialty').required = true;
+                toggleOtherSpecialtyField();
                 document.querySelectorAll('.clinic-address').forEach(el => el.required = true);
                 document.querySelectorAll('.clinic-hours').forEach(el => el.required = true);
+            }
+        }
+
+        // إظهار/إخفاء حقل "اكتب التخصص" لما يختار "أخرى"
+        function toggleOtherSpecialtyField() {
+            const select = document.getElementById('doctorSpecialty');
+            const group = document.getElementById('otherSpecialtyGroup');
+            const otherInput = document.getElementById('doctorSpecialtyOther');
+            const isDoctor = document.getElementById('selectedRole').value === 'doctor';
+
+            if (select.value === 'أخرى') {
+                group.style.display = 'block';
+                otherInput.required = isDoctor;
+            } else {
+                group.style.display = 'none';
+                otherInput.required = false;
             }
         }
 
@@ -475,16 +490,18 @@ const firebaseConfig = {
             clinicCount++;
             const container = document.getElementById('clinicsContainer');
             const block = document.createElement('div');
-            block.className = 'clinic-block';
+            const isMain = clinicCount === 1;
+            block.className = isMain ? 'clinic-block main-clinic' : 'clinic-block';
             block.id = `clinic_block_${clinicCount}`;
             
             // جعل حقول العيادة إجبارية فقط لو الحساب الحالي "دكتور"
             const isDoctor = document.getElementById('selectedRole').value === 'doctor';
             const reqAttr = isDoctor ? 'required' : '';
+            const blockTitle = isMain ? 'العيادة الرئيسية 🏥' : `عيادة إضافية رقم (${clinicCount})`;
 
             block.innerHTML = `
-                ${clinicCount > 1 ? `<button type="button" class="remove-clinic-btn" onclick="removeClinicBlock(${clinicCount})">حذف ❌</button>` : ''}
-                <div style="font-weight: bold; margin-bottom: 10px; color: #718096;">العيادة رقم (${clinicCount})</div>
+                ${!isMain ? `<button type="button" class="remove-clinic-btn" onclick="removeClinicBlock(${clinicCount})">حذف ❌</button>` : ''}
+                <div style="font-weight: bold; margin-bottom: 10px; color: ${isMain ? 'var(--primary)' : '#718096'};">${blockTitle}</div>
                 <div class="form-group">
                     <label>العنوان بالتفصيل</label>
                     <input type="text" class="form-control clinic-address" placeholder="مثال: شارع الجلاء بجوار صيدلية النيل" ${reqAttr}>
@@ -494,7 +511,7 @@ const firebaseConfig = {
                     <input type="url" class="form-control clinic-map" placeholder="ضع رابط مشاركة الموقع الجغرافي">
                 </div>
                 <div class="form-group">
-                    <label>مواعيد العمل</label>
+                    <label>مواعيد العمل (مثال: صباحي أو مسائي)</label>
                     <input type="text" class="form-control clinic-hours" placeholder="مثال: السبت والإثنين من 5 م لـ 10 م" ${reqAttr}>
                 </div>
             `;
@@ -504,16 +521,6 @@ const firebaseConfig = {
         function removeClinicBlock(id) {
             const block = document.getElementById(`clinic_block_${id}`);
             if (block) block.remove();
-        }
-
-        function convertImageToBase64() {
-            const file = document.getElementById('doctorImage').files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = function() {
-                document.getElementById('doctorImageBase64').value = reader.result;
-            };
-            reader.readAsDataURL(file);
         }
 
         // ================= معالجة عملية إنشاء الحساب (Register) =================
@@ -542,13 +549,15 @@ const firebaseConfig = {
                 };
 
                 if (role === 'patient') {
-                    userData.governorate = document.getElementById('patientGov').value;
-                    userData.city = document.getElementById('patientCity').value;
-                    userData.village = document.getElementById('patientVillage').value.trim();
+                    userData.age = parseInt(document.getElementById('patientAge').value, 10);
+                    userData.address = document.getElementById('patientAddress').value.trim();
                 } 
                 else if (role === 'doctor') {
-                    userData.specialty = document.getElementById('doctorSpecialty').value;
-                    userData.image_url = document.getElementById('doctorImageBase64').value || "";
+                    const specialtySelect = document.getElementById('doctorSpecialty').value;
+                    const specialtyOther = document.getElementById('doctorSpecialtyOther').value.trim();
+                    userData.specialty = (specialtySelect === 'أخرى' && specialtyOther) ? specialtyOther : specialtySelect;
+                    // الصورة مش بتترفع هنا؛ الإدارة هي اللي هتضيف رابط الصورة (من جوجل درايف مثلاً) وقت المراجعة والموافقة
+                    userData.image_url = "";
                     // ملحوظة: الحالة هنا لازم تتطابق مع الحالة اللي بتدور عليها لوحة الأدمن (admin.html -> loadPendingDoctors)
                     userData.status = "pending";
 
@@ -571,13 +580,13 @@ const firebaseConfig = {
                 await db.collection("users").doc(uid).set(userData);
 
                 if (role === 'patient') {
-                    alert("تهانينا! تم إنشاء حسابك بنجاح كمريض.");
+                    showToast("تهانينا! تم إنشاء حسابك بنجاح كمريض.", 'success');
                     localStorage.setItem('user_id', uid);
                     localStorage.setItem('user_name', name);
                     localStorage.setItem('user_role', 'patient');
-                    window.location.href = 'patient.html'; 
+                    setTimeout(() => { window.location.href = 'patient.html'; }, 1000);
                 } else {
-                    alert("تم تسجيل حسابك بنجاح! حسابك بانتظار موافقة الإدارة لتتمكن من تسجيل الدخول.");
+                    showToast("تم تسجيل حسابك بنجاح! حسابك بانتظار موافقة الإدارة لتتمكن من تسجيل الدخول.", 'success');
                     auth.signOut();
                     switchTab('login');
                 }
@@ -585,9 +594,9 @@ const firebaseConfig = {
             } catch (error) {
                 console.error(error);
                 if (error.code === 'auth/email-already-in-use') {
-                    alert("رقم الهاتف هذا مسجل به حساب بالفعل!");
+                    showToast("رقم الهاتف هذا مسجل به حساب بالفعل!", 'error');
                 } else {
-                    alert("حدث خطأ أثناء التسجيل: " + error.message);
+                    showToast("حدث خطأ أثناء التسجيل: " + error.message, 'error');
                 }
             }
         }
@@ -617,18 +626,18 @@ const firebaseConfig = {
                     // 1. التحقق لو الحساب "أدمن"
                     if (userData.role === 'admin') {
                         localStorage.setItem('user_role', 'admin');
-                        alert("أهلاً بك يا سيادة المدير! جاري التوجيه للوحة التحكم...");
-                        window.location.href = 'admin.html';
+                        showToast("أهلاً بك يا سيادة المدير! جاري التوجيه للوحة التحكم...", 'success');
+                        setTimeout(() => { window.location.href = 'admin.html'; }, 800);
                     } 
                     // 2. التحقق لو الحساب "دكتور"
                     else if (userData.role === 'doctor') {
                         if (userData.status === 'pending') {
-                            alert("عذراً، حسابك لا يزال قيد مراجعة وتفعيل الإدارة.");
+                            showToast("عذراً، حسابك لا يزال قيد مراجعة وتفعيل الإدارة.", 'error');
                             auth.signOut();
                             return;
                         }
                         if (userData.status === 'rejected') {
-                            alert("عذراً، تم رفض طلب تسجيلك من قبل الإدارة.");
+                            showToast("عذراً، تم رفض طلب تسجيلك من قبل الإدارة.", 'error');
                             auth.signOut();
                             return;
                         }
@@ -642,12 +651,12 @@ const firebaseConfig = {
                     }
                 } else {
                     // حماية إضافية في حال لم يجد المستند في Firestore
-                    alert("تم تسجيل الدخول بنجاح، ولكن لم يتم العثور على بيانات الصلاحيات الخاصة بك في قاعدة البيانات.");
+                    showToast("تم تسجيل الدخول بنجاح، ولكن لم يتم العثور على بيانات الصلاحيات الخاصة بك في قاعدة البيانات.", 'error');
                 }
 
             } catch (error) {
                 console.error(error);
-                alert("بيانات الدخول غير صحيحة، يرجى التأكد من الهاتف وكلمة المرور.");
+                showToast("بيانات الدخول غير صحيحة، يرجى التأكد من الهاتف وكلمة المرور.", 'error');
             }
         }
     </script>
