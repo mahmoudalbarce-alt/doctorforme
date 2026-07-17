@@ -32,11 +32,13 @@
         header {
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 2px solid #edf2f7; padding-bottom: 15px; margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         h2 { margin: 0; color: var(--primary-color); }
         
         .header-actions {
-            display: flex; gap: 10px; align-items: center;
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
         }
 
         .logout-btn {
@@ -58,8 +60,14 @@
             font-weight: 600; border: 1px dashed var(--primary-color);
         }
 
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         table {
             width: 100%; border-collapse: collapse; margin-top: 20px; text-align: right;
+            min-width: 600px;
         }
 
         th, td { padding: 15px; border-bottom: 1px solid #edf2f7; }
@@ -83,21 +91,76 @@
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+            padding: 15px;
         }
         .modal-content {
-            background-color: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: right;
+            background-color: #fff; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; text-align: right;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .modal-content textarea { width: 100%; height: 100px; padding: 10px; margin-top: 10px; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; resize: none; box-sizing: border-box; }
         .modal-content input[type="password"] { width: 100%; padding: 12px; margin-top: 10px; border: 2px solid #edf2f7; border-radius: 8px; outline: none; box-sizing: border-box; font-size: 15px; }
         .modal-content input[type="password"]:focus { border-color: var(--primary-color); }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; flex-wrap: wrap; }
         .modal-content label { display: block; font-weight: bold; color: #4a5568; margin-top: 10px; }
         
         .clinic-tag { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+
+        /* تنبيهات Toast مخصصة (بديل alert() اللي بيظهر دومين الموقع) */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 420px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #2d3748;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: toastIn 0.25s ease;
+            text-align: center;
+        }
+
+        .toast.success { background: var(--success-color); }
+        .toast.error { background: var(--danger-color); }
+        .toast.info { background: var(--primary-color); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* دعم شاشات الهاتف */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .dashboard-container { padding: 15px; margin: 10px auto; border-radius: 12px; }
+            header { flex-direction: column; align-items: flex-start; }
+            .header-actions { width: 100%; }
+            .password-btn, .logout-btn { flex: 1; text-align: center; }
+            h2 { font-size: 16px; }
+            .audio-notice { font-size: 12px; padding: 8px 10px; }
+            table { font-size: 12px; }
+            th, td { padding: 8px; }
+            .modal-content { padding: 18px; }
+        }
     </style>
 </head>
 <body>
+
+    <div class="toast-container" id="toastContainer"></div>
 
     <div class="dashboard-container">
         <header>
@@ -112,21 +175,23 @@
             📢 نظام الإشعار الصوتي نشط تلقائياً. يرجى الضغط في أي مكان داخل الصفحة لضمان عمل رنين التنبيه فور وصول حجز جديد.
         </div>
         
-        <table id="bookingsTable">
-            <thead>
-                <tr>
-                    <th>اسم المريض</th>
-                    <th>رقم الهاتف</th>
-                    <th>العيادة / الفرع المحجوز</th>
-                    <th>تاريخ الطلب</th>
-                    <th>الحالة الحالية</th>
-                    <th>القرار والإجراء</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="6" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="bookingsTable">
+                <thead>
+                    <tr>
+                        <th>اسم المريض</th>
+                        <th>رقم الهاتف</th>
+                        <th>العيادة / الفرع المحجوز</th>
+                        <th>تاريخ الطلب</th>
+                        <th>الحالة الحالية</th>
+                        <th>القرار والإجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="6" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div id="rejectModal" class="modal">
@@ -159,14 +224,25 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <script>
+        // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
+        function showToast(message, type) {
+            type = type || 'info';
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
         // التحقق من أن المستخدم طبيب ومسجل دخول بالكامل
         const currentRole = localStorage.getItem('user_role');
         const doctorId = localStorage.getItem('user_id'); 
         const doctorName = localStorage.getItem('user_name');
 
         if (!currentRole || currentRole !== 'doctor') {
-            alert("برجاء تسجيل الدخول أولاً كطبيب للوصول للوحة التحكم.");
-            window.location.href = 'login.html';
+            showToast("برجاء تسجيل الدخول أولاً كطبيب للوصول للوحة التحكم.", 'error');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1200);
         } else {
             document.getElementById('doctorWelcome').innerText = `دكتور: ${doctorName} - الحجوزات الواردة`;
         }
@@ -257,12 +333,13 @@
                       const bookingDate = booking.created_at ? (booking.created_at.seconds ? new Date(booking.created_at.seconds * 1000).toLocaleString('ar-EG') : new Date(booking.created_at).toLocaleString('ar-EG')) : 'غير محدد';  
                       // قراءة عنوان العيادة المحجوزة المبعوث من شاشة المريض
                       const selectedClinic = booking.clinic_address || "العيادة الرئيسية / غير محدد";
+                      const clinicHours = booking.clinic_hours ? ` (${booking.clinic_hours})` : '';
 
                       const row = `
                           <tr>
                               <td><strong>${booking.patient_name}</strong></td>
                               <td>${booking.patient_phone}</td>
-                              <td><span class="clinic-tag">🏥 ${selectedClinic}</span></td>
+                              <td><span class="clinic-tag">🏥 ${selectedClinic}${clinicHours}</span></td>
                               <td style="font-size:12px; color:#718096;">${bookingDate}</td>
                               <td>${statusBadge}</td>
                               <td>${actionButtons}</td>
@@ -290,9 +367,9 @@
                 await db.collection("bookings").doc(id).update({
                     status: 'doctor_approved'
                 });
-                alert("تمت موافقتك بنجاح! تم إرسال الطلب الآن إلى لوحة الإدارة لإجراء التنسيق المالي والاتفاق الهاتفي مع المريض.");
+                showToast("تمت موافقتك بنجاح! تم إرسال الطلب الآن إلى لوحة الإدارة لإجراء التنسيق المالي والاتفاق الهاتفي مع المريض.", 'success');
             } catch (error) {
-                alert("حدث خطأ أثناء التحديث: " + error.message);
+                showToast("حدث خطأ أثناء التحديث: " + error.message, 'error');
             }
         }
 
@@ -328,7 +405,7 @@
         document.getElementById('submitRejectBtn').addEventListener('click', async () => {
             const reason = document.getElementById('rejectReasonInput').value.trim();
             if (!reason) {
-                alert("برجاء إدخال سبب الرفض أولاً.");
+                showToast("برجاء إدخال سبب الرفض أولاً.", 'error');
                 return;
             }
 
@@ -339,9 +416,9 @@
                     rejection_reason: reason
                 });
                 closeRejectModal();
-                alert("تم رفض طلب الحجز بنجاح، وتحديث شاشة المريض بالسبب.");
+                showToast("تم رفض طلب الحجز بنجاح، وتحديث شاشة المريض بالسبب.", 'success');
             } catch (error) {
-                alert("حدث خطأ: " + error.message);
+                showToast("حدث خطأ: " + error.message, 'error');
             }
         });
 
@@ -362,18 +439,18 @@
             const newPassword = document.getElementById('newPasswordInput').value.trim();
 
             if (!currentPass) {
-                alert("برجاء إدخال كلمة السر الحالية للتحقق من هويتك.");
+                showToast("برجاء إدخال كلمة السر الحالية للتحقق من هويتك.", 'error');
                 return;
             }
 
             if (newPassword.length < 6) {
-                alert("برجاء إدخال كلمة سر صالحة وقوية لا تقل عن 6 أحرف أو أرقام.");
+                showToast("برجاء إدخال كلمة سر صالحة وقوية لا تقل عن 6 أحرف أو أرقام.", 'error');
                 return;
             }
 
             const user = auth.currentUser;
             if (!user) {
-                alert("انتهت جلسة العمل الحالية، يرجى إعادة تسجيل الدخول لتغيير كلمة السر.");
+                showToast("انتهت جلسة العمل الحالية، يرجى إعادة تسجيل الدخول لتغيير كلمة السر.", 'error');
                 return;
             }
 
@@ -383,12 +460,12 @@
                 await user.reauthenticateWithCredential(credential);
                 await user.updatePassword(newPassword);
 
-                alert("🎉 تم تحديث كلمة السر بنجاح! سيتم تسجيل خروجك الآن لتسجيل الدخول بكلمة السر الجديدة.");
+                showToast("🎉 تم تحديث كلمة السر بنجاح! سيتم تسجيل خروجك الآن.", 'success');
                 closePasswordModal();
-                logout();
+                setTimeout(() => { logout(); }, 1200);
             } catch (error) {
                 console.error("Change password error:", error);
-                alert("فشل التحديث: يرجى التأكد من كلمة السر الحالية. (" + error.message + ")");
+                showToast("فشل التحديث: يرجى التأكد من كلمة السر الحالية.", 'error');
             }
         }
 
