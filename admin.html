@@ -370,10 +370,10 @@
     <div class="container">
 
         <div class="admin-tabs">
-            <button class="tab-btn active" onclick="switchTab('requests')">طلبات تسجيل الأطباء 📩</button>
-            <button class="tab-btn" onclick="switchTab('bookings')">إدارة حجز المواعيد 📅</button>
-            <button class="tab-btn" onclick="switchTab('users')">قاعدة بيانات المستخدمين 👥</button>
-            <button class="tab-btn" onclick="switchTab('logs')">سجل عمليات النظام 📝</button>
+            <button class="tab-btn active" data-tab="requests" onclick="switchTab('requests', this)">طلبات تسجيل الأطباء 📩</button>
+            <button class="tab-btn" data-tab="bookings" onclick="switchTab('bookings', this)">إدارة حجز المواعيد 📅</button>
+            <button class="tab-btn" data-tab="users" onclick="switchTab('users', this)">قاعدة بيانات المستخدمين 👥</button>
+            <button class="tab-btn" data-tab="logs" onclick="switchTab('logs', this)">سجل عمليات النظام 📝</button>
         </div>
 
         <div style="background-color:#eef5ff; color:#2a85ff; padding:10px 15px; border-radius:8px; font-size:13px; text-align:center; margin-bottom:20px; font-weight:600; border:1px dashed var(--primary);">
@@ -507,6 +507,7 @@
 
         let activeAdminName = "مسؤول النظام";
         let isSuperAdmin = false;
+        let isBookingsOnlyAdmin = false; // أدمن مُرقّى من مريض، صلاحيته تأكيد الحجوزات فقط
 
         // ================= نظام الإشعار الصوتي لوصول طلبات جديدة =================
         const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
@@ -642,7 +643,7 @@
             return trimmed; // مش رابط جوجل درايف بالصيغة المعروفة، يترجع زي ما هو
         }
 
-        window.onload = function() {
+        window.onload = async function() {
             const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role');
 
@@ -658,32 +659,57 @@
                 document.getElementById('adminRoleBadge').style.background = "#9b59b6";
             }
 
-            // جلب اسم الأدمن مع تأمين عدم التسبب في تعليق الصفحة إذا لم يعثر عليه
-            db.collection("users").doc(userId).get().then(doc => {
-                if (doc.exists && doc.data().name) {
-                    activeAdminName = doc.data().name;
+            // جلب بيانات الأدمن (الاسم ونوع الصلاحية) قبل تحميل باقي الصفحة
+            try {
+                const doc = await db.collection("users").doc(userId).get();
+                if (doc.exists) {
+                    if (doc.data().name) activeAdminName = doc.data().name;
+                    if (doc.data().admin_scope === 'bookings_only') {
+                        isBookingsOnlyAdmin = true;
+                    }
                 }
-                document.getElementById('activeAdminName').innerText = `الأدمن النشط: ${activeAdminName} 👤`;
-            }).catch(err => {
+            } catch (err) {
                 console.warn("Could not load admin name, using default:", err);
-                document.getElementById('activeAdminName').innerText = `الأدمن النشط: ${activeAdminName} 👤`;
-            });
+            }
+            document.getElementById('activeAdminName').innerText = `الأدمن النشط: ${activeAdminName} 👤`;
 
-            // تحميل التبويب الأول مباشرة بصورة آمنة
-            loadPendingDoctors();
+            if (isBookingsOnlyAdmin) {
+                applyBookingsOnlyRestrictions();
+            } else {
+                // تحميل التبويب الأول مباشرة بصورة آمنة
+                loadPendingDoctors();
+                // بدء الاستماع اللحظي لتشغيل التنبيه الصوتي عند وصول طلبات تسجيل أطباء جديدة
+                listenForPendingDoctorsAlerts();
+            }
 
-            // بدء الاستماع اللحظي لتشغيل التنبيه الصوتي عند وصول طلبات جديدة
-            listenForPendingDoctorsAlerts();
+            // كل الأدمنز (بمن فيهم أدمن الحجوزات فقط) محتاجين تنبيه الحجوزات
             listenForBookingAlerts();
         };
 
-        function switchTab(tabName) {
+        // تقييد واجهة الأدمن المُرقّى من مريض على تبويب الحجوزات فقط
+        function applyBookingsOnlyRestrictions() {
+            document.getElementById('adminRoleBadge').innerText = "أدمن حجوزات فقط 📅";
+            document.getElementById('adminRoleBadge').style.background = "#3498db";
+
+            const bookingsBtn = document.querySelector(".admin-tabs .tab-btn[data-tab='bookings']");
+            switchTab('bookings', bookingsBtn);
+
+            document.querySelectorAll('.admin-tabs .tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab') !== 'bookings') {
+                    btn.style.display = 'none';
+                }
+            });
+        }
+
+        function switchTab(tabName, btnEl) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-            event.target.classList.add('active');
+            const targetBtn = btnEl || document.querySelector(".admin-tabs .tab-btn[data-tab='" + tabName + "']");
+            if (targetBtn) targetBtn.classList.add('active');
 
             if (tabName === 'requests') {
+                if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
                 document.getElementById('requestsTab').classList.add('active');
                 loadPendingDoctors();
                 pendingDoctorsHasNewAlert = false;
@@ -694,9 +720,11 @@
                 bookingsHasNewAlert = false;
                 stopAlertSoundIfClear();
             } else if (tabName === 'users') {
+                if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
                 document.getElementById('usersTab').classList.add('active');
                 loadAllUsers();
             } else if (tabName === 'logs') {
+                if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
                 document.getElementById('logsTab').classList.add('active');
                 loadActivityLogs();
             }
@@ -894,12 +922,32 @@
                             }
                         }
                         
-                        let roleText = data.role === 'doctor' ? '👨‍⚕️ دكتور' : (data.role === 'patient' ? '🧑‍🦽 مريض' : '🔑 مشرف');
+                        let roleText;
+                        if (data.role === 'doctor') {
+                            roleText = '👨‍⚕️ دكتور';
+                        } else if (data.role === 'patient') {
+                            roleText = '🧑‍🦽 مريض';
+                        } else if (data.role === 'admin' && data.admin_scope === 'bookings_only') {
+                            roleText = '📅 أدمن حجوزات فقط';
+                        } else {
+                            roleText = '🔑 مشرف عام';
+                        }
 
-                        // حماية حسابات المشرفين من الحذف عن طريق هذه الواجهة
-                        const actionCell = (data.role === 'admin')
-                            ? `<span style="color:#a0aec0; font-size:12px;">🔒 حساب محمي</span>`
-                            : `<button class="btn btn-danger" onclick="deleteUser('${uid}', '${(data.name||'').replace(/'/g,"\\'")}')">حذف مستخدم 🗑️</button>`;
+                        const escapedName = (data.name || '').replace(/'/g, "\\'");
+                        let actionCell = '';
+
+                        if (data.role === 'patient') {
+                            actionCell = `
+                                <button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button>
+                                <button class="btn btn-primary" onclick="promoteToBookingsAdmin('${uid}', '${escapedName}')">ترقية لأدمن حجوزات ⬆️</button>
+                            `;
+                        } else if (data.role === 'doctor') {
+                            actionCell = `<button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button>`;
+                        } else if (data.role === 'admin' && data.admin_scope === 'bookings_only') {
+                            actionCell = `<button class="btn" style="background:#edf2f7; color:#333;" onclick="demoteToPatient('${uid}', '${escapedName}')">إرجاع لحساب مريض ⬇️</button>`;
+                        } else {
+                            actionCell = `<span style="color:#a0aec0; font-size:12px;">🔒 حساب محمي</span>`;
+                        }
 
                         tableBody.innerHTML += `
                             <tr>
@@ -914,6 +962,36 @@
                 }).catch(err => {
                     tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
                 });
+        }
+
+        // ترقية مريض لحساب "أدمن حجوزات فقط" - يقدر يأكد حجوزات المرضى بس، ومش هيظهر في قائمة المرضى تاني
+        async function promoteToBookingsAdmin(uid, name) {
+            const confirmed = await showConfirm(`هل تريد ترقية (${name}) لحساب أدمن بصلاحية تأكيد حجوزات المرضى فقط؟ لن يتمكن بعدها من استخدام حسابه كمريض، وسيختفي من قائمة المرضى.`);
+            if (!confirmed) return;
+
+            db.collection("users").doc(uid).update({
+                role: 'admin',
+                admin_scope: 'bookings_only'
+            }).then(() => {
+                showToast(`تم ترقية (${name}) لأدمن حجوزات بنجاح.`, 'success');
+                logActivity('ترقية مستخدم لأدمن حجوزات', `ترقية (${name}) لصلاحية تأكيد الحجوزات فقط`);
+                loadAllUsers();
+            }).catch(err => showToast(err.message, 'error'));
+        }
+
+        // إرجاع أدمن الحجوزات لحساب مريض عادي (بياناته القديمة كمريض بتفضل محفوظة)
+        async function demoteToPatient(uid, name) {
+            const confirmed = await showConfirm(`هل تريد إرجاع (${name}) لحساب مريض عادي وإلغاء صلاحيات الأدمن؟`);
+            if (!confirmed) return;
+
+            db.collection("users").doc(uid).update({
+                role: 'patient',
+                admin_scope: firebase.firestore.FieldValue.delete()
+            }).then(() => {
+                showToast(`تم إرجاع (${name}) لحساب مريض بنجاح.`, 'success');
+                logActivity('إرجاع أدمن حجوزات لمريض', `إلغاء صلاحيات الأدمن عن (${name})`);
+                loadAllUsers();
+            }).catch(err => showToast(err.message, 'error'));
         }
 
         async function deleteUser(uid, name) {
