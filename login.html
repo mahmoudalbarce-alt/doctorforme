@@ -415,6 +415,43 @@ const firebaseConfig = {
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // حفظ جلسة الدخول محلياً على الجهاز عشان المستخدم يدخل تلقائياً في المرة الجاية
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
+            console.warn("Persistence setup failed:", err);
+        });
+
+        // ================= التحقق التلقائي لو فيه جلسة دخول محفوظة بالفعل =================
+        let autoRedirectChecked = false;
+        auth.onAuthStateChanged(async (user) => {
+            if (autoRedirectChecked) return; // نتأكد إننا منعملش التوجيه أكتر من مرة
+            autoRedirectChecked = true;
+
+            if (!user) return; // مفيش جلسة محفوظة، يفضل يشوف فورم الدخول عادي
+
+            try {
+                const docSnap = await db.collection("users").doc(user.uid).get();
+                if (!docSnap.exists) return;
+
+                const userData = docSnap.data();
+                localStorage.setItem('user_id', user.uid);
+                localStorage.setItem('user_name', userData.name);
+
+                if (userData.role === 'admin') {
+                    localStorage.setItem('user_role', 'admin');
+                    window.location.href = 'admin.html';
+                } else if (userData.role === 'doctor' && userData.status === 'approved') {
+                    localStorage.setItem('user_role', 'doctor');
+                    window.location.href = 'doctor.html';
+                } else if (userData.role === 'patient') {
+                    localStorage.setItem('user_role', 'patient');
+                    window.location.href = 'patient.html';
+                }
+                // لو الدكتور لسه pending أو rejected، نسيبه في صفحة الدخول عادي لحد ما يتفعل حسابه
+            } catch (err) {
+                console.error("Auto-login check failed:", err);
+            }
+        });
+
         // ================= بيانات المحافظات والمدن المصرية =================
         const egyptData = {
             "القاهرة": ["مصر الجديدة", "مدينة نصر", "شبرا", "المعادي", "حلوان", "التجمع الخامس", "وسط البلد"],
@@ -654,6 +691,7 @@ const firebaseConfig = {
                 // 1. إنشاء حساب المصادقة في Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
+                autoRedirectChecked = true; // منعاً لتكرار نفس عملية التوجيه من كاشف الجلسة المحفوظة
 
                 // تحضير كائن البيانات الأساسية
                 let userData = {
@@ -743,6 +781,7 @@ const firebaseConfig = {
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
+                autoRedirectChecked = true; // منعاً لتكرار نفس عملية التوجيه من كاشف الجلسة المحفوظة
 
                 // جلب بيانات المستخدم من Firestore للتحقق من الرول
                 const docSnap = await db.collection("users").doc(uid).get();
