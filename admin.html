@@ -301,6 +301,58 @@
             cursor: pointer;
             font-weight: bold;
         }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-responsive table {
+            min-width: 650px;
+        }
+
+        /* دعم شاشات الهاتف */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .header h1 {
+                font-size: 16px;
+            }
+            .user-info {
+                gap: 8px;
+                font-size: 12px;
+                flex-wrap: wrap;
+            }
+            .container {
+                padding: 0 10px;
+                margin: 15px auto;
+            }
+            .admin-tabs {
+                gap: 6px;
+            }
+            .tab-btn {
+                padding: 9px 12px;
+                font-size: 12px;
+            }
+            .card {
+                padding: 15px;
+            }
+            .card h2 {
+                font-size: 15px;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+            .image-url-input {
+                min-width: 140px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -324,10 +376,15 @@
             <button class="tab-btn" onclick="switchTab('logs')">سجل عمليات النظام 📝</button>
         </div>
 
+        <div style="background-color:#eef5ff; color:#2a85ff; padding:10px 15px; border-radius:8px; font-size:13px; text-align:center; margin-bottom:20px; font-weight:600; border:1px dashed var(--primary);">
+            📢 نظام الإشعار الصوتي نشط تلقائياً. هيرن تلقائي فور وصول طلب تسجيل طبيب جديد أو حجز بانتظار تأكيدك النهائي. اضغط في أي مكان بالصفحة لضمان عمل الرنين.
+        </div>
+
         <div id="requestsTab" class="tab-content active">
             <div class="card">
                 <h2>الأطباء بانتظار المراجعة والقبول 👨‍⚕️</h2>
                 <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 قبل الموافقة، تقدر تحط رابط صورة الطبيب (من جوجل درايف أو أي مصدر تاني) في الخانة المخصصة. لو الرابط من جوجل درايف، تأكد إن صلاحية المشاركة "Anyone with the link" عشان الصورة تظهر لكل الزوار.</p>
+                <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -343,12 +400,14 @@
                         <tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
         <div id="bookingsTab" class="tab-content">
             <div class="card">
                 <h2>طلبات حجز المواعيد النشطة بالمنصة 📅</h2>
+                <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -365,30 +424,28 @@
                         <tr><td colspan="7" style="text-align:center;">جاري التحميل...</td></tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
         <div id="usersTab" class="tab-content">
-            <div id="notSuperAdminNotice" class="card" style="text-align: center; padding: 40px; color: #a0aec0;">
-                🔒 عذراً، لا تملك الصلاحية لإدارة المستخدمين أو الحذف والإضافة. هذه الصلاحية متوفرة للأدمن الأساسي فقط.
-            </div>
-
-            <div id="superAdminSection" class="super-admin-only">
-                <div class="card">
-                    <h2>قائمة المستخدمين المسجلين بالنظام (أطباء ومرضى)</h2>
-                    <table style="margin-top: 20px;">
-                        <thead>
-                            <tr>
-                                <th>الاسم</th>
-                                <th>الهاتف</th>
-                                <th>نوع الحساب</th>
-                                <th>تاريخ التسجيل</th>
-                                <th>التحكم بالحساب</th>
-                            </tr>
-                        </thead>
-                        <tbody id="allUsersTable">
-                        </tbody>
-                    </table>
+            <div class="card">
+                <h2>قائمة المستخدمين المسجلين بالنظام (أطباء ومرضى)</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 يقدر أي أدمن يحذف حساب أي دكتور أو مريض من هنا. حسابات المشرفين نفسها محمية ومش بتتحذف من الواجهة دي.</p>
+                <div class="table-responsive">
+                <table style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>نوع الحساب</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>التحكم بالحساب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allUsersTable">
+                    </tbody>
+                </table>
                 </div>
             </div>
         </div>
@@ -450,6 +507,92 @@
 
         let activeAdminName = "مسؤول النظام";
         let isSuperAdmin = false;
+
+        // ================= نظام الإشعار الصوتي لوصول طلبات جديدة =================
+        const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
+        alertSound.loop = true;
+        let isSoundPlaying = false;
+
+        // مجموعتين لتتبع الطلبات "المعروفة" مسبقاً، لمعرفة إيه اللي وصل جديد فعلاً بعد فتح الصفحة
+        let pendingDoctorsSeen = null;
+        let bookingsAlertSeen = null;
+        let pendingDoctorsHasNewAlert = false;
+        let bookingsHasNewAlert = false;
+
+        function playAlertSound() {
+            if (!isSoundPlaying) {
+                alertSound.play().then(() => {
+                    isSoundPlaying = true;
+                }).catch(() => {
+                    console.log("بانتظار تفاعل المستخدم الصريح لتفعيل نغمة الإشعار...");
+                });
+            }
+        }
+
+        function stopAlertSoundIfClear() {
+            if (!pendingDoctorsHasNewAlert && !bookingsHasNewAlert) {
+                alertSound.pause();
+                alertSound.currentTime = 0;
+                isSoundPlaying = false;
+            }
+        }
+
+        // استماع لحظي لطلبات تسجيل الأطباء الجديدة (بيشتغل طول ما الصفحة مفتوحة بغض النظر عن التبويب الحالي)
+        function listenForPendingDoctorsAlerts() {
+            db.collection("users")
+              .where("role", "==", "doctor")
+              .where("status", "==", "pending")
+              .onSnapshot(snapshot => {
+                  const currentIds = new Set();
+                  snapshot.forEach(doc => currentIds.add(doc.id));
+
+                  if (pendingDoctorsSeen === null) {
+                      pendingDoctorsSeen = currentIds;
+                      return;
+                  }
+
+                  let hasNew = false;
+                  currentIds.forEach(id => { if (!pendingDoctorsSeen.has(id)) hasNew = true; });
+                  pendingDoctorsSeen = currentIds;
+
+                  if (hasNew) {
+                      pendingDoctorsHasNewAlert = true;
+                      playAlertSound();
+                      showToast('يوجد طلب تسجيل طبيب جديد بانتظار المراجعة 👨‍⚕️', 'info');
+                      if (document.getElementById('requestsTab').classList.contains('active')) {
+                          loadPendingDoctors();
+                      }
+                  }
+              }, err => console.error('Pending doctors alert listener error:', err));
+        }
+
+        // استماع لحظي للحجوزات اللي وصلت لمرحلة "مقبول من الدكتور" وبانتظار التأكيد النهائي من الإدارة
+        function listenForBookingAlerts() {
+            db.collection("bookings")
+              .where("status", "==", "doctor_approved")
+              .onSnapshot(snapshot => {
+                  const currentIds = new Set();
+                  snapshot.forEach(doc => currentIds.add(doc.id));
+
+                  if (bookingsAlertSeen === null) {
+                      bookingsAlertSeen = currentIds;
+                      return;
+                  }
+
+                  let hasNew = false;
+                  currentIds.forEach(id => { if (!bookingsAlertSeen.has(id)) hasNew = true; });
+                  bookingsAlertSeen = currentIds;
+
+                  if (hasNew) {
+                      bookingsHasNewAlert = true;
+                      playAlertSound();
+                      showToast('يوجد حجز جديد بانتظار التأكيد النهائي 📅', 'info');
+                      if (document.getElementById('bookingsTab').classList.contains('active')) {
+                          loadBookings();
+                      }
+                  }
+              }, err => console.error('Bookings alert listener error:', err));
+        }
 
         // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
         function showToast(message, type) {
@@ -513,8 +656,6 @@
                 isSuperAdmin = true;
                 document.getElementById('adminRoleBadge').innerText = "المدير العام 👑";
                 document.getElementById('adminRoleBadge').style.background = "#9b59b6";
-                document.getElementById('notSuperAdminNotice').style.display = 'none';
-                document.getElementById('superAdminSection').style.display = 'block';
             }
 
             // جلب اسم الأدمن مع تأمين عدم التسبب في تعليق الصفحة إذا لم يعثر عليه
@@ -530,6 +671,10 @@
 
             // تحميل التبويب الأول مباشرة بصورة آمنة
             loadPendingDoctors();
+
+            // بدء الاستماع اللحظي لتشغيل التنبيه الصوتي عند وصول طلبات جديدة
+            listenForPendingDoctorsAlerts();
+            listenForBookingAlerts();
         };
 
         function switchTab(tabName) {
@@ -541,14 +686,16 @@
             if (tabName === 'requests') {
                 document.getElementById('requestsTab').classList.add('active');
                 loadPendingDoctors();
+                pendingDoctorsHasNewAlert = false;
+                stopAlertSoundIfClear();
             } else if (tabName === 'bookings') {
                 document.getElementById('bookingsTab').classList.add('active');
                 loadBookings();
+                bookingsHasNewAlert = false;
+                stopAlertSoundIfClear();
             } else if (tabName === 'users') {
                 document.getElementById('usersTab').classList.add('active');
-                if (isSuperAdmin) {
-                    loadAllUsers();
-                }
+                loadAllUsers();
             } else if (tabName === 'logs') {
                 document.getElementById('logsTab').classList.add('active');
                 loadActivityLogs();
@@ -725,9 +872,8 @@
             });
         }
 
-        // ================= 3. جلب جميع المستخدمين (Super Admin فقط) =================
+        // ================= 3. جلب جميع المستخدمين (متاحة لأي أدمن) =================
         function loadAllUsers() {
-            if (!isSuperAdmin) return;
             const tableBody = document.getElementById('allUsersTable');
             tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
 
@@ -750,15 +896,18 @@
                         
                         let roleText = data.role === 'doctor' ? '👨‍⚕️ دكتور' : (data.role === 'patient' ? '🧑‍🦽 مريض' : '🔑 مشرف');
 
+                        // حماية حسابات المشرفين من الحذف عن طريق هذه الواجهة
+                        const actionCell = (data.role === 'admin')
+                            ? `<span style="color:#a0aec0; font-size:12px;">🔒 حساب محمي</span>`
+                            : `<button class="btn btn-danger" onclick="deleteUser('${uid}', '${(data.name||'').replace(/'/g,"\\'")}')">حذف مستخدم 🗑️</button>`;
+
                         tableBody.innerHTML += `
                             <tr>
                                 <td><b>${data.name || 'مجهول'}</b></td>
                                 <td>${data.phone || 'بدون هاتف'}</td>
                                 <td>${roleText}</td>
                                 <td>${dateStr}</td>
-                                <td>
-                                    <button class="btn btn-danger" onclick="deleteUser('${uid}', '${(data.name||'').replace(/'/g,"\\'")}')">حذف مستخدم 🗑️</button>
-                                </td>
+                                <td>${actionCell}</td>
                             </tr>
                         `;
                     });
@@ -768,8 +917,7 @@
         }
 
         async function deleteUser(uid, name) {
-            if (!isSuperAdmin) return;
-            const confirmed = await showConfirm(`❌ هل أنت متأكد تماماً من حذف المستخدم (${name})؟`);
+            const confirmed = await showConfirm(`❌ هل أنت متأكد تماماً من حذف المستخدم (${name})؟ هذا الإجراء لا يمكن التراجع عنه.`);
             if (!confirmed) return;
 
             db.collection("users").doc(uid).delete().then(() => {
