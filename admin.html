@@ -656,6 +656,8 @@
         }
 
         // ================= تحويل رابط جوجل درايف العادي لصيغة قابلة للعرض المباشر داخل <img> =================
+        // ملحوظة: جوجل أوقفت صيغة uc?export=view (بترجع خطأ 403) بسبب تغييرات في سياسة الكوكيز،
+        // فبنستخدم بدلاً منها صيغة thumbnail اللي لسه شغالة
         function convertDriveLink(url) {
             if (!url) return url;
             const trimmed = url.trim();
@@ -664,7 +666,7 @@
             const fileId = (fileMatch && fileMatch[1]) || (idParamMatch && idParamMatch[1]);
 
             if (fileId) {
-                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
             }
             return trimmed; // مش رابط جوجل درايف بالصيغة المعروفة، يترجع زي ما هو
         }
