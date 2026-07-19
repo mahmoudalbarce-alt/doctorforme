@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم والإدارة الشاملة | DoctorForMe</title>
+    <style>
+        :root {
+            --primary: #2a85ff;
+            --primary-hover: #0066eb;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --bg: #f4f7f9;
+            --text-dark: #2d3748;
+            --border-color: #cbd5e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text-dark);
+        }
+
+        /* الهيدر العلوي */
+        .header {
+            background: #1a202c;
+            color: #ffffff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            margin: 0;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-badge {
+            background: var(--danger);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c53030;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* نظام التبويبات */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #edf2f7;
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            color: #4a5568;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* الجداول والكروت */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 15px;
+            color: #2d3748;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 15px;
+            text-align: right;
+        }
+
+        th {
+            background-color: #f7fafc;
+            color: #4a5568;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* الأزرار والإجراءات */
+        .btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: 0.3s;
+            margin: 2px;
+        }
+
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #27ae60; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-approved { background: #d1fae5; color: #059669; }
+        .status-rejected { background: #fee2e2; color: #dc2626; }
+
+        /* حقل رابط الصورة داخل جدول الطلبات */
+        .image-url-input {
+            width: 100%;
+            min-width: 180px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .image-url-hint {
+            font-size: 10px;
+            color: #a0aec0;
+            display: block;
+        }
+
+        /* سجل العمليات */
+        .log-table th {
+            background-color: #2d3748;
+            color: white;
+        }
+        .log-time {
+            color: #718096;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        /* إخفاء العناصر للمشرفين العاديين */
+        .super-admin-only {
+            display: none;
+        }
+
+        /* تنبيهات Toast مخصصة (بديل alert() اللي بيظهر دومين الموقع) */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 420px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #2d3748;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: toastIn 0.25s ease;
+            text-align: center;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.info { background: var(--primary); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* نافذة تأكيد مخصصة (بديل confirm()) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: #333;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-responsive table {
+            min-width: 650px;
+        }
+
+        /* دعم شاشات الهاتف */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .header h1 {
+                font-size: 16px;
+            }
+            .user-info {
+                gap: 8px;
+                font-size: 12px;
+                flex-wrap: wrap;
+            }
+            .container {
+                padding: 0 10px;
+                margin: 15px auto;
+            }
+            .admin-tabs {
+                gap: 6px;
+            }
+            .tab-btn {
+                padding: 9px 12px;
+                font-size: 12px;
+            }
+            .card {
+                padding: 15px;
+            }
+            .card h2 {
+                font-size: 15px;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+            .image-url-input {
+                min-width: 140px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="header">
+        <h1>DoctorForMe 🏥 <span class="admin-badge" id="adminRoleBadge">لوحة المشرف</span></h1>
+        <div class="user-info">
+            <span id="activeAdminName" style="font-weight: bold;">الأدمن النشط: جاري التحقق... 👤</span>
+            <button class="logout-btn" onclick="handleLogout()">خروج 🚪</button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="admin-tabs">
+            <button class="tab-btn active" data-tab="requests" onclick="switchTab('requests', this)">طلبات تسجيل الأطباء 📩</button>
+            <button class="tab-btn" data-tab="bookings" onclick="switchTab('bookings', this)">إدارة حجز المواعيد 📅</button>
+            <button class="tab-btn" data-tab="users" onclick="switchTab('users', this)">قاعدة بيانات المستخدمين 👥</button>
+            <button class="tab-btn" data-tab="logs" onclick="switchTab('logs', this)">سجل عمليات النظام 📝</button>
+        </div>
+
+        <div style="background-color:#eef5ff; color:#2a85ff; padding:10px 15px; border-radius:8px; font-size:13px; text-align:center; margin-bottom:20px; font-weight:600; border:1px dashed var(--primary);">
+            📢 نظام الإشعار الصوتي نشط تلقائياً. هيرن تلقائي فور وصول طلب تسجيل طبيب جديد أو حجز بانتظار تأكيدك النهائي. اضغط في أي مكان بالصفحة لضمان عمل الرنين.
+        </div>
+
+        <div id="requestsTab" class="tab-content active">
+            <div class="card">
+                <h2>الأطباء بانتظار المراجعة والقبول 👨‍⚕️</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 قبل الموافقة، تقدر تحط رابط صورة الطبيب (من جوجل درايف أو أي مصدر تاني) في الخانة المخصصة. لو الرابط من جوجل درايف، تأكد إن صلاحية المشاركة "Anyone with the link" عشان الصورة تظهر لكل الزوار.</p>
+                <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم الطبيب</th>
+                            <th>رقم الهاتف</th>
+                            <th>التخصص</th>
+                            <th>العيادات المسجلة</th>
+                            <th>رابط الصورة الشخصية</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingDoctorsTable">
+                        <tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="bookingsTab" class="tab-content">
+            <div class="card">
+                <h2>طلبات حجز المواعيد النشطة بالمنصة 📅</h2>
+                <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>المريض</th>
+                            <th>هاتف المريض</th>
+                            <th>الطبيب المطلـوب</th>
+                            <th>العـنوان والعيادة</th>
+                            <th>سعر الكشف</th>
+                            <th>تاريخ الطلب</th>
+                            <th>حالة الحجز</th>
+                            <th>الإجراء والاتصال</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingsTable">
+                        <tr><td colspan="8" style="text-align:center;">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="usersTab" class="tab-content">
+            <div class="card">
+                <h2>قائمة المستخدمين المسجلين بالنظام (أطباء ومرضى)</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 يقدر أي أدمن يحذف حساب أي دكتور أو مريض من هنا. حسابات المشرفين نفسها محمية ومش بتتحذف من الواجهة دي.</p>
+                <div class="table-responsive">
+                <table style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>نوع الحساب</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>التحكم بالحساب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allUsersTable">
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="logsTab" class="tab-content">
+            <div class="card">
+                <h2>سجل نشاط الإدارة والموافقات 📝</h2>
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>المشرف المسؤول</th>
+                            <th>العملية المنفذة</th>
+                            <th>التفاصيل والمستهدف</th>
+                            <th>الوقت والتاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityLogsTable">
+                        <tr><td colspan="4" style="text-align:center;">جاري تحميل سجل النشاط...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- نافذة تأكيد مخصصة -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <p id="confirmMessage" style="font-size:15px; margin-bottom:10px;"></p>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="confirmCancelBtn">إلغاء</button>
+                <button class="btn btn-primary" id="confirmOkBtn" style="padding:10px 18px;">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- استدعاء مكتبات الـ SDK المتوافقة والآمنة -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // تكوين Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYasEz-4b-f4xsG3V8O5oQ-aOhDqS1Ue0",
+            authDomain: "doctorforme-62aaf.firebaseapp.com",
+            projectId: "doctorforme-62aaf",
+            storageBucket: "doctorforme-62aaf.firebasestorage.app",
+            messagingSenderId: "121506902078",
+            appId: "1:121506902078:web:f60f680810614cbe88e16f",
+            measurementId: "G-CYNKCJH6KB"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // الـ UID الخاص بالأدمن الأساسي
+        const SUPER_ADMIN_UID = "iMuCHeOQCKOK8LywBBvDvJ5p7Hh1";
+
+        let activeAdminName = "مسؤول النظام";
+        let isSuperAdmin = false;
+        let isBookingsOnlyAdmin = false; // أدمن مُرقّى من مريض، صلاحيته تأكيد الحجوزات فقط
+
+        // ================= نظام الإشعار الصوتي لوصول طلبات جديدة =================
+        const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
+        alertSound.loop = true;
+        let isSoundPlaying = false;
+
+        // مجموعتين لتتبع الطلبات "المعروفة" مسبقاً، لمعرفة إيه اللي وصل جديد فعلاً بعد فتح الصفحة
+        let pendingDoctorsSeen = null;
+        let bookingsAlertSeen = null;
+        let pendingDoctorsHasNewAlert = false;
+        let bookingsHasNewAlert = false;
+
+        function playAlertSound() {
+            if (!isSoundPlaying) {
+                alertSound.play().then(() => {
+                    isSoundPlaying = true;
+                }).catch(() => {
+                    console.log("بانتظار تفاعل المستخدم الصريح لتفعيل نغمة الإشعار...");
+                });
+            }
+        }
+
+        function stopAlertSoundIfClear() {
+            if (!pendingDoctorsHasNewAlert && !bookingsHasNewAlert) {
+                alertSound.pause();
+                alertSound.currentTime = 0;
+                isSoundPlaying = false;
+            }
+        }
+
+        // استماع لحظي لطلبات تسجيل الأطباء الجديدة (بيشتغل طول ما الصفحة مفتوحة بغض النظر عن التبويب الحالي)
+        function listenForPendingDoctorsAlerts() {
+            db.collection("users")
+              .where("role", "==", "doctor")
+              .where("status", "==", "pending")
+              .onSnapshot(snapshot => {
+                  const currentIds = new Set();
+                  snapshot.forEach(doc => currentIds.add(doc.id));
+
+                  if (pendingDoctorsSeen === null) {
+                      pendingDoctorsSeen = currentIds;
+                      return;
+                  }
+
+                  let hasNew = false;
+                  currentIds.forEach(id => { if (!pendingDoctorsSeen.has(id)) hasNew = true; });
+                  pendingDoctorsSeen = currentIds;
+
+                  if (hasNew) {
+                      pendingDoctorsHasNewAlert = true;
+                      playAlertSound();
+                      showToast('يوجد طلب تسجيل طبيب جديد بانتظار المراجعة 👨‍⚕️', 'info');
+                      if (document.getElementById('requestsTab').classList.contains('active')) {
+                          loadPendingDoctors();
+                      }
+                  }
+              }, err => console.error('Pending doctors alert listener error:', err));
+        }
+
+        // استماع لحظي للحجوزات اللي وصلت لمرحلة "مقبول من الدكتور" وبانتظار التأكيد النهائي من الإدارة
+        function listenForBookingAlerts() {
+            db.collection("bookings")
+              .where("status", "==", "doctor_approved")
+              .onSnapshot(snapshot => {
+                  const currentIds = new Set();
+                  snapshot.forEach(doc => currentIds.add(doc.id));
+
+                  if (bookingsAlertSeen === null) {
+                      bookingsAlertSeen = currentIds;
+                      return;
+                  }
+
+                  let hasNew = false;
+                  currentIds.forEach(id => { if (!bookingsAlertSeen.has(id)) hasNew = true; });
+                  bookingsAlertSeen = currentIds;
+
+                  if (hasNew) {
+                      bookingsHasNewAlert = true;
+                      playAlertSound();
+                      showToast('يوجد حجز جديد بانتظار التأكيد النهائي 📅', 'info');
+                      if (document.getElementById('bookingsTab').classList.contains('active')) {
+                          loadBookings();
+                      }
+                  }
+              }, err => console.error('Bookings alert listener error:', err));
+        }
+
+        // ================= دوال تنقية بيانات المستخدم قبل عرضها (حماية من XSS) =================
+        // تستخدم لأي نص بيتحط كـ محتوى HTML أو قيمة attribute عادية (مش جوه onclick)
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // تستخدم للنصوص اللي بتتحط جوه onclick="...('${...}')" عشان تتأمن كـ JS string الأول وكـ HTML attribute بعدين
+        function escapeForInlineJsAttr(str) {
+            if (str === null || str === undefined) return '';
+            let s = String(str)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'");
+            return s
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
+        function showToast(message, type) {
+            type = type || 'info';
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        // ================= نافذة تأكيد مخصصة بديل confirm() =================
+        function showConfirm(message) {
+            return new Promise((resolve) => {
+                document.getElementById('confirmMessage').innerText = message;
+                const modal = document.getElementById('confirmModal');
+                modal.style.display = 'flex';
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                function cleanup(result) {
+                    modal.style.display = 'none';
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        // ================= تحويل رابط جوجل درايف العادي لصيغة قابلة للعرض المباشر داخل <img> =================
+        function convertDriveLink(url) {
+            if (!url) return url;
+            const trimmed = url.trim();
+            const fileMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            const idParamMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            const fileId = (fileMatch && fileMatch[1]) || (idParamMatch && idParamMatch[1]);
+
+            if (fileId) {
+                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+            }
+            return trimmed; // مش رابط جوجل درايف بالصيغة المعروفة، يترجع زي ما هو
+        }
+
+        window.onload = async function() {
+            const userId = localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role');
+
+            if (!userId || userRole !== 'admin') {
+                showToast("للتحقق والأمان، يرجى تسجيل الدخول بحساب مسؤول أولاً.", 'error');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+                return;
+            }
+
+            if (userId === SUPER_ADMIN_UID) {
+                isSuperAdmin = true;
+                document.getElementById('adminRoleBadge').innerText = "المدير العام 👑";
+                document.getElementById('adminRoleBadge').style.background = "#9b59b6";
+            }
+
+            // جلب بيانات الأدمن (الاسم ونوع الصلاحية) قبل تحميل باقي الصفحة
+            try {
+                const doc = await db.collection("users").doc(userId).get();
+                if (doc.exists) {
+                    if (doc.data().name) activeAdminName = doc.data().name;
+                    if (doc.data().admin_scope === 'bookings_only') {
+                        isBookingsOnlyAdmin = true;
+                    }
+                }
+            } catch (err) {
+                console.warn("Could not load admin name, using default:", err);
+            }
+            document.getElementById('activeAdminName').innerText = `الأدمن النشط: ${activeAdminName} 👤`;
+
+            if (isBookingsOnlyAdmin) {
+                applyBookingsOnlyRestrictions();
+            } else {
+                // تحميل التبويب الأول مباشرة بصورة آمنة
+                loadPendingDoctors();
+                // بدء الاستماع اللحظي لتشغيل التنبيه الصوتي عند وصول طلبات تسجيل أطباء جديدة
+                listenForPendingDoctorsAlerts();
+            }
+
+            // كل الأدمنز (بمن فيهم أدمن الحجوزات فقط) محتاجين تنبيه الحجوزات
+            listenForBookingAlerts();
+        };
+
+        // تقييد واجهة الأدمن المُرقّى من مريض على تبويب الحجوزات فقط
+        function applyBookingsOnlyRestrictions() {
+            document.getElementById('adminRoleBadge').innerText = "أدمن حجوزات فقط 📅";
+            document.getElementById('adminRoleBadge').style.background = "#3498db";
+
+            const bookingsBtn = document.querySelector(".admin-tabs .tab-btn[data-tab='bookings']");
+            switchTab('bookings', bookingsBtn);
+
+            document.querySelectorAll('.admin-tabs .tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab') !== 'bookings') {
+                    btn.style.display = 'none';
+                }
+            });
+        }
+
+        function switchTab(tabName, btnEl) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const targetBtn = btnEl || document.querySelector(".admin-tabs .tab-btn[data-tab='" + tabName + "']");
+            if (targetBtn) targetBtn.classList.add('active');
+
+            if (tabName === 'requests') {
+                if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
+                document.getElementById('requestsTab').classList.add('active');
+                loadPendingDoctors();
+                pendingDoctorsHasNewAlert = false;
+                stopAlertSoundIfClear();
+            } else if (tabName === 'bookings') {
+                document.getElementById('bookingsTab').classList.add('active');
+                loadBookings();
+                bookingsHasNewAlert = false;
+                stopAlertSoundIfClear();
+            } else if (tabName === 'users') {
+                if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
+                document.getElementById('usersTab').classList.add('active');
+                loadAllUsers();
+            } else if (tabName === 'logs') {
+                if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
+                document.getElementById('logsTab').classList.add('active');
+                loadActivityLogs();
+            }
+        }
+
+        // ================= 1. جلب طلبات تسجيل الأطباء (نسخة مبسطة بدون ترتيب معقد لتجنب الـ Index) =================
+        function loadPendingDoctors() {
+            const tableBody = document.getElementById('pendingDoctorsTable');
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>';
+            
+            db.collection("users")
+                .where("role", "==", "doctor")
+                .where("status", "==", "pending")
+                .get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #718096;">لا توجد طلبات تسجيل جديدة حالياً.</td></tr>';
+                        return;
+                    }
+                    tableBody.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        const doctor = doc.data();
+                        const docId = doc.id;
+                        let clinicsTextRaw = doctor.clinics ? doctor.clinics.map(c => c.clinic_address).join(" | ") : "لم تحدد بعد";
+                        const clinicsText = escapeHtml(clinicsTextRaw);
+                        const safeName = escapeHtml(doctor.name || 'غير معروف');
+                        const safePhone = escapeHtml(doctor.phone || 'بدون هاتف');
+                        const safeSpecialty = escapeHtml(doctor.specialty || 'عام');
+                        const jsName = escapeForInlineJsAttr(doctor.name || '');
+                        
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><b>د. ${safeName}</b></td>
+                                <td>${safePhone}</td>
+                                <td><span class="status-badge status-approved">${safeSpecialty}</span></td>
+                                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${clinicsText}">${clinicsText}</td>
+                                <td>
+                                    <input type="url" class="image-url-input" id="imgUrl_${docId}" placeholder="رابط صورة الطبيب (اختياري)">
+                                    <span class="image-url-hint">يقبل روابط جوجل درايف أو أي رابط صورة مباشر</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-success" onclick="approveDoctor('${docId}', '${jsName}')">موافقة وتفعيل ✅</button>
+                                    <button class="btn btn-danger" onclick="rejectDoctor('${docId}', '${jsName}')">رفض وتجاهل ❌</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }).catch(err => {
+                    console.error("Error loading pending doctors: ", err);
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الطلبات: ${err.message}</td></tr>`;
+                });
+        }
+
+        async function approveDoctor(docId, docName) {
+            const confirmed = await showConfirm(`هل توافق على تفعيل حساب د. ${docName} بالمنصة؟`);
+            if (!confirmed) return;
+
+            const imageInput = document.getElementById(`imgUrl_${docId}`);
+            const rawImageUrl = imageInput ? imageInput.value.trim() : "";
+            const finalImageUrl = convertDriveLink(rawImageUrl);
+
+            const updateData = { status: "approved" };
+            if (finalImageUrl) {
+                updateData.image_url = finalImageUrl;
+            }
+
+            db.collection("users").doc(docId).update(updateData).then(() => {
+                showToast(`تم تفعيل حساب د. ${docName} بنجاح!`, 'success');
+                logActivity("قبول حساب طبيب", `الموافقة على تفعيل حساب د. ${docName}` + (finalImageUrl ? ' مع إضافة صورة شخصية' : ''));
+                loadPendingDoctors();
+            }).catch(err => {
+                showToast("حدث خطأ أثناء التفعيل: " + err.message, 'error');
+            });
+        }
+
+        async function rejectDoctor(docId, docName) {
+            const confirmed = await showConfirm(`هل أنت متأكد من رفض طلب الطبيب د. ${docName}؟`);
+            if (!confirmed) return;
+
+            db.collection("users").doc(docId).update({
+                status: "rejected"
+            }).then(() => {
+                showToast(`تم رفض الطلب بنجاح.`, 'success');
+                logActivity("رفض حساب طبيب", `رفض تسجيل د. ${docName}`);
+                loadPendingDoctors();
+            }).catch(err => {
+                showToast("حدث خطأ أثناء معالجة الطلب: " + err.message, 'error');
+            });
+        }
+
+        // ================= 2. جلب الحجوزات (بدون orderBy لتجنب قيود الـ Index الفورية) =================
+        function loadBookings() {
+            const tableBody = document.getElementById('bookingsTable');
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">جاري التحميل...</td></tr>';
+
+            db.collection("bookings")
+                .get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد حجوزات مسجلة بالنظام حالياً.</td></tr>';
+                        return;
+                    }
+                    tableBody.innerHTML = '';
+                    
+                    // تحويل وترتيب يدوي برمجياً لتخطي طلب الـ Index الخاص بـ Firestore
+                    let bookingsList = [];
+                    snapshot.forEach(doc => {
+                        bookingsList.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    bookingsList.sort((a, b) => {
+                        const tA = a.created_at ? (a.created_at.seconds || 0) : 0;
+                        const tB = b.created_at ? (b.created_at.seconds || 0) : 0;
+                        return tB - tA; 
+                    });
+
+                    bookingsList.forEach(data => {
+                        const id = data.id;
+                        const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleString('ar-EG') : 'قيد المعالجة';
+                        
+                        let statusBadge = '';
+                        let actionButtons = '';
+                        const priceValue = (data.final_price !== undefined && data.final_price !== null) ? data.final_price : data.clinic_price;
+                        const jsPatientName = escapeForInlineJsAttr(data.patient_name || '');
+                        const jsDoctorName = escapeForInlineJsAttr(data.doctor_name || '');
+
+                        if (data.status === 'confirmed') {
+                            statusBadge = `<span class="badge" style="background:#d1fae5; color:#065f46; padding:4px 8px; border-radius:4px; font-weight:bold;">مؤكد نهائياً ✅</span>`;
+                            actionButtons = `<span style="color:gray; font-size:12px;">تم التأكيد بنجاح</span>`;
+                        } 
+                        else if (data.status === 'doctor_approved') {
+                            statusBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-weight:bold;">مقبول من الدكتور 📞</span>`;
+                            actionButtons = `
+                                <button class="btn btn-success" onclick="updateBookingStatus('${id}', 'confirmed', '${jsPatientName}', '${jsDoctorName}')">تأكيد حجز ✅</button>
+                                <button class="btn btn-danger" onclick="updateBookingStatus('${id}', 'rejected', '${jsPatientName}', '${jsDoctorName}')">إلغاء ❌</button>
+                            `;
+                        } 
+                        else if (data.status === 'rejected') {
+                            statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:4px; font-weight:bold;">مرفوض / ملغي ❌</span>`;
+                            actionButtons = `<span style="color:gray; font-size:12px;">تم اتخاذ القرار</span>`;
+                        } 
+                        else {
+                            statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; padding:4px 8px; border-radius:4px; font-weight:bold;">قيد الانتظار عند الدكتور ⏳</span>`;
+                            actionButtons = `<span style="color:#718096; font-size:11px; font-style:italic;">بانتظار قبول الطبيب أولاً</span>`;
+                        }
+
+                        // خانة السعر: قابلة للتعديل فقط وقت ما الحجز يكون بانتظار التأكيد النهائي من الإدارة
+                        let priceCell = '';
+                        if (data.status === 'doctor_approved') {
+                            priceCell = `<input type="number" min="0" class="price-input" id="price_${id}" value="${priceValue !== undefined && priceValue !== null ? priceValue : ''}" placeholder="السعر" style="width:85px; padding:6px; border:1px solid #cbd5e0; border-radius:4px; font-size:13px;">`;
+                        } else {
+                            priceCell = (priceValue !== undefined && priceValue !== null) ? `${escapeHtml(priceValue)} ج.م` : '<span style="color:#a0aec0;">غير محدد</span>';
+                        }
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><b>${escapeHtml(data.patient_name || 'مريض')}</b></td>
+                                <td><a href="tel:${escapeHtml(data.patient_phone || '')}">${escapeHtml(data.patient_phone || 'بدون هاتف')} 📞</a></td>
+                                <td>د. ${escapeHtml(data.doctor_name || 'غير معروف')}</td>
+                                <td>${escapeHtml(data.clinic_address || 'غير متوفر')}${data.clinic_hours ? ' - ' + escapeHtml(data.clinic_hours) : ''}</td>
+                                <td>${priceCell}</td>
+                                <td>${dateStr}</td>
+                                <td>${statusBadge}</td>
+                                <td>${actionButtons}</td>
+                            </tr>
+                        `;
+                    });
+                }).catch(err => {
+                    console.error("Error loading bookings:", err);
+                    tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">فشل جلب الحجوزات: ${err.message}</td></tr>`;
+                });
+        }
+
+        async function updateBookingStatus(bookingId, newStatus, patientName, docName) {
+            let dbStatus = (newStatus === 'confirmed') ? 'confirmed' : 'rejected';
+            let stateText = (newStatus === 'confirmed') ? 'تأكيد وقبول نهائي' : 'إلغاء ورفض';
+
+            const confirmed = await showConfirm(`هل أنت متأكد من ${stateText} هذا الحجز؟`);
+            if (!confirmed) return;
+
+            const updateData = { status: dbStatus };
+            let priceNote = '';
+
+            if (dbStatus === 'confirmed') {
+                const priceInput = document.getElementById(`price_${bookingId}`);
+                if (priceInput && priceInput.value !== '') {
+                    const priceVal = parseFloat(priceInput.value);
+                    if (!isNaN(priceVal)) {
+                        updateData.final_price = priceVal;
+                        priceNote = ` بسعر كشف نهائي (${priceVal} ج.م)`;
+                    }
+                }
+            }
+
+            db.collection("bookings").doc(bookingId).update(updateData).then(() => {
+                showToast(`تم تحديث حالة الحجز بنجاح!`, 'success');
+                logActivity(`${stateText} حجز مريض`, `تعديل حالة الحجز للمريض (${patientName}) مع د. (${docName}) إلى [${dbStatus}]${priceNote}`);
+                loadBookings();
+            }).catch(error => {
+                showToast("حدث خطأ أثناء التحديث: " + error.message, 'error');
+            });
+        }
+
+        // ================= 3. جلب جميع المستخدمين (متاحة لأي أدمن) =================
+        function loadAllUsers() {
+            const tableBody = document.getElementById('allUsersTable');
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
+
+            db.collection("users")
+                .get()
+                .then(snapshot => {
+                    tableBody.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const uid = doc.id;
+                        let dateStr = 'غير متوفر';
+                        
+                        if (data.created_at) {
+                            if (data.created_at.seconds) {
+                                dateStr = new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG');
+                            } else {
+                                dateStr = new Date(data.created_at).toLocaleDateString('ar-EG');
+                            }
+                        }
+                        
+                        let roleText;
+                        if (data.role === 'doctor') {
+                            roleText = '👨‍⚕️ دكتور';
+                        } else if (data.role === 'patient') {
+                            roleText = '🧑‍🦽 مريض';
+                        } else if (data.role === 'admin' && data.admin_scope === 'bookings_only') {
+                            roleText = '📅 أدمن حجوزات فقط';
+                        } else {
+                            roleText = '🔑 مشرف عام';
+                        }
+
+                        const escapedName = escapeForInlineJsAttr(data.name || '');
+                        let actionCell = '';
+
+                        if (data.role === 'patient') {
+                            actionCell = `
+                                <button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button>
+                                <button class="btn btn-primary" onclick="promoteToBookingsAdmin('${uid}', '${escapedName}')">ترقية لأدمن حجوزات ⬆️</button>
+                            `;
+                        } else if (data.role === 'doctor') {
+                            actionCell = `<button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button>`;
+                        } else if (data.role === 'admin' && data.admin_scope === 'bookings_only') {
+                            actionCell = `<button class="btn" style="background:#edf2f7; color:#333;" onclick="demoteToPatient('${uid}', '${escapedName}')">إرجاع لحساب مريض ⬇️</button>`;
+                        } else {
+                            actionCell = `<span style="color:#a0aec0; font-size:12px;">🔒 حساب محمي</span>`;
+                        }
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><b>${escapeHtml(data.name || 'مجهول')}</b></td>
+                                <td>${escapeHtml(data.phone || 'بدون هاتف')}</td>
+                                <td>${roleText}</td>
+                                <td>${dateStr}</td>
+                                <td>${actionCell}</td>
+                            </tr>
+                        `;
+                    });
+                }).catch(err => {
+                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
+                });
+        }
+
+        // ترقية مريض لحساب "أدمن حجوزات فقط" - يقدر يأكد حجوزات المرضى بس، ومش هيظهر في قائمة المرضى تاني
+        async function promoteToBookingsAdmin(uid, name) {
+            const confirmed = await showConfirm(`هل تريد ترقية (${name}) لحساب أدمن بصلاحية تأكيد حجوزات المرضى فقط؟ لن يتمكن بعدها من استخدام حسابه كمريض، وسيختفي من قائمة المرضى.`);
+            if (!confirmed) return;
+
+            db.collection("users").doc(uid).update({
+                role: 'admin',
+                admin_scope: 'bookings_only'
+            }).then(() => {
+                showToast(`تم ترقية (${name}) لأدمن حجوزات بنجاح.`, 'success');
+                logActivity('ترقية مستخدم لأدمن حجوزات', `ترقية (${name}) لصلاحية تأكيد الحجوزات فقط`);
+                loadAllUsers();
+            }).catch(err => showToast(err.message, 'error'));
+        }
+
+        // إرجاع أدمن الحجوزات لحساب مريض عادي (بياناته القديمة كمريض بتفضل محفوظة)
+        async function demoteToPatient(uid, name) {
+            const confirmed = await showConfirm(`هل تريد إرجاع (${name}) لحساب مريض عادي وإلغاء صلاحيات الأدمن؟`);
+            if (!confirmed) return;
+
+            db.collection("users").doc(uid).update({
+                role: 'patient',
+                admin_scope: firebase.firestore.FieldValue.delete()
+            }).then(() => {
+                showToast(`تم إرجاع (${name}) لحساب مريض بنجاح.`, 'success');
+                logActivity('إرجاع أدمن حجوزات لمريض', `إلغاء صلاحيات الأدمن عن (${name})`);
+                loadAllUsers();
+            }).catch(err => showToast(err.message, 'error'));
+        }
+
+        async function deleteUser(uid, name) {
+            const confirmed = await showConfirm(`❌ هل أنت متأكد تماماً من حذف المستخدم (${name})؟ هذا الإجراء لا يمكن التراجع عنه.`);
+            if (!confirmed) return;
+
+            db.collection("users").doc(uid).delete().then(() => {
+                showToast(`تم الحذف.`, 'success');
+                logActivity("حذف حساب مستخدم", `حذف حساب (${name})`);
+                loadAllUsers();
+            }).catch(err => showToast(err.message, 'error'));
+        }
+
+        // ================= 4. سجل العمليات (ترتيب برمجي آمن) =================
+        function logActivity(action, details) {
+            db.collection("activity_logs").add({
+                admin_id: localStorage.getItem('user_id'),
+                admin_name: activeAdminName,
+                action: action,
+                details: details,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.error("Logging failed:", err));
+        }
+
+        function loadActivityLogs() {
+            const tableBody = document.getElementById('activityLogsTable');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>';
+
+            db.collection("activity_logs")
+                .get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد أنشطة مسجلة.</td></tr>';
+                        return;
+                    }
+                    tableBody.innerHTML = '';
+                    
+                    let logs = [];
+                    snapshot.forEach(doc => {
+                        logs.push(doc.data());
+                    });
+
+                    // ترتيب برمجي لتجنب الـ Index
+                    logs.sort((a, b) => {
+                        const tA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+                        const tB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+                        return tB - tA;
+                    });
+
+                    logs.forEach(data => {
+                        const timeStr = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString('ar-EG') : 'الآن';
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><b>${escapeHtml(data.admin_name || 'مشرف')} 👤</b></td>
+                                <td><span style="color:var(--primary); font-weight:bold;">${escapeHtml(data.action || '')}</span></td>
+                                <td style="font-size:13px;">${escapeHtml(data.details || '')}</td>
+                                <td class="log-time">${timeStr}</td>
+                            </tr>
+                        `;
+                    });
+                }).catch(err => {
+                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">خطأ أثناء جلب السجلات: ${err.message}</td></tr>`;
+                });
+        }
+
+        function handleLogout() {
+            auth.signOut().finally(() => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+        }
+    </script>
+</body>
+</html>
