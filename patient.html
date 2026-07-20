@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة العملاء| تطبيق حجزي</title>
+    <title>بوابة العميل | DoctorForMe</title>
     <style>
         :root {
             --primary: #2a85ff;
@@ -198,13 +198,25 @@
         .welcome-card {
             background: linear-gradient(135deg, var(--primary), #63a4ff);
             color: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 30px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .welcome-card h2 {
-            margin: 0 0 10px 0;
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .welcome-card p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.9;
         }
 
         /* صفحات التبويبات */
@@ -229,6 +241,61 @@
             border-left: 5px solid var(--primary);
             padding-right: 0;
             padding-left: 10px;
+        }
+
+        /* شريط البحث الذكي وفلتر التخصص */
+        .search-filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input-wrap {
+            flex: 2;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-input-wrap input {
+            width: 100%;
+            padding: 10px 15px 10px 15px;
+            padding-right: 38px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+        }
+
+        .search-input-wrap input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-input-wrap .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: #a0aec0;
+            pointer-events: none;
+        }
+
+        .specialty-filter-select {
+            flex: 1;
+            min-width: 160px;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            cursor: pointer;
+        }
+
+        .specialty-filter-select:focus {
+            border-color: var(--primary);
         }
 
         /* شبكة الأطباء */
@@ -645,7 +712,7 @@
 
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <span>تطبيق حجزي 🏥</span>
+            <span>DoctorForMe 🏥</span>
             <button class="sidebar-close" onclick="toggleSidebar(false)">✕</button>
         </div>
         <ul class="sidebar-menu">
@@ -669,10 +736,19 @@
 
         <div id="search-doctors" class="tab-content active">
             <div class="welcome-card">
-                <h2 id="welcomeText">مرحباً بك في صفحتك الطبية</h2>
-                <p data-i18n="welcomeText2">يمكنك تصفح الاطباء، والاطلاع على تفاصيل كل طبيب واختيار العيادة والفترة المناسبة لك.</p>
+                <h2 id="welcomeText" data-i18n="welcomeTextShort">مرحباً بك</h2>
+                <p data-i18n="welcomeText2">تصفح الأطباء المعتمدين واختار العيادة والفترة المناسبة لك</p>
             </div>
-            <h2 class="section-title" data-i18n="approvedDoctorsTitle">الأطباء بالمنصة</h2>
+            <h2 class="section-title" data-i18n="approvedDoctorsTitle">الأطباء المعتمدون بالمنصة</h2>
+            <div class="search-filter-bar">
+                <div class="search-input-wrap">
+                    <input type="text" id="doctorSearchInput" data-i18n-placeholder="searchPlaceholder" placeholder="ابحث بالاسم أو التخصص أو المنطقة..." oninput="applyDoctorFilters()">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <select id="specialtyFilterSelect" class="specialty-filter-select" onchange="applyDoctorFilters()">
+                    <option value="" data-i18n="allSpecialties">كل التخصصات</option>
+                </select>
+            </div>
             <div class="doctors-grid" id="doctorsGrid">
                 <div class="no-doctors" style="text-align: center; padding: 40px; color: #718096; grid-column:1/-1;" data-i18n="loadingDoctors">جاري تحميل الأطباء المعتمدين...</div>
             </div>
@@ -882,16 +958,38 @@
                 menuLanguage: "🌐 اللغة",
                 menuPassword: "🔑 تغيير كلمة المرور",
                 logout: "تسجيل الخروج 🚪",
-                welcomeText2: "يمكنك تصفح الأطباء، والاطلاع على تفاصيل كل طبيب واختيار العيادة والفترة المناسبة لك.",
-                approvedDoctorsTitle: "الأطباء بالمنصة",
-                loadingDoctors: "جاري تحميل الأطباء...",
+                welcomeTextShort: "مرحباً بك",
+                welcomeText2: "تصفح الأطباء المعتمدين واختار العيادة والفترة المناسبة لك",
+                welcomeGreeting: "مرحباً، أستاذ",
+                clientLabel: "العميل",
+                approvedDoctorsTitle: "الأطباء المعتمدون بالمنصة",
+                loadingDoctors: "جاري تحميل الأطباء المعتمدين...",
+                searchPlaceholder: "ابحث بالاسم أو التخصص أو المنطقة...",
+                allSpecialties: "كل التخصصات",
+                noDoctorsAvailable: "لا يوجد أطباء معتمدون متاحون حالياً بالمنصة.",
+                noDoctorsMatch: "لا يوجد أطباء مطابقين لبحثك.",
+                clinicsCountLabel: "عدد العيادات المتاحة",
+                noClinicsRegistered: "لا توجد عيادات مسجلة لهذا الطبيب حالياً.",
                 myBookingsTitle: "قائمة حجوزاتك ومتابعة الحالات لحظياً",
                 loadingBookings: "جاري تحميل حجوزاتك...",
+                noBookingsYet: "لا توجد حجوزات مسجلة باسمك حتى الآن.",
+                bookingsLoadError: "حدث خطأ أثناء تحميل الحجوزات.",
+                statusConfirmed: "مؤكد نهائياً ✅",
+                statusDoctorApproved: "جاري التأكيد النهائي بواسطة الإدارة 📞",
+                statusRejectedPrefix: "مرفوض ❌ (السبب:",
+                statusPending: "قيد الانتظار عند الطبيب ⏳",
+                reasonNotSpecified: "غير محدد",
+                dateNotSpecified: "غير محدد",
+                requestDateLabel: "تاريخ الطلب",
+                clinicLabelShort: "عيادة",
+                priceCurrency: "ج.م",
                 supportTitle: "المساعدة والدعم والشكاوى والمقترحات",
                 supportDesc: "يسعدنا دائماً مساعدتك. قم بتقديم شكوى أو طلب دعم أو مقترح وسيقوم فريق الإدارة بمراجعته والرد عليك فوراً.",
                 ticketSubjectLabel: "عنوان المشكلة / الطلب / المقترح",
                 ticketMessageLabel: "تفاصيل الشكوى أو طلب الدعم أو المقترح",
                 sendRequest: "إرسال الطلب الآن 📨",
+                ticketSuccess: "تم إرسال طلبك بنجاح! سيتم مراجعته من قبل الإدارة والتواصل معك.",
+                ticketError: "حدث خطأ أثناء إرسال الطلب:",
                 langTitle: "اللغة / Language",
                 langDesc: "اختر لغة عرض الواجهة",
                 changePasswordTitle: "تغيير كلمة المرور",
@@ -899,6 +997,10 @@
                 newPasswordLabel: "كلمة المرور الجديدة",
                 confirmPasswordLabel: "تأكيد كلمة المرور الجديدة",
                 updatePasswordBtn: "تحديث كلمة المرور 🔑",
+                passwordMismatch: "كلمتا المرور الجديدتان غير متطابقتين.",
+                sessionExpired: "انتهت جلسة العمل الحالية، يرجى إعادة تسجيل الدخول لتغيير كلمة المرور.",
+                passwordUpdateSuccess: "تم تحديث كلمة المرور بنجاح! سيتم تسجيل خروجك الآن.",
+                passwordUpdateFail: "فشل التحديث: يرجى التأكد من كلمة المرور الحالية.",
                 chooseClinic: "اختر العيادة والفترة المناسبة لك:",
                 close: "إغلاق",
                 bookSelectedClinic: "احجز في العيادة المختارة",
@@ -915,7 +1017,13 @@
                 cancel: "إلغاء",
                 confirmBooking: "تأكيد الحجز ✅",
                 confirmOk: "تأكيد",
-                detailsBtn: "📋 تفاصيل"
+                detailsBtn: "📋 تفاصيل",
+                fillAllFields: "برجاء استكمال جميع الحقول المطلوبة.",
+                bookingSuccess: "تم إرسال طلب الحجز بنجاح! يمكنك تتبع حالته في تبويب حجوزاتي.",
+                bookingError: "حدث خطأ أثناء إتمام الحجز:",
+                loginRequired: "برجاء تسجيل الدخول أولاً.",
+                accountVerifyFailed: "فشل التحقق من بيانات الحساب.",
+                doctorLoadError: "تعذر تحميل بيانات هذا الطبيب."
             },
             en: {
                 menuSearch: "🔍 Browse & Book Doctors",
@@ -924,16 +1032,38 @@
                 menuLanguage: "🌐 Language",
                 menuPassword: "🔑 Change Password",
                 logout: "Logout 🚪",
-                welcomeText2: "Browse doctors approved by the platform, view each doctor's full details, and choose the clinic and time period that suits you.",
+                welcomeTextShort: "Welcome",
+                welcomeText2: "Browse approved doctors and choose the clinic and time that suits you",
+                welcomeGreeting: "Welcome,",
+                clientLabel: "Client",
                 approvedDoctorsTitle: "Approved Doctors on the Platform",
                 loadingDoctors: "Loading approved doctors...",
+                searchPlaceholder: "Search by name, specialty, or area...",
+                allSpecialties: "All Specialties",
+                noDoctorsAvailable: "No approved doctors are available on the platform right now.",
+                noDoctorsMatch: "No doctors match your search.",
+                clinicsCountLabel: "Available clinics",
+                noClinicsRegistered: "This doctor has no registered clinics yet.",
                 myBookingsTitle: "Your bookings and live status tracking",
                 loadingBookings: "Loading your bookings...",
+                noBookingsYet: "You don't have any bookings yet.",
+                bookingsLoadError: "An error occurred while loading your bookings.",
+                statusConfirmed: "Confirmed ✅",
+                statusDoctorApproved: "Being finalized by admin 📞",
+                statusRejectedPrefix: "Rejected ❌ (Reason:",
+                statusPending: "Waiting for doctor ⏳",
+                reasonNotSpecified: "Not specified",
+                dateNotSpecified: "Not specified",
+                requestDateLabel: "Request date",
+                clinicLabelShort: "Clinic",
+                priceCurrency: "EGP",
                 supportTitle: "Support, Complaints & Suggestions",
                 supportDesc: "We're always happy to help. Submit a complaint, support request, or suggestion and our admin team will review and respond promptly.",
                 ticketSubjectLabel: "Subject / Request / Suggestion",
                 ticketMessageLabel: "Details of your complaint, request or suggestion",
                 sendRequest: "Send Request 📨",
+                ticketSuccess: "Your request was sent successfully! Our admin team will review it and contact you.",
+                ticketError: "An error occurred while sending your request:",
                 langTitle: "Language / اللغة",
                 langDesc: "Choose the interface display language",
                 changePasswordTitle: "Change Password",
@@ -941,6 +1071,10 @@
                 newPasswordLabel: "New Password",
                 confirmPasswordLabel: "Confirm New Password",
                 updatePasswordBtn: "Update Password 🔑",
+                passwordMismatch: "The new passwords do not match.",
+                sessionExpired: "Your session has expired, please log in again to change your password.",
+                passwordUpdateSuccess: "Password updated successfully! You'll be logged out now.",
+                passwordUpdateFail: "Update failed: please make sure your current password is correct.",
                 chooseClinic: "Choose the clinic and time period that suits you:",
                 close: "Close",
                 bookSelectedClinic: "Book Selected Clinic",
@@ -957,6 +1091,13 @@
                 cancel: "Cancel",
                 confirmBooking: "Confirm Booking ✅",
                 confirmOk: "Confirm",
+                detailsBtn: "📋 Details",
+                fillAllFields: "Please fill in all required fields.",
+                bookingSuccess: "Your booking request was sent successfully! You can track its status in the My Bookings tab.",
+                bookingError: "An error occurred while completing the booking:",
+                loginRequired: "Please log in first.",
+                accountVerifyFailed: "Failed to verify your account details.",
+                doctorLoadError: "Could not load this doctor's details.",
                 detailsBtn: "📋 Details"
             }
         };
@@ -964,6 +1105,23 @@
         function setLanguage(lang) {
             localStorage.setItem('preferred_lang', lang);
             applyLanguage(lang);
+        }
+
+        // دالة مختصرة لجلب النص المترجم بلغة العرض الحالية، تستخدم في أي كود JS خارج حلقة data-i18n
+        function t(key) {
+            const lang = localStorage.getItem('preferred_lang') || 'ar';
+            const dict = translations[lang] || translations.ar;
+            return dict[key] || translations.ar[key] || key;
+        }
+
+        // بادئة "دكتور" حسب لغة العرض الحالية
+        function doctorPrefix() {
+            return (localStorage.getItem('preferred_lang') === 'en') ? 'Dr.' : 'د.';
+        }
+
+        // صيغة التاريخ حسب اللغة الحالية
+        function currentDateLocale() {
+            return (localStorage.getItem('preferred_lang') === 'en') ? 'en-GB' : 'ar-EG';
         }
 
         function applyLanguage(lang) {
@@ -976,6 +1134,12 @@
                 if (dict[key]) el.innerText = dict[key];
             });
 
+            // ترجمة الـ placeholder لحقول الإدخال (زي شريط البحث)
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dict[key]) el.placeholder = dict[key];
+            });
+
             document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
             document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
 
@@ -983,6 +1147,22 @@
             document.querySelectorAll('.details-btn').forEach(btn => {
                 btn.innerText = dict.detailsBtn;
             });
+
+            // تحديث عنصر "كل التخصصات" الأول في فلتر التخصص
+            const firstOption = document.querySelector('#specialtyFilterSelect option[value=""]');
+            if (firstOption) firstOption.innerText = dict.allSpecialties;
+
+            // تحديث نص الترحيب باسم العميل (لو محمّل بالفعل)
+            if (currentPatient && currentPatient.name) {
+                document.getElementById('welcomeText').innerText = `${dict.welcomeGreeting} ${currentPatient.name}`;
+                document.getElementById('patientNameDisplay').innerText = `${dict.clientLabel}: ${currentPatient.name}`;
+            }
+
+            // إعادة رسم شبكة الأطباء وقائمة الحجوزات بلغة العرض الجديدة لو البيانات محمّلة بالفعل
+            if (window._doctorsCache) {
+                populateSpecialtyFilter();
+                applyDoctorFilters();
+            }
         }
 
         // عند فتح الصفحة
@@ -990,7 +1170,7 @@
             const userRole = localStorage.getItem('user_role');
 
             if (!patientId || userRole !== 'patient') {
-                showToast('برجاء تسجيل الدخول أولاً.', 'error');
+                showToast(t('loginRequired'), 'error');
                 setTimeout(() => { window.location.href = 'login.html'; }, 1200);
                 return;
             }
@@ -998,17 +1178,17 @@
             const savedLang = localStorage.getItem('preferred_lang') || 'ar';
             applyLanguage(savedLang);
 
-            // عرض التاريخ الحالي
-            document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            // عرض التاريخ الحالي بلغة العرض المختارة
+            document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString(currentDateLocale(), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
             try {
                 const patientSnap = await db.collection("users").doc(patientId).get();
                 if (patientSnap.exists) {
                     currentPatient = patientSnap.data();
-                    document.getElementById('patientNameDisplay').innerText = `صفحة: ${currentPatient.name} 🧑‍🦽`;
-                    document.getElementById('welcomeText').innerText = `مرحباً، أستاذ ${currentPatient.name}`;
+                    document.getElementById('patientNameDisplay').innerText = `${t('clientLabel')}: ${currentPatient.name}`;
+                    document.getElementById('welcomeText').innerText = `${t('welcomeGreeting')} ${currentPatient.name}`;
                 } else {
-                    showToast('فشل التحقق من بيانات الحساب.', 'error');
+                    showToast(t('accountVerifyFailed'), 'error');
                     handleLogout();
                 }
             } catch (err) {
@@ -1044,8 +1224,6 @@
         // جلب الأطباء المعتمدين من الإدارة
         async function loadApprovedDoctors() {
             const grid = document.getElementById('doctorsGrid');
-            const lang = localStorage.getItem('preferred_lang') || 'ar';
-            const dict = translations[lang];
 
             try {
                 const snapshot = await db.collection("users")
@@ -1053,50 +1231,95 @@
                     .where("status", "==", "approved")
                     .get();
 
-                if (snapshot.empty) {
-                    grid.innerHTML = '<div class="no-doctors" style="grid-column: 1/-1; text-align: center;">لا يوجد أطباء معتمدون متاحون حالياً بالمنصة.</div>';
-                    return;
-                }
-
-                grid.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const docId = doc.id;
-                    const avatarSrc = data.image_url ? escapeHtml(data.image_url) : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
-                    const clinicsCount = data.clinics ? data.clinics.length : 0;
-
-                    grid.innerHTML += `
-                        <div class="doctor-card">
-                            <div class="doc-profile">
-                                <img src="${avatarSrc}" class="doc-avatar" alt="Doctor Photo">
-                                <div class="doc-info">
-                                    <h3>د. ${escapeHtml(data.name)}</h3>
-                                    <span class="doc-specialty">${escapeHtml(data.specialty)}</span>
-                                </div>
-                            </div>
-                            <div class="doc-summary-line">🏥 عدد العيادات المتاحة: ${clinicsCount}</div>
-                            <button class="details-btn" onclick='openDoctorDetails(${JSON.stringify(docId)})'>${dict.detailsBtn}</button>
-                        </div>
-                    `;
-                });
-
-                // نخزن بيانات الأطباء في متغير عام سهل الوصول له عند فتح التفاصيل
+                // نخزن بيانات الأطباء في متغير عام سهل الوصول له عند البحث/الفلترة وفتح التفاصيل
                 window._doctorsCache = {};
                 snapshot.forEach(doc => {
                     window._doctorsCache[doc.id] = doc.data();
                 });
 
+                populateSpecialtyFilter();
+                applyDoctorFilters();
+
             } catch (error) {
                 console.error("Error loading doctors:", error);
-                grid.innerHTML = '<div class="no-doctors">حدث خطأ أثناء تحميل بيانات الأطباء.</div>';
+                grid.innerHTML = `<div class="no-doctors">${t('doctorLoadError')}</div>`;
             }
+        }
+
+        // بناء قائمة التخصصات في الفلتر من التخصصات الموجودة فعلياً بين الأطباء المعتمدين
+        function populateSpecialtyFilter() {
+            const select = document.getElementById('specialtyFilterSelect');
+            const previousValue = select.value;
+            const specialties = new Set();
+
+            Object.values(window._doctorsCache || {}).forEach(data => {
+                if (data.specialty) specialties.add(data.specialty);
+            });
+
+            select.innerHTML = `<option value="">${t('allSpecialties')}</option>`;
+            Array.from(specialties).sort().forEach(spec => {
+                const opt = document.createElement('option');
+                opt.value = spec;
+                opt.innerText = spec;
+                select.appendChild(opt);
+            });
+
+            select.value = previousValue; // نحافظ على اختيار المستخدم لو لسه موجود
+        }
+
+        // بحث ذكي بالاسم أو التخصص أو المنطقة (محافظة/مدينة/عنوان أي عيادة)، مع فلتر التخصص
+        function applyDoctorFilters() {
+            const grid = document.getElementById('doctorsGrid');
+            const searchTerm = (document.getElementById('doctorSearchInput').value || '').trim().toLowerCase();
+            const specialtyFilter = document.getElementById('specialtyFilterSelect').value;
+            const cache = window._doctorsCache || {};
+            const entries = Object.entries(cache);
+
+            if (entries.length === 0) {
+                grid.innerHTML = `<div class="no-doctors" style="grid-column: 1/-1; text-align: center;">${t('noDoctorsAvailable')}</div>`;
+                return;
+            }
+
+            const filtered = entries.filter(([docId, data]) => {
+                if (specialtyFilter && data.specialty !== specialtyFilter) return false;
+                if (!searchTerm) return true;
+
+                const clinicsText = (data.clinics || []).map(c => `${c.clinic_address || ''} ${c.governorate || ''} ${c.city || ''} ${c.village || ''}`).join(' ');
+                const haystack = `${data.name || ''} ${data.specialty || ''} ${clinicsText}`.toLowerCase();
+                return haystack.includes(searchTerm);
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="no-doctors" style="grid-column: 1/-1; text-align: center;">${t('noDoctorsMatch')}</div>`;
+                return;
+            }
+
+            grid.innerHTML = '';
+            filtered.forEach(([docId, data]) => {
+                const avatarSrc = data.image_url ? escapeHtml(data.image_url) : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
+                const clinicsCount = data.clinics ? data.clinics.length : 0;
+
+                grid.innerHTML += `
+                    <div class="doctor-card">
+                        <div class="doc-profile">
+                            <img src="${avatarSrc}" class="doc-avatar" alt="Doctor Photo">
+                            <div class="doc-info">
+                                <h3>${doctorPrefix()} ${escapeHtml(data.name)}</h3>
+                                <span class="doc-specialty">${escapeHtml(data.specialty)}</span>
+                            </div>
+                        </div>
+                        <div class="doc-summary-line">🏥 ${t('clinicsCountLabel')}: ${clinicsCount}</div>
+                        <button class="details-btn" onclick='openDoctorDetails(${JSON.stringify(docId)})'>${t('detailsBtn')}</button>
+                    </div>
+                `;
+            });
         }
 
         // ================= فتح نافذة تفاصيل الطبيب واختيار العيادة =================
         function openDoctorDetails(doctorId) {
             const data = window._doctorsCache ? window._doctorsCache[doctorId] : null;
             if (!data) {
-                showToast('تعذر تحميل بيانات هذا الطبيب.', 'error');
+                showToast(t('doctorLoadError'), 'error');
                 return;
             }
 
@@ -1106,14 +1329,14 @@
 
             const avatarSrc = data.image_url ? data.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
             document.getElementById('detailsAvatar').src = avatarSrc;
-            document.getElementById('detailsName').innerText = `د. ${data.name}`;
+            document.getElementById('detailsName').innerText = `${doctorPrefix()} ${data.name}`;
             document.getElementById('detailsSpecialty').innerText = data.specialty || '';
 
             const listContainer = document.getElementById('detailsClinicsList');
             listContainer.innerHTML = '';
 
             if (!data.clinics || data.clinics.length === 0) {
-                listContainer.innerHTML = '<p style="font-size:13px; color:#a0aec0;">لا توجد عيادات مسجلة لهذا الطبيب حالياً.</p>';
+                listContainer.innerHTML = `<p style="font-size:13px; color:#a0aec0;">${t('noClinicsRegistered')}</p>`;
             } else {
                 data.clinics.forEach((clinic, idx) => {
                     const item = document.createElement('label');
@@ -1129,7 +1352,7 @@
                         <div>
                             <div class="clinic-address">📍 ${escapeHtml(clinic.clinic_address)}</div>
                             <div class="clinic-hours">🕒 ${escapeHtml(clinic.work_hours)}</div>
-                            ${clinic.price !== undefined && clinic.price !== null ? `<div class="clinic-hours">💰 سعر الكشف: ${escapeHtml(clinic.price)} ج.م</div>` : ''}
+                            ${clinic.price !== undefined && clinic.price !== null ? `<div class="clinic-hours">${t('priceLabel')} ${escapeHtml(clinic.price)} ${t('priceCurrency')}</div>` : ''}
                             ${mapButton}
                         </div>
                     `;
@@ -1167,7 +1390,7 @@
 
             closeDoctorDetailsModal();
 
-            document.getElementById('modalDoctorName').innerText = `د. ${currentDoctorForDetails.name}`;
+            document.getElementById('modalDoctorName').innerText = `${doctorPrefix()} ${currentDoctorForDetails.name}`;
             document.getElementById('modalClinicAddress').innerText = clinic.clinic_address;
             document.getElementById('modalClinicHours').innerText = clinic.work_hours;
             document.getElementById('modalClinicPrice').innerText = (clinic.price !== undefined && clinic.price !== null) ? `${clinic.price} ج.م` : 'غير محدد';
@@ -1197,7 +1420,7 @@
             const address = document.getElementById('modalPatientAddress').value.trim();
 
             if (!name || !phone || !address || isNaN(age)) {
-                showToast('برجاء استكمال جميع الحقول المطلوبة.', 'error');
+                showToast(t('fillAllFields'), 'error');
                 return;
             }
 
@@ -1210,7 +1433,7 @@
                     address: address
                 });
                 currentPatient = { ...currentPatient, name, phone, age, address };
-                document.getElementById('patientNameDisplay').innerText = `العميل: ${name}`;
+                document.getElementById('patientNameDisplay').innerText = `${t('clientLabel')}: ${name}`;
 
                 const bookingData = {
                     patient_id: patientId,
@@ -1229,14 +1452,14 @@
 
                 await db.collection("bookings").add(bookingData);
                 closeBookingModal();
-                showToast('تم إرسال طلب الحجز بنجاح! يمكنك تتبع حالته في تبويب حجوزاتي.', 'success');
+                showToast(t('bookingSuccess'), 'success');
 
                 // الانتقال المباشر لتبويب المتابعة لمشاهدة الحجز الجديد
                 switchTab('my-bookings', document.querySelectorAll('.sidebar-menu li')[1]);
 
             } catch (error) {
                 console.error("Error creating booking:", error);
-                showToast('حدث خطأ أثناء إتمام الحجز: ' + error.message, 'error');
+                showToast(t('bookingError') + ' ' + error.message, 'error');
             }
         }
 
@@ -1248,7 +1471,7 @@
         .where("patient_id", "==", patientId)
         .onSnapshot((snapshot) => {
             if (snapshot.empty) {
-                listDiv.innerHTML = '<div style="text-align:center; padding:40px; color:#a0aec0;">لا توجد حجوزات مسجلة باسمك حتى الآن.</div>';
+                listDiv.innerHTML = `<div style="text-align:center; padding:40px; color:#a0aec0;">${t('noBookingsYet')}</div>`;
                 return;
             }
 
@@ -1270,33 +1493,33 @@
                 let badgeClass = '';
                 
                 if (booking.status === 'confirmed') {
-                    statusText = 'مؤكد نهائياً ✅';
+                    statusText = t('statusConfirmed');
                     badgeClass = 'badge-confirmed';
                 } else if (booking.status === 'doctor_approved') {
-                    statusText = 'جاري التأكيد النهائي بواسطة الإدارة 📞';
+                    statusText = t('statusDoctorApproved');
                     badgeClass = 'badge-approved';
                 } else if (booking.status === 'rejected') {
-                    statusText = `مرفوض ❌ (السبب: ${escapeHtml(booking.rejection_reason || 'غير محدد')})`;
+                    statusText = `${t('statusRejectedPrefix')} ${escapeHtml(booking.rejection_reason || t('reasonNotSpecified'))})`;
                     badgeClass = 'badge-rejected';
                 } else {
-                    statusText = 'قيد الانتظار عند الطبيب ⏳';
+                    statusText = t('statusPending');
                     badgeClass = 'badge-pending';
                 }
 
                 const dateObj = booking.created_at ? (booking.created_at.seconds ? new Date(booking.created_at.seconds * 1000) : new Date(booking.created_at)) : null;
-                const dateStr = dateObj ? dateObj.toLocaleString('ar-EG') : 'غير محدد';
+                const dateStr = dateObj ? dateObj.toLocaleString(currentDateLocale()) : t('dateNotSpecified');
                 const hoursLine = booking.clinic_hours ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">🕒 ${escapeHtml(booking.clinic_hours)}</p>` : '';
                 const priceValue = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
-                const priceLine = (priceValue !== undefined && priceValue !== null) ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">💰 سعر الكشف: ${escapeHtml(priceValue)} ج.م</p>` : '';
+                const priceLine = (priceValue !== undefined && priceValue !== null) ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">${t('priceLabel')} ${escapeHtml(priceValue)} ${t('priceCurrency')}</p>` : '';
 
                 listDiv.innerHTML += `
                     <div class="booking-card ${booking.status}">
                         <div>
-                            <h3 style="margin:0 0 8px 0; font-size:16px;">د. ${escapeHtml(booking.doctor_name)}</h3>
-                            <p style="margin:0 0 5px 0; font-size:13px; color:#4a5568;">🏥 عيادة: ${escapeHtml(booking.clinic_address)}</p>
+                            <h3 style="margin:0 0 8px 0; font-size:16px;">${doctorPrefix()} ${escapeHtml(booking.doctor_name)}</h3>
+                            <p style="margin:0 0 5px 0; font-size:13px; color:#4a5568;">🏥 ${t('clinicLabelShort')}: ${escapeHtml(booking.clinic_address)}</p>
                             ${hoursLine}
                             ${priceLine}
-                            <small style="color:#a0aec0;">تاريخ الطلب: ${dateStr}</small>
+                            <small style="color:#a0aec0;">${t('requestDateLabel')}: ${dateStr}</small>
                         </div>
                         <div>
                             <span class="badge ${badgeClass}">${statusText}</span>
@@ -1306,7 +1529,7 @@
             });
         }, (error) => {
             console.error("Firestore error in my bookings list:", error);
-            listDiv.innerHTML = '<div style="text-align:center; padding:40px; color:#e74c3c;">حدث خطأ أثناء تحميل الحجوزات.</div>';
+            listDiv.innerHTML = `<div style="text-align:center; padding:40px; color:#e74c3c;">${t('bookingsLoadError')}</div>`;
         });
 }
 
@@ -1327,10 +1550,10 @@
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                showToast('تم إرسال طلبك بنجاح! سيتم مراجعته من قبل الإدارة والتواصل معك.', 'success');
+                showToast(t('ticketSuccess'), 'success');
                 document.getElementById('supportForm').reset();
             } catch (error) {
-                showToast('حدث خطأ أثناء إرسال الطلب: ' + error.message, 'error');
+                showToast(t('ticketError') + ' ' + error.message, 'error');
             }
         }
 
@@ -1342,13 +1565,13 @@
             const confirmNewPass = document.getElementById('confirmNewPassword').value;
 
             if (newPass !== confirmNewPass) {
-                showToast('كلمتا المرور الجديدتان غير متطابقتين.', 'error');
+                showToast(t('passwordMismatch'), 'error');
                 return;
             }
 
             const user = auth.currentUser;
             if (!user) {
-                showToast('انتهت جلسة العمل الحالية، يرجى إعادة تسجيل الدخول لتغيير كلمة المرور.', 'error');
+                showToast(t('sessionExpired'), 'error');
                 return;
             }
 
@@ -1358,11 +1581,11 @@
                 await user.reauthenticateWithCredential(credential);
                 await user.updatePassword(newPass);
 
-                showToast('تم تحديث كلمة المرور بنجاح! سيتم تسجيل خروجك الآن.', 'success');
+                showToast(t('passwordUpdateSuccess'), 'success');
                 setTimeout(() => { handleLogout(); }, 1200);
             } catch (error) {
                 console.error("Change password error:", error);
-                showToast('فشل التحديث: يرجى التأكد من كلمة المرور الحالية.', 'error');
+                showToast(t('passwordUpdateFail'), 'error');
             }
         }
 
