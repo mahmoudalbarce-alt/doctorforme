@@ -226,6 +226,10 @@
             display: none;
         }
 
+        .super-admin-only-tab {
+            display: none;
+        }
+
         /* تنبيهات Toast مخصصة (بديل alert() اللي بيظهر دومين الموقع) */
         .toast-container {
             position: fixed;
@@ -372,7 +376,9 @@
         <div class="admin-tabs">
             <button class="tab-btn active" data-tab="requests" onclick="switchTab('requests', this)">طلبات تسجيل الأطباء 📩</button>
             <button class="tab-btn" data-tab="bookings" onclick="switchTab('bookings', this)">إدارة حجز المواعيد 📅</button>
-            <button class="tab-btn" data-tab="users" onclick="switchTab('users', this)">قاعدة بيانات المستخدمين 👥</button>
+            <button class="tab-btn super-admin-only-tab" data-tab="doctorsList" onclick="switchTab('doctorsList', this)">الأطباء 👨‍⚕️</button>
+            <button class="tab-btn super-admin-only-tab" data-tab="patientsList" onclick="switchTab('patientsList', this)">المرضى 🧑‍🦽</button>
+            <button class="tab-btn super-admin-only-tab" data-tab="adminsList" onclick="switchTab('adminsList', this)">المشرفين 🔑</button>
             <button class="tab-btn" data-tab="logs" onclick="switchTab('logs', this)">سجل عمليات النظام 📝</button>
         </div>
 
@@ -429,22 +435,68 @@
             </div>
         </div>
 
-        <div id="usersTab" class="tab-content">
+        <div id="doctorsListTab" class="tab-content">
             <div class="card">
-                <h2>قائمة المستخدمين المسجلين بالنظام (أطباء ومرضى)</h2>
-                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 يقدر أي أدمن يحذف حساب أي دكتور أو مريض من هنا. حسابات المشرفين نفسها محمية ومش بتتحذف من الواجهة دي.</p>
+                <h2>قائمة الأطباء المسجلين بالنظام 👨‍⚕️</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 هذا التبويب يعرض كل الأطباء بغض النظر عن حالتهم (معتمد / بانتظار المراجعة / مرفوض)، ومتاح للمدير العام فقط.</p>
                 <div class="table-responsive">
                 <table style="margin-top: 20px;">
                     <thead>
                         <tr>
                             <th>الاسم</th>
                             <th>الهاتف</th>
-                            <th>نوع الحساب</th>
+                            <th>التخصص</th>
+                            <th>الحالة</th>
                             <th>تاريخ التسجيل</th>
                             <th>التحكم بالحساب</th>
                         </tr>
                     </thead>
-                    <tbody id="allUsersTable">
+                    <tbody id="allDoctorsTable">
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="patientsListTab" class="tab-content">
+            <div class="card">
+                <h2>قائمة المرضى المسجلين بالنظام 🧑‍🦽</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 متاح للمدير العام فقط. يقدر ترقية أي مريض لأدمن حجوزات من هنا.</p>
+                <div class="table-responsive">
+                <table style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>السن</th>
+                            <th>العنوان</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>التحكم بالحساب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allPatientsTable">
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="adminsListTab" class="tab-content">
+            <div class="card">
+                <h2>قائمة المشرفين 🔑</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 متاح للمدير العام فقط. حسابات المدير العام والمشرفين العامين محمية من التعديل هنا.</p>
+                <div class="table-responsive">
+                <table style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>نوع الصلاحية</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>التحكم بالحساب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allAdminsTable">
                     </tbody>
                 </table>
                 </div>
@@ -685,6 +737,9 @@
                 isSuperAdmin = true;
                 document.getElementById('adminRoleBadge').innerText = "المدير العام 👑";
                 document.getElementById('adminRoleBadge').style.background = "#9b59b6";
+                document.querySelectorAll('.super-admin-only-tab').forEach(btn => {
+                    btn.style.display = 'inline-block';
+                });
             }
 
             // جلب بيانات الأدمن (الاسم ونوع الصلاحية) قبل تحميل باقي الصفحة
@@ -747,10 +802,18 @@
                 loadBookings();
                 bookingsHasNewAlert = false;
                 stopAlertSoundIfClear();
-            } else if (tabName === 'users') {
-                if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
-                document.getElementById('usersTab').classList.add('active');
-                loadAllUsers();
+            } else if (tabName === 'doctorsList') {
+                if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+                document.getElementById('doctorsListTab').classList.add('active');
+                loadAllDoctors();
+            } else if (tabName === 'patientsList') {
+                if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+                document.getElementById('patientsListTab').classList.add('active');
+                loadAllPatients();
+            } else if (tabName === 'adminsList') {
+                if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+                document.getElementById('adminsListTab').classList.add('active');
+                loadAllAdmins();
             } else if (tabName === 'logs') {
                 if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
                 document.getElementById('logsTab').classList.add('active');
@@ -957,50 +1020,113 @@
             });
         }
 
-        // ================= 3. جلب جميع المستخدمين (متاحة لأي أدمن) =================
-        function loadAllUsers() {
-            const tableBody = document.getElementById('allUsersTable');
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
+        // ================= 3. جلب الأطباء / المرضى / المشرفين كل واحد في تبويبه (متاحة للمدير العام فقط) =================
+        function formatUserDate(data) {
+            if (!data.created_at) return 'غير متوفر';
+            if (data.created_at.seconds) {
+                return new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG');
+            }
+            return new Date(data.created_at).toLocaleDateString('ar-EG');
+        }
 
-            db.collection("users")
-                .get()
+        function loadAllDoctors() {
+            const tableBody = document.getElementById('allDoctorsTable');
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>';
+
+            db.collection("users").where("role", "==", "doctor").get()
                 .then(snapshot => {
+                    if (snapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#a0aec0;">لا يوجد أطباء مسجلين حالياً.</td></tr>';
+                        return;
+                    }
                     tableBody.innerHTML = '';
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         const uid = doc.id;
-                        let dateStr = 'غير متوفر';
-                        
-                        if (data.created_at) {
-                            if (data.created_at.seconds) {
-                                dateStr = new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG');
-                            } else {
-                                dateStr = new Date(data.created_at).toLocaleDateString('ar-EG');
-                            }
-                        }
-                        
-                        let roleText;
-                        if (data.role === 'doctor') {
-                            roleText = '👨‍⚕️ دكتور';
-                        } else if (data.role === 'patient') {
-                            roleText = '🧑‍🦽 مريض';
-                        } else if (data.role === 'admin' && data.admin_scope === 'bookings_only') {
-                            roleText = '📅 أدمن حجوزات فقط';
-                        } else {
-                            roleText = '🔑 مشرف عام';
-                        }
-
                         const escapedName = escapeForInlineJsAttr(data.name || '');
-                        let actionCell = '';
 
-                        if (data.role === 'patient') {
-                            actionCell = `
-                                <button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button>
-                                <button class="btn btn-primary" onclick="promoteToBookingsAdmin('${uid}', '${escapedName}')">ترقية لأدمن حجوزات ⬆️</button>
-                            `;
-                        } else if (data.role === 'doctor') {
-                            actionCell = `<button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button>`;
-                        } else if (data.role === 'admin' && data.admin_scope === 'bookings_only') {
+                        let statusBadge;
+                        if (data.status === 'approved') statusBadge = '<span class="status-badge status-approved">معتمد ✅</span>';
+                        else if (data.status === 'rejected') statusBadge = '<span class="status-badge status-rejected">مرفوض ❌</span>';
+                        else statusBadge = '<span class="status-badge status-pending">بانتظار المراجعة ⏳</span>';
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><b>${escapeHtml(data.name || 'مجهول')}</b></td>
+                                <td>${escapeHtml(data.phone || 'بدون هاتف')}</td>
+                                <td>${escapeHtml(data.specialty || 'غير محدد')}</td>
+                                <td>${statusBadge}</td>
+                                <td>${formatUserDate(data)}</td>
+                                <td><button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button></td>
+                            </tr>
+                        `;
+                    });
+                }).catch(err => {
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
+                });
+        }
+
+        function loadAllPatients() {
+            const tableBody = document.getElementById('allPatientsTable');
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>';
+
+            db.collection("users").where("role", "==", "patient").get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#a0aec0;">لا يوجد مرضى مسجلين حالياً.</td></tr>';
+                        return;
+                    }
+                    tableBody.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const uid = doc.id;
+                        const escapedName = escapeForInlineJsAttr(data.name || '');
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><b>${escapeHtml(data.name || 'مجهول')}</b></td>
+                                <td>${escapeHtml(data.phone || 'بدون هاتف')}</td>
+                                <td>${data.age !== undefined && data.age !== null ? escapeHtml(data.age) : 'غير محدد'}</td>
+                                <td>${escapeHtml(data.address || 'غير محدد')}</td>
+                                <td>${formatUserDate(data)}</td>
+                                <td>
+                                    <button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button>
+                                    <button class="btn btn-primary" onclick="promoteToBookingsAdmin('${uid}', '${escapedName}')">ترقية لأدمن حجوزات ⬆️</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }).catch(err => {
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
+                });
+        }
+
+        function loadAllAdmins() {
+            const tableBody = document.getElementById('allAdminsTable');
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
+
+            db.collection("users").where("role", "==", "admin").get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#a0aec0;">لا يوجد مشرفين مسجلين حالياً.</td></tr>';
+                        return;
+                    }
+                    tableBody.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const uid = doc.id;
+                        const escapedName = escapeForInlineJsAttr(data.name || '');
+                        const isThisSuperAdmin = (uid === SUPER_ADMIN_UID);
+
+                        let scopeText;
+                        if (isThisSuperAdmin) scopeText = '👑 المدير العام';
+                        else if (data.admin_scope === 'bookings_only') scopeText = '📅 أدمن حجوزات فقط';
+                        else scopeText = '🔑 مشرف عام';
+
+                        let actionCell;
+                        if (isThisSuperAdmin) {
+                            actionCell = `<span style="color:#a0aec0; font-size:12px;">🔒 حساب محمي</span>`;
+                        } else if (data.admin_scope === 'bookings_only') {
                             actionCell = `<button class="btn" style="background:#edf2f7; color:#333;" onclick="demoteToPatient('${uid}', '${escapedName}')">إرجاع لحساب مريض ⬇️</button>`;
                         } else {
                             actionCell = `<span style="color:#a0aec0; font-size:12px;">🔒 حساب محمي</span>`;
@@ -1010,8 +1136,8 @@
                             <tr>
                                 <td><b>${escapeHtml(data.name || 'مجهول')}</b></td>
                                 <td>${escapeHtml(data.phone || 'بدون هاتف')}</td>
-                                <td>${roleText}</td>
-                                <td>${dateStr}</td>
+                                <td>${scopeText}</td>
+                                <td>${formatUserDate(data)}</td>
                                 <td>${actionCell}</td>
                             </tr>
                         `;
@@ -1019,6 +1145,13 @@
                 }).catch(err => {
                     tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
                 });
+        }
+
+        // بعد أي إجراء (حذف/ترقية/إرجاع) نحدّث التبويب المفتوح حالياً بس
+        function refreshActiveUserTab() {
+            if (document.getElementById('doctorsListTab').classList.contains('active')) loadAllDoctors();
+            else if (document.getElementById('patientsListTab').classList.contains('active')) loadAllPatients();
+            else if (document.getElementById('adminsListTab').classList.contains('active')) loadAllAdmins();
         }
 
         // ترقية مريض لحساب "أدمن حجوزات فقط" - يقدر يأكد حجوزات المرضى بس، ومش هيظهر في قائمة المرضى تاني
@@ -1032,7 +1165,7 @@
             }).then(() => {
                 showToast(`تم ترقية (${name}) لأدمن حجوزات بنجاح.`, 'success');
                 logActivity('ترقية مستخدم لأدمن حجوزات', `ترقية (${name}) لصلاحية تأكيد الحجوزات فقط`);
-                loadAllUsers();
+                refreshActiveUserTab();
             }).catch(err => showToast(err.message, 'error'));
         }
 
@@ -1047,7 +1180,7 @@
             }).then(() => {
                 showToast(`تم إرجاع (${name}) لحساب مريض بنجاح.`, 'success');
                 logActivity('إرجاع أدمن حجوزات لمريض', `إلغاء صلاحيات الأدمن عن (${name})`);
-                loadAllUsers();
+                refreshActiveUserTab();
             }).catch(err => showToast(err.message, 'error'));
         }
 
@@ -1058,7 +1191,7 @@
             db.collection("users").doc(uid).delete().then(() => {
                 showToast(`تم الحذف.`, 'success');
                 logActivity("حذف حساب مستخدم", `حذف حساب (${name})`);
-                loadAllUsers();
+                refreshActiveUserTab();
             }).catch(err => showToast(err.message, 'error'));
         }
 
