@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة المريض | تطبيق حجزي</title>
+    <title>بوابة العملاء| تطبيق حجزي</title>
     <style>
         :root {
             --primary: #2a85ff;
@@ -1005,7 +1005,7 @@
                 const patientSnap = await db.collection("users").doc(patientId).get();
                 if (patientSnap.exists) {
                     currentPatient = patientSnap.data();
-                    document.getElementById('patientNameDisplay').innerText = `المريض: ${currentPatient.name} 🧑‍🦽`;
+                    document.getElementById('patientNameDisplay').innerText = `صفحة: ${currentPatient.name} 🧑‍🦽`;
                     document.getElementById('welcomeText').innerText = `مرحباً، أستاذ ${currentPatient.name}`;
                 } else {
                     showToast('فشل التحقق من بيانات الحساب.', 'error');
