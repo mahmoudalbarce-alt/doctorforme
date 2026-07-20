@@ -130,6 +130,31 @@
             display: block;
         }
 
+        .days-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .days-selector label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: normal;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .days-selector input[type="checkbox"] {
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
         .password-toggle {
             position: absolute;
             left: 15px;
@@ -591,7 +616,10 @@ const firebaseConfig = {
                 document.querySelectorAll('.clinic-city').forEach(el => el.required = false);
                 document.querySelectorAll('.clinic-village').forEach(el => el.required = false);
                 document.querySelectorAll('.clinic-price').forEach(el => el.required = false);
-                document.querySelectorAll('.clinic-hours').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-time-from-hour').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-time-from-period').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-time-to-hour').forEach(el => el.required = false);
+                document.querySelectorAll('.clinic-time-to-period').forEach(el => el.required = false);
             } else {
                 document.getElementById('patientAge').required = false;
                 document.getElementById('patientGov').required = false;
@@ -604,7 +632,10 @@ const firebaseConfig = {
                 document.querySelectorAll('.clinic-city').forEach(el => el.required = true);
                 document.querySelectorAll('.clinic-village').forEach(el => el.required = true);
                 document.querySelectorAll('.clinic-price').forEach(el => el.required = true);
-                document.querySelectorAll('.clinic-hours').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-time-from-hour').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-time-from-period').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-time-to-hour').forEach(el => el.required = true);
+                document.querySelectorAll('.clinic-time-to-period').forEach(el => el.required = true);
             }
         }
 
@@ -667,8 +698,38 @@ const firebaseConfig = {
                     <input type="url" class="form-control clinic-map" placeholder="ضع رابط مشاركة الموقع الجغرافي">
                 </div>
                 <div class="form-group">
-                    <label>مواعيد العمل (مثال: صباحي أو مسائي)</label>
-                    <input type="text" class="form-control clinic-hours" placeholder="مثال: السبت والإثنين من 5 م لـ 10 م" ${reqAttr}>
+                    <label>أيام العمل بهذه العيادة</label>
+                    <div class="days-selector">
+                        <label><input type="checkbox" class="clinic-day" value="السبت"> السبت</label>
+                        <label><input type="checkbox" class="clinic-day" value="الأحد"> الأحد</label>
+                        <label><input type="checkbox" class="clinic-day" value="الإثنين"> الإثنين</label>
+                        <label><input type="checkbox" class="clinic-day" value="الثلاثاء"> الثلاثاء</label>
+                        <label><input type="checkbox" class="clinic-day" value="الأربعاء"> الأربعاء</label>
+                        <label><input type="checkbox" class="clinic-day" value="الخميس"> الخميس</label>
+                        <label><input type="checkbox" class="clinic-day" value="الجمعة"> الجمعة</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>من الساعة</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" class="form-control clinic-time-from-hour" min="1" max="12" placeholder="مثال: 5" style="flex:1;" ${reqAttr}>
+                        <select class="form-control clinic-time-from-period" style="flex:1;" ${reqAttr}>
+                            <option value="">صباحاً / مساءً</option>
+                            <option value="صباحاً">صباحاً</option>
+                            <option value="مساءً">مساءً</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>لحد الساعة</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" class="form-control clinic-time-to-hour" min="1" max="12" placeholder="مثال: 10" style="flex:1;" ${reqAttr}>
+                        <select class="form-control clinic-time-to-period" style="flex:1;" ${reqAttr}>
+                            <option value="">صباحاً / مساءً</option>
+                            <option value="صباحاً">صباحاً</option>
+                            <option value="مساءً">مساءً</option>
+                        </select>
+                    </div>
                 </div>
             `;
             container.appendChild(block);
@@ -690,6 +751,18 @@ const firebaseConfig = {
             const name = document.getElementById('regName').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPassword').value;
+
+            // تحقق إضافي للدكتور: لازم يختار يوم عمل واحد على الأقل لكل عيادة
+            if (role === 'doctor') {
+                const blocks = document.querySelectorAll('.clinic-block');
+                for (const block of blocks) {
+                    const hasDay = block.querySelectorAll('.clinic-day:checked').length > 0;
+                    if (!hasDay) {
+                        showToast('برجاء اختيار يوم عمل واحد على الأقل لكل عيادة.', 'error');
+                        return;
+                    }
+                }
+            }
 
             const email = `${phone}@doctorforme.com`;
 
@@ -737,7 +810,19 @@ const firebaseConfig = {
                         const village = block.querySelector('.clinic-village').value.trim();
                         const price = parseFloat(block.querySelector('.clinic-price').value);
                         const mapLink = block.querySelector('.clinic-map').value.trim();
-                        const hours = block.querySelector('.clinic-hours').value.trim();
+
+                        const workDays = Array.from(block.querySelectorAll('.clinic-day:checked')).map(cb => cb.value);
+                        const fromHour = block.querySelector('.clinic-time-from-hour').value.trim();
+                        const fromPeriod = block.querySelector('.clinic-time-from-period').value;
+                        const toHour = block.querySelector('.clinic-time-to-hour').value.trim();
+                        const toPeriod = block.querySelector('.clinic-time-to-period').value;
+
+                        const daysText = workDays.length > 0 ? workDays.join('، ') : 'أيام غير محددة';
+                        const hoursText = (fromHour && fromPeriod && toHour && toPeriod)
+                            ? `من ${fromHour} ${fromPeriod} حتى ${toHour} ${toPeriod}`
+                            : 'مواعيد غير محددة';
+                        // نص جاهز للعرض المباشر في كل الصفحات (نفس دور حقل "مواعيد العمل" القديم)
+                        const workHoursDisplay = `${daysText} - ${hoursText}`;
 
                         clinics.push({
                             governorate: gov,
@@ -747,7 +832,10 @@ const firebaseConfig = {
                             clinic_address: `${gov} - ${city} - ${village}`,
                             price: isNaN(price) ? null : price,
                             google_maps_link: mapLink,
-                            work_hours: hours
+                            work_days: workDays,
+                            time_from: { hour: fromHour, period: fromPeriod },
+                            time_to: { hour: toHour, period: toPeriod },
+                            work_hours: workHoursDisplay
                         });
                     });
                     userData.clinics = clinics;
