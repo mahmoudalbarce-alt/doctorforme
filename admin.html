@@ -556,7 +556,7 @@
         const auth = firebase.auth();
 
         // الـ UID الخاص بالأدمن الأساسي
-        const SUPER_ADMIN_UID = "RfK3QG0A5YZUTvZvKMgHDHOUOa13";
+        const SUPER_ADMIN_UID = "iMuCHeOQCKOK8LywBBvDvJ5p7Hh1";
 
         let activeAdminName = "مسؤول النظام";
         let isSuperAdmin = false;
@@ -733,16 +733,7 @@
                 return;
             }
 
-            if (userId === SUPER_ADMIN_UID) {
-                isSuperAdmin = true;
-                document.getElementById('adminRoleBadge').innerText = "المدير العام 👑";
-                document.getElementById('adminRoleBadge').style.background = "#9b59b6";
-                document.querySelectorAll('.super-admin-only-tab').forEach(btn => {
-                    btn.style.display = 'inline-block';
-                });
-            }
-
-            // جلب بيانات الأدمن (الاسم ونوع الصلاحية) قبل تحميل باقي الصفحة
+            // جلب بيانات الأدمن (الاسم ونوع الصلاحية وهل هو مدير عام) قبل تحميل باقي الصفحة
             try {
                 const doc = await db.collection("users").doc(userId).get();
                 if (doc.exists) {
@@ -750,10 +741,32 @@
                     if (doc.data().admin_scope === 'bookings_only') {
                         isBookingsOnlyAdmin = true;
                     }
+
+                    if (doc.data().is_super_admin === true) {
+                        isSuperAdmin = true;
+                    } else if (userId === SUPER_ADMIN_UID) {
+                        // ترقية تلقائية لمرة واحدة: الحساب ده هو المدير العام المحدد بالكود
+                        // لكن حقل is_super_admin لسه متسجلش في قاعدة البيانات - نسجله دلوقتي
+                        isSuperAdmin = true;
+                        try {
+                            await db.collection("users").doc(userId).update({ is_super_admin: true });
+                        } catch (e) {
+                            console.warn("Could not auto-set is_super_admin flag:", e);
+                        }
+                    }
                 }
             } catch (err) {
                 console.warn("Could not load admin name, using default:", err);
             }
+
+            if (isSuperAdmin) {
+                document.getElementById('adminRoleBadge').innerText = "المدير العام 👑";
+                document.getElementById('adminRoleBadge').style.background = "#9b59b6";
+                document.querySelectorAll('.super-admin-only-tab').forEach(btn => {
+                    btn.style.display = 'inline-block';
+                });
+            }
+
             document.getElementById('activeAdminName').innerText = `الأدمن النشط: ${activeAdminName} 👤`;
 
             if (isBookingsOnlyAdmin) {
@@ -1116,7 +1129,7 @@
                         const data = doc.data();
                         const uid = doc.id;
                         const escapedName = escapeForInlineJsAttr(data.name || '');
-                        const isThisSuperAdmin = (uid === SUPER_ADMIN_UID);
+                        const isThisSuperAdmin = (data.is_super_admin === true) || (uid === SUPER_ADMIN_UID);
 
                         let scopeText;
                         if (isThisSuperAdmin) scopeText = '👑 المدير العام';
