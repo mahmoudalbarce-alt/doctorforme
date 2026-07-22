@@ -317,7 +317,7 @@
 
     <div class="auth-container">
         <div class="logo-area">
-            <h1>DoctorForMe 🏥</h1>
+            <h1>تطبيق حجزي 🏥</h1>
             <p>منصتك الطبية المتكاملة لحجز العيادات وتسهيل التواصل</p>
         </div>
 
@@ -343,7 +343,7 @@
             <div class="form-group">
                 <label>نوع الحساب</label>
                 <div class="role-selector">
-                    <div class="role-option selected" id="rolePatient" onclick="selectRole('patient')"> حساب عميل</div>
+                    <div class="role-option selected" id="rolePatient" onclick="selectRole('patient')">🧑‍🦽 حساب مريض</div>
                     <div class="role-option" id="roleDoctor" onclick="selectRole('doctor')">👨‍⚕️ حساب دكتور</div>
                 </div>
                 <input type="hidden" id="selectedRole" value="patient">
@@ -498,7 +498,7 @@ const firebaseConfig = {
             "المنيا": ["المنيا", "ملوي", "بني مزار", "مغاغة", "سمالوط", "أبو قرقاص"],
             "أسيوط": ["أسيوط", "ديروط", "منفلوط", "القوصية", "أبو تيج", "صدفا"],
             "سوهاج": ["سوهاج", "طهطا", "جرجا", "أخميم", "البلينا", "المراغة"],
-            "قنا": ["قنا", "نجع حمادي", "دشنا", "أبو تشت", "قفط","قوص", "نقادة"],
+            "قنا": ["قنا", "نجع حمادي", "دشنا", "قفط", "أبو تشت", "قوص", "نقادة"],
             "الأقصر": ["الأقصر", "إسنا", "أرمنت", "القرنة"],
             "أسوان": ["أسوان", "كوم أمبو", "إدفو", "نصر النوبة"],
             "البحر الأحمر": ["الغردقة", "سفاجا", "القصير", "مرسى علم", "شلاتين"],
@@ -721,7 +721,7 @@ const firebaseConfig = {
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>لحد الساعة</label>
+                    <label>إلي الساعة</label>
                     <div style="display:flex; gap:10px;">
                         <input type="number" class="form-control clinic-time-to-hour" min="1" max="12" placeholder="مثال: 10" style="flex:1;" ${reqAttr}>
                         <select class="form-control clinic-time-to-period" style="flex:1;" ${reqAttr}>
@@ -845,7 +845,7 @@ const firebaseConfig = {
                 await db.collection("users").doc(uid).set(userData);
 
                 if (role === 'patient') {
-                    showToast("تهانينا! تم إنشاء حسابك بنجاح كمريض.", 'success');
+                    showToast("تهانينا! تم إنشاء حسابك بنجاح كعميل.", 'success');
                     localStorage.setItem('user_id', uid);
                     localStorage.setItem('user_name', name);
                     localStorage.setItem('user_role', 'patient');
@@ -867,6 +867,19 @@ const firebaseConfig = {
         }
 
         // ================= معالجة عملية تسجيل الدخول (Login) المحدثة =================
+        // ================= جسر تسجيل الدخول لتطبيق Flutter (لخدمة الاستماع في الخلفية) =================
+        // بيبعت بيانات الدخول لقناة "FlutterAuth" عشان فلاتر يعمل جلسة Firebase خاصة بيه
+        // منفصلة عن جلسة المتصفح، ويقدر يشغّل خدمة استماع في الخلفية (Foreground Service)
+        function notifyFlutterLogin(uid, role, email, password) {
+            try {
+                if (window.FlutterAuth && typeof window.FlutterAuth.postMessage === 'function') {
+                    window.FlutterAuth.postMessage(JSON.stringify({ type: 'login', uid, role, email, password }));
+                }
+            } catch (e) {
+                console.warn('FlutterAuth bridge not available:', e);
+            }
+        }
+
         async function handleLogin(event) {
             event.preventDefault();
 
@@ -893,6 +906,7 @@ const firebaseConfig = {
                     if (userData.role === 'admin') {
                         localStorage.setItem('user_role', 'admin');
                         showToast("أهلاً بك يا سيادة المدير! جاري التوجيه للوحة التحكم...", 'success');
+                        notifyFlutterLogin(uid, 'admin', email, password);
                         setTimeout(() => { window.location.href = 'admin.html'; }, 800);
                     } 
                     // 2. التحقق لو الحساب "دكتور"
@@ -908,6 +922,7 @@ const firebaseConfig = {
                             return;
                         }
                         localStorage.setItem('user_role', 'doctor');
+                        notifyFlutterLogin(uid, 'doctor', email, password);
                         window.location.href = 'doctor.html';
                     } 
                     // 3. التحقق لو الحساب "مريض"
