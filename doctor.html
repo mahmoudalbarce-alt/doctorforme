@@ -246,6 +246,17 @@
             setTimeout(() => { toast.remove(); }, 4000);
         }
 
+        // ================= جسر إشعارات لتطبيق Flutter (لو الصفحة شغالة جوه WebView فلاتر) =================
+        function notifyFlutterApp(title, body) {
+            try {
+                if (window.FlutterNotify && typeof window.FlutterNotify.postMessage === 'function') {
+                    window.FlutterNotify.postMessage(JSON.stringify({ title, body }));
+                }
+            } catch (e) {
+                console.warn('FlutterNotify bridge not available:', e);
+            }
+        }
+
         // التحقق من أن المستخدم طبيب ومسجل دخول بالكامل
         const currentRole = localStorage.getItem('user_role');
         const doctorId = localStorage.getItem('user_id'); 
@@ -363,6 +374,7 @@
                   // إدارة تشغيل أو إيقاف صوت الرنين فوراً
                   if (triggerVoiceAlert) {
                       playAlertSound();
+                      notifyFlutterApp('حجز جديد 📅', 'وصلك حجز جديد بانتظار قرارك');
                   } else {
                       stopAlertSound();
                   }
@@ -481,8 +493,19 @@
             }
         }
 
+        function notifyFlutterLogout() {
+            try {
+                if (window.FlutterAuth && typeof window.FlutterAuth.postMessage === 'function') {
+                    window.FlutterAuth.postMessage(JSON.stringify({ type: 'logout' }));
+                }
+            } catch (e) {
+                console.warn('FlutterAuth bridge not available:', e);
+            }
+        }
+
         // خروج مأمن
         function logout() {
+            notifyFlutterLogout();
             auth.signOut().finally(() => {
                 localStorage.clear();
                 window.location.href = 'login.html';
