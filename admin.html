@@ -562,6 +562,18 @@
         let isSuperAdmin = false;
         let isBookingsOnlyAdmin = false; // أدمن مُرقّى من مريض، صلاحيته تأكيد الحجوزات فقط
 
+        // ================= جسر إشعارات لتطبيق Flutter (لو الصفحة شغالة جوه WebView فلاتر) =================
+        // بيبعت رسالة لقناة "FlutterNotify" اللي بيضيفها تطبيق فلاتر، ويتجاهلها بأمان لو الصفحة مفتوحة في متصفح عادي
+        function notifyFlutterApp(title, body) {
+            try {
+                if (window.FlutterNotify && typeof window.FlutterNotify.postMessage === 'function') {
+                    window.FlutterNotify.postMessage(JSON.stringify({ title, body }));
+                }
+            } catch (e) {
+                console.warn('FlutterNotify bridge not available:', e);
+            }
+        }
+
         // ================= نظام الإشعار الصوتي لوصول طلبات جديدة =================
         const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
         alertSound.loop = true;
@@ -613,6 +625,7 @@
                       pendingDoctorsHasNewAlert = true;
                       playAlertSound();
                       showToast('يوجد طلب تسجيل طبيب جديد بانتظار المراجعة 👨‍⚕️', 'info');
+                      notifyFlutterApp('طلب تسجيل طبيب جديد 👨‍⚕️', 'وصل طلب تسجيل جديد بانتظار المراجعة');
                       if (document.getElementById('requestsTab').classList.contains('active')) {
                           loadPendingDoctors();
                       }
@@ -641,6 +654,7 @@
                       bookingsHasNewAlert = true;
                       playAlertSound();
                       showToast('يوجد حجز جديد بانتظار التأكيد النهائي 📅', 'info');
+                      notifyFlutterApp('حجز بانتظار التأكيد 📅', 'يوجد حجز جديد بانتظار التأكيد النهائي');
                       if (document.getElementById('bookingsTab').classList.contains('active')) {
                           loadBookings();
                       }
@@ -1260,7 +1274,18 @@
                 });
         }
 
+        function notifyFlutterLogout() {
+            try {
+                if (window.FlutterAuth && typeof window.FlutterAuth.postMessage === 'function') {
+                    window.FlutterAuth.postMessage(JSON.stringify({ type: 'logout' }));
+                }
+            } catch (e) {
+                console.warn('FlutterAuth bridge not available:', e);
+            }
+        }
+
         function handleLogout() {
+            notifyFlutterLogout();
             auth.signOut().finally(() => {
                 localStorage.clear();
                 window.location.href = 'login.html';
