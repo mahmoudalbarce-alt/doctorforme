@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة العميل | تطبيق حجزي كلينك</title>
+    <title>بوابة العميل | حجزي كلينك</title>
     <style>
         :root {
             --primary: #2a85ff;
@@ -712,7 +712,7 @@
 
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <span>🏥 حجزي كلينك </span>
+            <span> 🏥 حجزي كلينك</span>
             <button class="sidebar-close" onclick="toggleSidebar(false)">✕</button>
         </div>
         <ul class="sidebar-menu">
@@ -1408,8 +1408,9 @@
                     return;
                 }
             } catch (err) {
-                console.error('Error checking doctor availability:', err);
-                showToast(t('doctorOffline'), 'error');
+                // خطأ حقيقي (صلاحيات، شبكة...) - مش بالضرورة إن الطبيب غير متاح، فنوضح الفرق
+                console.error('Error checking doctor availability (code: ' + (err.code || 'unknown') + '):', err);
+                showToast('حدث خطأ أثناء التحقق من حالة الطبيب: ' + (err.message || err), 'error');
                 proceedBtn.disabled = false;
                 proceedBtn.innerText = originalBtnText;
                 return;
