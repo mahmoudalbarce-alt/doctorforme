@@ -172,7 +172,7 @@
         </header>
 
         <div class="audio-notice">
-            📢 نظام الإشعار الصوتي نشط تلقائياً. يرجى الضغط في أي مكان داخل الصفحة لضمان عمل رنين التنبيه فور وصول حجز جديد.
+          
         </div>
         
         <div class="table-responsive">
@@ -286,6 +286,24 @@
 
         const tableBody = document.querySelector('#bookingsTable tbody');
         let activeBookingId = '';
+
+        // ================= نظام "حالة الاتصال" - يبلّغ إن صفحة الدكتور مفتوحة فعلاً =================
+        // بيحدّث توقيت "آخر ظهور" كل شوية طول ما الصفحة مفتوحة، عشان صفحة المريض
+        // تقدر تتأكد إن الدكتور فاتح صفحته فعلاً قبل ما تسمح بالحجز
+        function updateDoctorPresence() {
+            db.collection("users").doc(doctorId).update({
+                last_active: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.warn('Presence update failed:', err));
+        }
+
+        updateDoctorPresence(); // فور فتح الصفحة
+        setInterval(updateDoctorPresence, 30000); // كل 30 ثانية طول ما الصفحة مفتوحة
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                updateDoctorPresence();
+            }
+        });
 
         // إعدادات كائن الصوت للإشعار اللحظي المستمر (رنة متكررة)
         const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-500.wav');
@@ -506,6 +524,7 @@
         // خروج مأمن
         function logout() {
             notifyFlutterLogout();
+            db.collection("users").doc(doctorId).update({ last_active: null }).catch(() => {});
             auth.signOut().finally(() => {
                 localStorage.clear();
                 window.location.href = 'login.html';
