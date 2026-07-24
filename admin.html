@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم والإدارة الشاملة | DoctorForMe</title>
+    <title>لوحة التحكم والإدارة الشاملة | تطبيق حجزي</title>
     <style>
         :root {
             --primary: #2a85ff;
@@ -364,7 +364,7 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="header">
-        <h1>DoctorForMe 🏥 <span class="admin-badge" id="adminRoleBadge">لوحة المشرف</span></h1>
+        <h1> 🏥تطبيق حجزي <span class="admin-badge" id="adminRoleBadge">لوحة المشرف</span></h1>
         <div class="user-info">
             <span id="activeAdminName" style="font-weight: bold;">الأدمن النشط: جاري التحقق... 👤</span>
             <button class="logout-btn" onclick="handleLogout()">خروج 🚪</button>
@@ -379,6 +379,7 @@
             <button class="tab-btn super-admin-only-tab" data-tab="doctorsList" onclick="switchTab('doctorsList', this)">الأطباء 👨‍⚕️</button>
             <button class="tab-btn super-admin-only-tab" data-tab="patientsList" onclick="switchTab('patientsList', this)">المرضى 🧑‍🦽</button>
             <button class="tab-btn super-admin-only-tab" data-tab="adminsList" onclick="switchTab('adminsList', this)">المشرفين 🔑</button>
+            <button class="tab-btn super-admin-only-tab" data-tab="complaints" onclick="switchTab('complaints', this)">الشكاوى 📨</button>
             <button class="tab-btn" data-tab="logs" onclick="switchTab('logs', this)">سجل عمليات النظام 📝</button>
         </div>
 
@@ -503,6 +504,32 @@
             </div>
         </div>
 
+        <div id="complaintsTab" class="tab-content">
+            <div class="card">
+                <h2>الشكاوى وطلبات الدعم والمقترحات 📨</h2>
+                <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 متاح للمدير العام فقط. الرسائل اللي بيبعتها المرضى والأطباء من تبويب "المساعدة والدعم" في صفحاتهم.</p>
+                <div class="table-responsive">
+                <table style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>النوع</th>
+                            <th>العنوان</th>
+                            <th>الرسالة</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="complaintsTable">
+                        <tr><td colspan="8" style="text-align:center;">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
         <div id="logsTab" class="tab-content">
             <div class="card">
                 <h2>سجل نشاط الإدارة والموافقات 📝</h2>
@@ -556,7 +583,7 @@
         const auth = firebase.auth();
 
         // الـ UID الخاص بالأدمن الأساسي
-        const SUPER_ADMIN_UID = "RfK3QG0A5YZUTvZvKMgHDHOUOa13";
+        const SUPER_ADMIN_UID = "iMuCHeOQCKOK8LywBBvDvJ5p7Hh1";
 
         let activeAdminName = "مسؤول النظام";
         let isSuperAdmin = false;
@@ -841,6 +868,10 @@
                 if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
                 document.getElementById('adminsListTab').classList.add('active');
                 loadAllAdmins();
+            } else if (tabName === 'complaints') {
+                if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+                document.getElementById('complaintsTab').classList.add('active');
+                loadComplaints();
             } else if (tabName === 'logs') {
                 if (isBookingsOnlyAdmin) return; // صلاحيته لا تسمح بالوصول لهذا التبويب
                 document.getElementById('logsTab').classList.add('active');
@@ -1179,6 +1210,76 @@
             if (document.getElementById('doctorsListTab').classList.contains('active')) loadAllDoctors();
             else if (document.getElementById('patientsListTab').classList.contains('active')) loadAllPatients();
             else if (document.getElementById('adminsListTab').classList.contains('active')) loadAllAdmins();
+        }
+
+        // ================= الشكاوى وطلبات الدعم والمقترحات (متاحة للمدير العام فقط) =================
+        function loadComplaints() {
+            const tableBody = document.getElementById('complaintsTable');
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">جاري التحميل...</td></tr>';
+
+            db.collection("feedbacks").get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#a0aec0;">لا توجد شكاوى أو طلبات دعم حالياً.</td></tr>';
+                        return;
+                    }
+
+                    // ترتيب برمجي (الأحدث أولاً) لتفادي طلب الـ Index
+                    let items = [];
+                    snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+                    items.sort((a, b) => {
+                        const tA = a.created_at ? (a.created_at.seconds || 0) : 0;
+                        const tB = b.created_at ? (b.created_at.seconds || 0) : 0;
+                        return tB - tA;
+                    });
+
+                    tableBody.innerHTML = '';
+                    items.forEach(data => {
+                        const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleString('ar-EG') : 'غير محدد';
+                        const roleText = data.role === 'doctor' ? '👨‍⚕️ دكتور' : (data.role === 'patient' ? '🧑‍🦽 عميل' : (data.role || 'غير محدد'));
+                        const isRead = data.status === 'read';
+                        const statusBadge = isRead
+                            ? '<span class="status-badge status-approved">تم الاطلاع ✅</span>'
+                            : '<span class="status-badge status-pending">جديدة 🆕</span>';
+
+                        const escapedSender = escapeForInlineJsAttr(data.sender_name || '');
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td><b>${escapeHtml(data.sender_name || 'غير معروف')}</b></td>
+                                <td>${data.sender_phone ? `<a href="tel:${escapeHtml(data.sender_phone)}">${escapeHtml(data.sender_phone)} 📞</a>` : 'بدون هاتف'}</td>
+                                <td>${roleText}</td>
+                                <td>${escapeHtml(data.subject || '-')}</td>
+                                <td style="max-width:250px; white-space:normal;">${escapeHtml(data.message || '-')}</td>
+                                <td style="font-size:12px; color:#718096;">${dateStr}</td>
+                                <td>${statusBadge}</td>
+                                <td>
+                                    ${!isRead ? `<button class="btn btn-success" onclick="markComplaintRead('${data.id}', '${escapedSender}')">تحديد كمقروء ✅</button>` : ''}
+                                    <button class="btn btn-danger" onclick="deleteComplaint('${data.id}', '${escapedSender}')">حذف 🗑️</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }).catch(err => {
+                    tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
+                });
+        }
+
+        function markComplaintRead(id, senderName) {
+            db.collection("feedbacks").doc(id).update({ status: 'read' }).then(() => {
+                showToast('تم تحديد الرسالة كمقروءة.', 'success');
+                loadComplaints();
+            }).catch(err => showToast(err.message, 'error'));
+        }
+
+        async function deleteComplaint(id, senderName) {
+            const confirmed = await showConfirm(`هل تريد حذف رسالة (${senderName})؟ هذا الإجراء لا يمكن التراجع عنه.`);
+            if (!confirmed) return;
+
+            db.collection("feedbacks").doc(id).delete().then(() => {
+                showToast('تم حذف الرسالة.', 'success');
+                loadComplaints();
+            }).catch(err => showToast(err.message, 'error'));
         }
 
         // ترقية مريض لحساب "أدمن حجوزات فقط" - يقدر يأكد حجوزات المرضى بس، ومش هيظهر في قائمة المرضى تاني
