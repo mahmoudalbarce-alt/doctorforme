@@ -1178,7 +1178,17 @@
                 setTimeout(() => { window.location.href = 'login.html'; }, 1200);
                 return;
             }
-
+         auth.onAuthStateChanged((user) => {
+        if (user) {
+            console.log('Firebase Auth UID:', user.uid);
+            console.log('localStorage patientId:', patientId);
+            if (user.uid !== patientId) {
+                console.error('⚠️ UID mismatch! هنا سبب مشكلة الصلاحيات');
+            }
+        } else {
+            console.error('⚠️ لا يوجد مستخدم مسجل دخول في Firebase Auth حالياً');
+        }
+    });
             const savedLang = localStorage.getItem('preferred_lang') || 'ar';
             applyLanguage(savedLang);
 
