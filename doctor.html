@@ -155,6 +155,60 @@
             table { font-size: 12px; }
             th, td { padding: 8px; }
             .modal-content { padding: 18px; }
+            @media (max-width: 768px) {
+
+    .table-responsive {
+        overflow-x: visible;
+    }
+
+    #bookingsTable {
+        min-width: unset;
+        border: none;
+    }
+
+    #bookingsTable thead {
+        display: none; /* إخفاء رأس الجدول التقليدي */
+    }
+
+    #bookingsTable tbody tr {
+        display: block;
+        background: #fff;
+        border: 1px solid #edf2f7;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        padding: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    #bookingsTable tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 5px;
+        border-bottom: 1px dashed #edf2f7;
+        gap: 10px;
+    }
+
+    #bookingsTable tbody td:last-child {
+        border-bottom: none;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #bookingsTable tbody td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #718096;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    #bookingsTable tbody td .btn {
+        margin: 5px 0 0 0;
+        width: 100%;
+    }
+}
         }
     </style>
 </head>
@@ -376,16 +430,16 @@
                       const clinicHours = booking.clinic_hours ? ` (${escapeHtml(booking.clinic_hours)})` : '';
                       const clinicPriceText = (booking.clinic_price !== undefined && booking.clinic_price !== null) ? ` - 💰 ${escapeHtml(booking.clinic_price)} ج.م` : '';
 
-                      const row = `
-                          <tr>
-                              <td><strong>${escapeHtml(booking.patient_name)}</strong></td>
-                              <td>${escapeHtml(booking.patient_phone)}</td>
-                              <td><span class="clinic-tag">🏥 ${selectedClinic}${clinicHours}${clinicPriceText}</span></td>
-                              <td style="font-size:12px; color:#718096;">${bookingDate}</td>
-                              <td>${statusBadge}</td>
-                              <td>${actionButtons}</td>
-                          </tr>
-                      `;
+                   const row = `
+    <tr>
+        <td data-label="اسم المريض"><strong>${escapeHtml(booking.patient_name)}</strong></td>
+        <td data-label="رقم الهاتف">${escapeHtml(booking.patient_phone)}</td>
+        <td data-label="العيادة"><span class="clinic-tag">🏥 ${selectedClinic}${clinicHours}${clinicPriceText}</span></td>
+        <td data-label="تاريخ الطلب" style="font-size:12px; color:#718096;">${bookingDate}</td>
+        <td data-label="الحالة">${statusBadge}</td>
+        <td data-label="القرار">${actionButtons}</td>
+    </tr>
+`;
                       tableBody.innerHTML += row;
                   });
 
