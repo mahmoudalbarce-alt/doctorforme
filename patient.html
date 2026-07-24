@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة العميل | تطبيق حجزي</title>
+    <title>بوابة العميل | تطبيق حجزي كلينك</title>
     <style>
         :root {
             --primary: #2a85ff;
@@ -712,7 +712,7 @@
 
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <span>DoctorForMe 🏥</span>
+            <span>🏥 حجزي كلينك </span>
             <button class="sidebar-close" onclick="toggleSidebar(false)">✕</button>
         </div>
         <ul class="sidebar-menu">
@@ -1023,7 +1023,9 @@
                 bookingError: "حدث خطأ أثناء إتمام الحجز:",
                 loginRequired: "برجاء تسجيل الدخول أولاً.",
                 accountVerifyFailed: "فشل التحقق من بيانات الحساب.",
-                doctorLoadError: "تعذر تحميل بيانات هذا الطبيب."
+                doctorLoadError: "تعذر تحميل بيانات هذا الطبيب.",
+                doctorOffline: "⚠️ الطبيب غير متاح الآن، برجاء المحاولة لاحقاً أو اختيار طبيب آخر.",
+                checkingAvailability: "جاري التحقق..."
             },
             en: {
                 menuSearch: "🔍 Browse & Book Doctors",
@@ -1098,6 +1100,8 @@
                 loginRequired: "Please log in first.",
                 accountVerifyFailed: "Failed to verify your account details.",
                 doctorLoadError: "Could not load this doctor's details.",
+                doctorOffline: "⚠️ This doctor is currently unavailable. Please try again later or choose another doctor.",
+                checkingAvailability: "Checking...",
                 detailsBtn: "📋 Details"
             }
         };
@@ -1375,9 +1379,44 @@
             document.getElementById('doctorDetailsModal').style.display = 'none';
         }
 
+        // التحقق إن الدكتور فاتح صفحته فعلاً (بعت "نبضة حياة" خلال آخر 3 دقايق)
+        function isDoctorOnline(lastActiveTimestamp) {
+            if (!lastActiveTimestamp || !lastActiveTimestamp.seconds) return false;
+            const nowSeconds = Math.floor(Date.now() / 1000);
+            const diffSeconds = nowSeconds - lastActiveTimestamp.seconds;
+            return diffSeconds < 180; // 3 دقايق
+        }
+
         // الانتقال من نافذة التفاصيل لنافذة تأكيد بيانات الحجز
-        function proceedToBookingForm() {
+        async function proceedToBookingForm() {
             if (!currentDoctorForDetails || selectedClinicIndex === null) return;
+
+            const proceedBtn = document.getElementById('proceedBookingBtn');
+            const originalBtnText = proceedBtn.innerText;
+            proceedBtn.disabled = true;
+            proceedBtn.innerText = t('checkingAvailability');
+
+            // تحقق فوري وطازج إن الدكتور متاح دلوقتي قبل ما نكمل الحجز
+            try {
+                const freshDoc = await db.collection('users').doc(currentDoctorForDetails.id).get();
+                const freshData = freshDoc.exists ? freshDoc.data() : null;
+
+                if (!freshData || !isDoctorOnline(freshData.last_active)) {
+                    showToast(t('doctorOffline'), 'error');
+                    proceedBtn.disabled = false;
+                    proceedBtn.innerText = originalBtnText;
+                    return;
+                }
+            } catch (err) {
+                console.error('Error checking doctor availability:', err);
+                showToast(t('doctorOffline'), 'error');
+                proceedBtn.disabled = false;
+                proceedBtn.innerText = originalBtnText;
+                return;
+            }
+
+            proceedBtn.disabled = false;
+            proceedBtn.innerText = originalBtnText;
 
             const clinic = currentDoctorForDetails.clinics[selectedClinicIndex];
             pendingBooking = {
