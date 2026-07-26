@@ -1173,10 +1173,6 @@
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key]) el.placeholder = dict[key];
             });
-
-            document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
-            document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
-
             // إعادة رسم أزرار "تفاصيل" في كروت الأطباء بلغة العرض الحالية
             document.querySelectorAll('.details-btn').forEach(btn => {
                 btn.innerText = dict.detailsBtn;
