@@ -715,24 +715,24 @@
             <span> 🏥 حجزي كلينك</span>
             <button class="sidebar-close" onclick="toggleSidebar(false)">✕</button>
         </div>
-        <ul class="sidebar-menu">
-            <li class="active" onclick="switchTab('search-doctors', this)"><a data-i18n="menuSearch">🔍 تصفح وحجز الأطباء</a></li>
-            <li onclick="switchTab('my-bookings', this)"><a data-i18n="menuBookings">📅 حجوزاتي</a></li>
-            <li onclick="switchTab('support-tickets', this)"><a data-i18n="menuSupport">💬 المساعدة والدعم والشكاوى والمقترحات</a></li>
-            <li onclick="switchTab('language-settings', this)"><a data-i18n="menuLanguage">🌐 اللغة</a></li>
-            <li onclick="switchTab('change-password', this)"><a data-i18n="menuPassword">🔑 تغيير كلمة المرور</a></li>
-        </ul>
+<ul class="sidebar-menu">
+    <li class="active" onclick="switchTab('search-doctors', this)"><a data-i18n="menuSearch">🔍 تصفح وحجز الأطباء</a></li>
+    <li onclick="switchTab('my-bookings', this)"><a data-i18n="menuBookings">📅 حجوزاتي</a></li>
+    <li onclick="switchTab('invite-friends', this)"><a>🎁 دعوة الأصدقاء</a></li>
+    <li onclick="switchTab('support-tickets', this)"><a data-i18n="menuSupport">💬 المساعدة والدعم والشكاوى والمقترحات</a></li>
+    <li onclick="switchTab('change-password', this)"><a data-i18n="menuPassword">🔑 تغيير كلمة المرور</a></li>
+</ul>
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="handleLogout()"><span data-i18n="logout">تسجيل الخروج 🚪</span></button>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="top-header">
-            <button class="menu-toggle" onclick="toggleSidebar(true)">☰</button>
-            <h1 id="patientNameDisplay">أهلاً بك..</h1>
-            <div style="font-size: 14px; color: #718096;" id="currentDateDisplay"></div>
-        </div>
+    <div class="top-header">
+    <button class="menu-toggle" onclick="toggleSidebar(true)">☰</button>
+    <h1>🏥 حجزي كلينك</h1>
+    <div style="font-size: 14px; color: #718096;" id="currentDateDisplay"></div>
+</div>
 
         <div id="search-doctors" class="tab-content active">
             <div class="welcome-card">
@@ -779,16 +779,28 @@
             </div>
         </div>
 
-        <div id="language-settings" class="tab-content">
-            <h2 class="section-title" data-i18n="langTitle">اللغة / Language</h2>
-            <div style="background:white; padding:25px; border-radius:12px; max-width:400px; box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <p style="color:#718096; font-size:14px; margin-bottom:20px;" data-i18n="langDesc">اختر لغة عرض الواجهة</p>
-                <div class="lang-options">
-                    <button class="lang-option" id="langArBtn" onclick="setLanguage('ar')">🇪🇬 العربية</button>
-                    <button class="lang-option" id="langEnBtn" onclick="setLanguage('en')">🇬🇧 English</button>
-                </div>
-            </div>
+<div id="invite-friends" class="tab-content">
+    <h2 class="section-title">🎁 ادعُ أصدقاءك واكسب نقاط</h2>
+    <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); max-width: 600px;">
+        <p style="color: #718096; font-size: 14px; margin-bottom: 20px;">شارك رابط تحميل التطبيق مع أصدقائك، واحصل على نقطة مع كل مشاركة!</p>
+
+        <div class="form-group">
+            <label>🏆 رصيدك الحالي من النقاط</label>
+            <div id="pointsDisplay" style="font-size: 32px; font-weight: bold; color: var(--primary);">0</div>
         </div>
+
+        <div class="form-group">
+            <label>رابط تحميل التطبيق</label>
+            <input type="text" id="appDownloadLink" class="form-control" readonly
+                value="https://play.google.com/store/apps/details?id=com.example.flutter_application_1">
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 15px;">
+            <button class="submit-btn" onclick="shareAppLink()">📤 مشاركة الرابط</button>
+            <button class="btn-secondary" onclick="copyAppLink()">📋 نسخ الرابط</button>
+        </div>
+    </div>
+</div>
 
         <div id="change-password" class="tab-content">
             <h2 class="section-title" data-i18n="changePasswordTitle">تغيير كلمة المرور</h2>
@@ -866,7 +878,25 @@
             </form>
         </div>
     </div>
-
+     <div id="paymentInstructionsModal" class="modal">
+    <div class="modal-content">
+        <h3>💳 خطوة أخيرة لتأكيد الحجز</h3>
+        <div class="modal-summary" id="paymentAmountSummary"></div>
+        <p style="font-size:14px; color:#4a5568; line-height:1.8;">
+            الرجاء تحويل مبلغ تأكيد الحجز على رقم
+            <strong style="color:var(--primary);">01558536935</strong>
+            ثم إرسال صورة إيصال الدفع عن طريق واتساب أو من خلال التطبيق ليتم تأكيد حجزك.
+        </p>
+        <div style="background:#fff8e1; border:1px dashed var(--warning); border-radius:8px; padding:12px; margin:15px 0; text-align:center;">
+            <div style="font-size:13px; color:#92400e; margin-bottom:5px;">⏳ سيتم إلغاء الحجز تلقائياً بعد</div>
+            <div id="paymentCountdownDisplay" style="font-size:26px; font-weight:bold; color:#d97706;">15:00</div>
+        </div>
+        <div class="modal-actions" style="justify-content:center; flex-direction:column; gap:10px;">
+            <button class="submit-btn" id="whatsappPaymentBtn" style="background:#25D366; width:100%;">📱 إرسال إيصال الدفع عبر واتساب</button>
+            <button class="btn-secondary" style="width:100%;" onclick="closePaymentInstructionsModal()">تم، إغلاق النافذة</button>
+        </div>
+    </div>
+</div>
     <!-- نافذة تأكيد مخصصة (بديل لـ confirm الافتراضية بالمتصفح) -->
     <div id="confirmModal" class="modal">
         <div class="modal-content" style="max-width:360px; text-align:center;">
@@ -1157,10 +1187,9 @@
             if (firstOption) firstOption.innerText = dict.allSpecialties;
 
             // تحديث نص الترحيب باسم العميل (لو محمّل بالفعل)
-            if (currentPatient && currentPatient.name) {
-                document.getElementById('welcomeText').innerText = `${dict.welcomeGreeting} ${currentPatient.name}`;
-                document.getElementById('patientNameDisplay').innerText = `${dict.clientLabel}: ${currentPatient.name}`;
-            }
+        if (currentPatient && currentPatient.name) {
+    document.getElementById('welcomeText').innerText = `${dict.welcomeGreeting} ${currentPatient.name} 👋`;
+}
 
             // إعادة رسم شبكة الأطباء وقائمة الحجوزات بلغة العرض الجديدة لو البيانات محمّلة بالفعل
             if (window._doctorsCache) {
@@ -1196,12 +1225,13 @@
             document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString(currentDateLocale(), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
             try {
-                const patientSnap = await db.collection("users").doc(patientId).get();
-                if (patientSnap.exists) {
-                    currentPatient = patientSnap.data();
-                    document.getElementById('patientNameDisplay').innerText = `${t('clientLabel')}: ${currentPatient.name}`;
-                    document.getElementById('welcomeText').innerText = `${t('welcomeGreeting')} ${currentPatient.name}`;
-                } else {
+         const patientSnap = await db.collection("users").doc(patientId).get();
+if (patientSnap.exists) {
+    currentPatient = patientSnap.data();
+    document.getElementById('welcomeText').innerText = `${t('welcomeGreeting')} ${currentPatient.name} 👋`;
+    updatePointsDisplay();
+    listenToMyProfile();
+} else {
                     showToast(t('accountVerifyFailed'), 'error');
                     handleLogout();
                 }
@@ -1460,58 +1490,111 @@
         }
 
         // ================= تأكيد الحجز وحفظ بيانات المريض المحدثة =================
-        async function confirmBookingSubmit(event) {
-            event.preventDefault();
-            if (!pendingBooking) return;
+const ADMIN_WHATSAPP_NUMBER = '201558536935';
+const BOOKING_PAYMENT_MINUTES = 15;
+const SERVICE_FEE_EGP = 5;
+let paymentCountdownInterval = null;
 
-            const name = document.getElementById('modalPatientName').value.trim();
-            const phone = document.getElementById('modalPatientPhone').value.trim();
-            const age = parseInt(document.getElementById('modalPatientAge').value, 10);
-            const address = document.getElementById('modalPatientAddress').value.trim();
+async function confirmBookingSubmit(event) {
+    event.preventDefault();
+    if (!pendingBooking) return;
 
-            if (!name || !phone || !address || isNaN(age)) {
-                showToast(t('fillAllFields'), 'error');
-                return;
-            }
+    const name = document.getElementById('modalPatientName').value.trim();
+    const phone = document.getElementById('modalPatientPhone').value.trim();
+    const age = parseInt(document.getElementById('modalPatientAge').value, 10);
+    const address = document.getElementById('modalPatientAddress').value.trim();
 
-            try {
-                // تحديث بيانات المريض في ملفه الشخصي (لعرضها للطبيب/الإدارة ولتسهيل الحجز القادم)
-                await db.collection("users").doc(patientId).update({
-                    name: name,
-                    phone: phone,
-                    age: age,
-                    address: address
-                });
-                currentPatient = { ...currentPatient, name, phone, age, address };
-                document.getElementById('patientNameDisplay').innerText = `${t('clientLabel')}: ${name}`;
+    if (!name || !phone || !address || isNaN(age)) {
+        showToast(t('fillAllFields'), 'error');
+        return;
+    }
 
-                const bookingData = {
-                    patient_id: patientId,
-                    patient_name: name,
-                    patient_phone: phone,
-                    patient_age: age,
-                    patient_address: address,
-                    doctor_id: pendingBooking.doctorId,
-                    doctor_name: pendingBooking.doctorName,
-                    clinic_address: pendingBooking.clinicAddress,
-                    clinic_hours: pendingBooking.clinicHours,
-                    clinic_price: pendingBooking.clinicPrice,
-                    status: "pending",
-                    created_at: firebase.firestore.FieldValue.serverTimestamp()
-                };
+    try {
+        await db.collection("users").doc(patientId).update({ name, phone, age, address });
+        currentPatient = { ...currentPatient, name, phone, age, address };
+        document.getElementById('welcomeText').innerText = `${t('welcomeGreeting')} ${name} 👋`;
 
-                await db.collection("bookings").add(bookingData);
-                closeBookingModal();
-                showToast(t('bookingSuccess'), 'success');
-
-                // الانتقال المباشر لتبويب المتابعة لمشاهدة الحجز الجديد
-                switchTab('my-bookings', document.querySelectorAll('.sidebar-menu li')[1]);
-
-            } catch (error) {
-                console.error("Error creating booking:", error);
-                showToast(t('bookingError') + ' ' + error.message, 'error');
-            }
+        let paymentAmount = null;
+        if (pendingBooking.clinicPrice !== null && pendingBooking.clinicPrice !== undefined) {
+            paymentAmount = Math.round((pendingBooking.clinicPrice * 0.25 + SERVICE_FEE_EGP) * 100) / 100;
         }
+
+        const paymentDeadline = new Date(Date.now() + BOOKING_PAYMENT_MINUTES * 60 * 1000);
+
+        const bookingData = {
+            patient_id: patientId,
+            patient_name: name,
+            patient_phone: phone,
+            patient_age: age,
+            patient_address: address,
+            doctor_id: pendingBooking.doctorId,
+            doctor_name: pendingBooking.doctorName,
+            clinic_address: pendingBooking.clinicAddress,
+            clinic_hours: pendingBooking.clinicHours,
+            clinic_price: pendingBooking.clinicPrice,
+            payment_amount: paymentAmount,
+            payment_deadline: firebase.firestore.Timestamp.fromDate(paymentDeadline),
+            status: "pending",
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        const bookingRef = await db.collection("bookings").add(bookingData);
+        closeBookingModal();
+        openPaymentInstructionsModal(paymentAmount, paymentDeadline, bookingRef.id);
+
+    } catch (error) {
+        console.error("Error creating booking:", error);
+        showToast(t('bookingError') + ' ' + error.message, 'error');
+    }
+}
+
+function openPaymentInstructionsModal(paymentAmount, paymentDeadline, bookingId) {
+    const summaryDiv = document.getElementById('paymentAmountSummary');
+    if (paymentAmount !== null) {
+        summaryDiv.innerHTML = `<div>💰 المبلغ المطلوب تحويله: <strong style="color:var(--primary); font-size:18px;">${paymentAmount} ج.م</strong></div>
+            <div style="font-size:12px; color:#a0aec0; margin-top:5px;">(25% من قيمة الكشف + 5 ج.م رسوم خدمة)</div>`;
+    } else {
+        summaryDiv.innerHTML = `<div style="color:#a0aec0; font-size:13px;">سعر الكشف غير محدد حالياً، برجاء التواصل مع الإدارة عبر واتساب لتحديد المبلغ المطلوب.</div>`;
+    }
+
+    const whatsappBtn = document.getElementById('whatsappPaymentBtn');
+    const messageText = paymentAmount !== null
+        ? `مرحباً، أرسل لكم إيصال دفع مبلغ تأكيد الحجز (${paymentAmount} ج.م) لحجز رقم ${bookingId}`
+        : `مرحباً، أريد الاستفسار عن مبلغ تأكيد حجز رقم ${bookingId}`;
+    whatsappBtn.onclick = () => {
+        window.open(`https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(messageText)}`, '_blank');
+    };
+
+    document.getElementById('paymentInstructionsModal').style.display = 'flex';
+    startPaymentCountdown(paymentDeadline);
+}
+
+function closePaymentInstructionsModal() {
+    document.getElementById('paymentInstructionsModal').style.display = 'none';
+    if (paymentCountdownInterval) clearInterval(paymentCountdownInterval);
+    showToast(t('bookingSuccess'), 'success');
+    switchTab('my-bookings', document.querySelectorAll('.sidebar-menu li')[1]);
+}
+
+function startPaymentCountdown(deadline) {
+    const display = document.getElementById('paymentCountdownDisplay');
+    if (paymentCountdownInterval) clearInterval(paymentCountdownInterval);
+
+    function tick() {
+        const remainingMs = deadline.getTime() - Date.now();
+        if (remainingMs <= 0) {
+            display.innerText = '00:00';
+            clearInterval(paymentCountdownInterval);
+            return;
+        }
+        const totalSeconds = Math.floor(remainingMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        display.innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    tick();
+    paymentCountdownInterval = setInterval(tick, 1000);
+}
 
        function listenToMyBookings() {
     const listDiv = document.getElementById('bookingsList');
@@ -1559,6 +1642,11 @@
                 const dateObj = booking.created_at ? (booking.created_at.seconds ? new Date(booking.created_at.seconds * 1000) : new Date(booking.created_at)) : null;
                 const dateStr = dateObj ? dateObj.toLocaleString(currentDateLocale()) : t('dateNotSpecified');
                 const hoursLine = booking.clinic_hours ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">🕒 ${escapeHtml(booking.clinic_hours)}</p>` : '';
+                let countdownHtml = '';
+                if (booking.status === 'pending' && booking.payment_deadline) {
+                const deadlineMs = booking.payment_deadline.seconds * 1000;
+                countdownHtml = `<div class="payment-countdown" data-deadline="${deadlineMs}" data-booking-id="${booking.id}" style="font-size:12px; color:#d97706; font-weight:bold; margin-top:6px;">⏳ --:--</div>`;
+                 }
                 const priceValue = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
                 const priceLine = (priceValue !== undefined && priceValue !== null) ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">${t('priceLabel')} ${escapeHtml(priceValue)} ${t('priceCurrency')}</p>` : '';
 
@@ -1567,8 +1655,9 @@
                         <div>
                             <h3 style="margin:0 0 8px 0; font-size:16px;">${doctorPrefix()} ${escapeHtml(booking.doctor_name)}</h3>
                             <p style="margin:0 0 5px 0; font-size:13px; color:#4a5568;">🏥 ${t('clinicLabelShort')}: ${escapeHtml(booking.clinic_address)}</p>
-                            ${hoursLine}
-                            ${priceLine}
+                          ${hoursLine}
+                        ${priceLine}
+                           ${countdownHtml}
                             <small style="color:#a0aec0;">${t('requestDateLabel')}: ${dateStr}</small>
                         </div>
                         <div>
@@ -1646,6 +1735,95 @@
                 window.location.href = 'login.html';
             });
         }
+        // ================= دعوة الأصدقاء والنقاط =================
+window.copyAppLink = function() {
+    const input = document.getElementById('appDownloadLink');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast('تم نسخ الرابط بنجاح!', 'success');
+    }).catch(() => {
+        showToast('تعذر نسخ الرابط، انسخه يدوياً.', 'error');
+    });
+};
+
+window.shareAppLink = async function() {
+    const link = document.getElementById('appDownloadLink').value;
+    const shareText = `جرب تطبيق حجزي كلينك لحجز الكشف عند الدكتور بسهولة! 🏥\n${link}`;
+
+    try {
+        if (navigator.share) {
+            await navigator.share({ title: 'حجزي كلينك', text: shareText });
+        } else {
+            window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+        }
+        await addReferralPoint();
+    } catch (err) {
+        console.log('Share cancelled or failed:', err);
+    }
+};
+
+async function addReferralPoint() {
+    try {
+        await db.collection("users").doc(patientId).update({
+            points: firebase.firestore.FieldValue.increment(1)
+        });
+        showToast('🎉 تم إضافة نقطة إلى رصيدك! شكراً لمشاركتك.', 'success');
+    } catch (err) {
+        console.error('Error adding referral point:', err);
+    }
+}
+
+function updatePointsDisplay() {
+    const el = document.getElementById('pointsDisplay');
+    if (el && currentPatient) {
+        el.innerText = currentPatient.points || 0;
+    }
+}
+
+function listenToMyProfile() {
+    db.collection("users").doc(patientId).onSnapshot((doc) => {
+        if (doc.exists) {
+            currentPatient = { ...currentPatient, ...doc.data() };
+            updatePointsDisplay();
+        }
+    });
+}
+// ================= عداد الدفع التلقائي وإلغاء الحجوزات المنتهية =================
+const autoCancelledBookings = new Set();
+
+setInterval(() => {
+    document.querySelectorAll('.payment-countdown').forEach(el => {
+        const deadlineMs = parseInt(el.getAttribute('data-deadline'), 10);
+        const bookingId = el.getAttribute('data-booking-id');
+        const remainingMs = deadlineMs - Date.now();
+
+        if (remainingMs <= 0) {
+            el.innerText = '⛔ انتهت مهلة الدفع';
+            autoCancelExpiredBooking(bookingId);
+            return;
+        }
+
+        const totalSeconds = Math.floor(remainingMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        el.innerText = `⏳ سيتم الإلغاء خلال ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    });
+}, 1000);
+
+async function autoCancelExpiredBooking(bookingId) {
+    if (autoCancelledBookings.has(bookingId)) return;
+    autoCancelledBookings.add(bookingId);
+    try {
+        await db.collection("bookings").doc(bookingId).update({
+            status: 'rejected',
+            rejection_reason: 'تم إلغاء الحجز تلقائياً لعدم استلام إيصال الدفع خلال 15 دقيقة'
+        });
+    } catch (err) {
+        console.error('Auto-cancel failed:', err);
+        autoCancelledBookings.delete(bookingId);
+    }
+}
     </script>
 </body>
 </html>
