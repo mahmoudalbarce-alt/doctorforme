@@ -429,7 +429,7 @@
                         </tr>
                     </thead>
                     <tbody id="bookingsTable">
-                        <tr><td colspan="8" style="text-align:center;">جاري التحميل...</td></tr>
+                         <tr><td colspan="9" style="text-align:center;">جاري التحميل...</td></tr>
                     </tbody>
                 </table>
                 </div>
@@ -510,18 +510,17 @@
                 <p style="font-size:12px; color:#718096; margin-top:-10px;">💡 متاح للمدير العام فقط. الرسائل اللي بيبعتها المرضى والأطباء من تبويب "المساعدة والدعم" في صفحاتهم.</p>
                 <div class="table-responsive">
                 <table style="margin-top: 20px;">
-                    <thead>
-                        <tr>
-                            <th>الاسم</th>
-                            <th>الهاتف</th>
-                            <th>النوع</th>
-                            <th>العنوان</th>
-                            <th>الرسالة</th>
-                            <th>التاريخ</th>
-                            <th>الحالة</th>
-                            <th>الإجراء</th>
-                        </tr>
-                    </thead>
+         <tr>
+    <th>المريض</th>
+    <th>هاتف المريض</th>
+    <th>الطبيب المطلـوب</th>
+    <th>العـنوان والعيادة</th>
+    <th>سعر الكشف</th>
+    <th>إيصال الدفع</th>
+    <th>تاريخ الطلب</th>
+    <th>حالة الحجز</th>
+    <th>الإجراء والاتصال</th>
+</tr>
                     <tbody id="complaintsTable">
                         <tr><td colspan="8" style="text-align:center;">جاري التحميل...</td></tr>
                     </tbody>
@@ -561,7 +560,15 @@
             </div>
         </div>
     </div>
-
+<div id="receiptViewModal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+        <h3 style="margin-top:0; color:var(--primary);">📄 إيصال الدفع</h3>
+        <img id="receiptViewImage" src="" alt="إيصال الدفع" style="width:100%; border-radius:8px; border:1px solid #e2e8f0;">
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeReceiptViewModal()">إغلاق</button>
+        </div>
+    </div>
+</div>
     <!-- استدعاء مكتبات الـ SDK المتوافقة والآمنة -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -968,13 +975,13 @@
         // ================= 2. جلب الحجوزات (بدون orderBy لتجنب قيود الـ Index الفورية) =================
         function loadBookings() {
             const tableBody = document.getElementById('bookingsTable');
-            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">جاري التحميل...</td></tr>';
-
+           tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">جاري التحميل...</td></tr>';
+window._bookingsCache = {};
             db.collection("bookings")
                 .get()
                 .then(snapshot => {
-                    if (snapshot.empty) {
-                        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد حجوزات مسجلة بالنظام حالياً.</td></tr>';
+              if (snapshot.empty) {
+    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">لا توجد حجوزات مسجلة بالنظام حالياً.</td></tr>';
                         return;
                     }
                     tableBody.innerHTML = '';
@@ -994,7 +1001,7 @@
                     bookingsList.forEach(data => {
                         const id = data.id;
                         const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleString('ar-EG') : 'قيد المعالجة';
-                        
+                        window._bookingsCache[id] = data;
                         let statusBadge = '';
                         let actionButtons = '';
                         const priceValue = (data.final_price !== undefined && data.final_price !== null) ? data.final_price : data.clinic_price;
@@ -1028,23 +1035,27 @@
                         } else {
                             priceCell = (priceValue !== undefined && priceValue !== null) ? `${escapeHtml(priceValue)} ج.م` : '<span style="color:#a0aec0;">غير محدد</span>';
                         }
+const receiptCell = data.receipt_base64
+    ? `<button class="btn btn-primary" onclick="viewReceipt('${id}')">📄 عرض الإيصال</button>`
+    : '<span style="color:#a0aec0; font-size:12px;">لم يُرسل بعد</span>';
 
-                        tableBody.innerHTML += `
-                            <tr>
-                                <td><b>${escapeHtml(data.patient_name || 'مريض')}</b></td>
-                                <td><a href="tel:${escapeHtml(data.patient_phone || '')}">${escapeHtml(data.patient_phone || 'بدون هاتف')} 📞</a></td>
-                                <td>د. ${escapeHtml(data.doctor_name || 'غير معروف')}</td>
-                                <td>${escapeHtml(data.clinic_address || 'غير متوفر')}${data.clinic_hours ? ' - ' + escapeHtml(data.clinic_hours) : ''}</td>
-                                <td>${priceCell}</td>
-                                <td>${dateStr}</td>
-                                <td>${statusBadge}</td>
-                                <td>${actionButtons}</td>
-                            </tr>
-                        `;
+tableBody.innerHTML += `
+    <tr>
+        <td><b>${escapeHtml(data.patient_name || 'مريض')}</b></td>
+        <td><a href="tel:${escapeHtml(data.patient_phone || '')}">${escapeHtml(data.patient_phone || 'بدون هاتف')} 📞</a></td>
+        <td>د. ${escapeHtml(data.doctor_name || 'غير معروف')}</td>
+        <td>${escapeHtml(data.clinic_address || 'غير متوفر')}${data.clinic_hours ? ' - ' + escapeHtml(data.clinic_hours) : ''}</td>
+        <td>${priceCell}</td>
+        <td>${receiptCell}</td>
+        <td>${dateStr}</td>
+        <td>${statusBadge}</td>
+        <td>${actionButtons}</td>
+    </tr>
+`;
                     });
                 }).catch(err => {
                     console.error("Error loading bookings:", err);
-                    tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">فشل جلب الحجوزات: ${err.message}</td></tr>`;
+                 tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">فشل جلب الحجوزات: ${err.message}</td></tr>`;
                 });
         }
 
@@ -1077,7 +1088,21 @@
                 showToast("حدث خطأ أثناء التحديث: " + error.message, 'error');
             });
         }
+// ================= عرض إيصال الدفع =================
+window.viewReceipt = function(bookingId) {
+    const booking = window._bookingsCache ? window._bookingsCache[bookingId] : null;
+    if (!booking || !booking.receipt_base64) {
+        showToast('لم يتم العثور على صورة الإيصال.', 'error');
+        return;
+    }
+    document.getElementById('receiptViewImage').src = booking.receipt_base64;
+    document.getElementById('receiptViewModal').style.display = 'flex';
+};
 
+window.closeReceiptViewModal = function() {
+    document.getElementById('receiptViewModal').style.display = 'none';
+    document.getElementById('receiptViewImage').src = '';
+};
         // ================= 3. جلب الأطباء / المرضى / المشرفين كل واحد في تبويبه (متاحة للمدير العام فقط) =================
         function formatUserDate(data) {
             if (!data.created_at) return 'غير متوفر';
