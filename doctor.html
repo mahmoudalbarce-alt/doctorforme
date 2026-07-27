@@ -283,8 +283,11 @@
 </div>
     <div class="dashboard-container">
 <header>
-    <button class="menu-toggle-btn" onclick="toggleSidebar(true)">☰</button>
-    <h2>لوحة تحكم الطبيب - الحجوزات الواردة</h2>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <button class="menu-toggle-btn" onclick="toggleSidebar(true)">☰</button>
+        <span id="headerDoctorName" style="font-weight:bold; color:var(--primary-color); font-size:15px;">دكتور: جاري التحميل...</span>
+    </div>
+    <h2>الحجوزات الواردة</h2>
 </header>
 
         <div class="audio-notice">
@@ -306,7 +309,7 @@
     </tr>
 </thead>
                 <tbody>
-                 <tr><td colspan="8" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
+                 <tr><td colspan="9" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -348,6 +351,24 @@
         <div class="modal-actions">
             <button class="btn" style="background:#edf2f7; color:#333;" onclick="closeClinicsModal()">إلغاء</button>
             <button class="btn" style="background: var(--success-color); color:white;" onclick="saveClinicsChanges()">حفظ التعديلات</button>
+        </div>
+    </div>
+</div>
+<div id="queueModal" class="modal">
+    <div class="modal-content">
+        <h3>🔢 تحديد رقم الدور وميعاد الحضور</h3>
+        <p style="font-size:12px; color:#718096; margin-bottom:10px;">
+            الحقلين دول اختياريين. لو كتبت فيهم أي بيانات، هتظهر للمريض في صفحة حجوزاته. لو سبتهم فاضيين، مش هيظهر له أي حاجة.
+        </p>
+        <label for="queueNumberInput">رقم الدور في الكشف</label>
+        <input type="number" min="1" id="queueNumberInput" placeholder="مثال: 5" style="width:100%; padding:10px; margin-top:5px; border:1px solid #cbd5e0; border-radius:8px; box-sizing:border-box;">
+
+        <label for="appointmentTimeInput" style="margin-top:15px;">ميعاد الحضور المتوقع</label>
+        <input type="datetime-local" id="appointmentTimeInput" style="width:100%; padding:10px; margin-top:5px; border:1px solid #cbd5e0; border-radius:8px; box-sizing:border-box;">
+
+        <div class="modal-actions">
+            <button class="btn" style="background:#edf2f7; color:#333;" onclick="closeQueueModal()">إلغاء</button>
+            <button class="btn" style="background: var(--success-color); color:white;" onclick="saveQueueInfo()">حفظ</button>
         </div>
     </div>
 </div>
@@ -393,13 +414,13 @@
         const currentRole = localStorage.getItem('user_role');
         const doctorId = localStorage.getItem('user_id'); 
         const doctorName = localStorage.getItem('user_name');
-
-        if (!currentRole || currentRole !== 'doctor') {
-            showToast("برجاء تسجيل الدخول أولاً كطبيب للوصول للوحة التحكم.", 'error');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1200);
-        } else {
-            document.getElementById('doctorWelcome').innerText = `دكتور: ${doctorName} - الحجوزات الواردة`;
-        }
+if (!currentRole || currentRole !== 'doctor') {
+    showToast("برجاء تسجيل الدخول أولاً كطبيب للوصول للوحة التحكم.", 'error');
+    setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+} else {
+    document.getElementById('doctorNameSidebar').innerText = `دكتور: ${doctorName} 👨‍⚕️`;
+    document.getElementById('headerDoctorName').innerText = `دكتور: ${doctorName}`;
+}
 
         // تكوين Firebase (موحّد مع باقي صفحات المشروع)
         const firebaseConfig = {
@@ -451,8 +472,9 @@
             db.collection("bookings")
               .where("doctor_id", "==", doctorId)
               .onSnapshot((snapshot) => {
+                 window._bookingsCache = {};
               if (snapshot.empty) {
-               tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
+               tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
                       stopAlertSound();
                       return;
                   }
@@ -473,6 +495,7 @@
                   let triggerVoiceAlert = false;
 
                   bookingsList.forEach((booking) => {
+                    window._bookingsCache[booking.id] = booking;
                       let statusBadge = '';
                       let actionButtons = '';
 
@@ -511,6 +534,18 @@
 const patientAgeText = (booking.patient_age !== undefined && booking.patient_age !== null) ? escapeHtml(booking.patient_age) : 'غير محدد';
 const patientAddressText = booking.patient_address ? escapeHtml(booking.patient_address) : 'غير محدد';
 
+const queueNumberText = (booking.queue_number !== undefined && booking.queue_number !== null && booking.queue_number !== '')
+    ? `🔢 الدور: ${escapeHtml(booking.queue_number)}` : '';
+const appointmentTimeText = booking.appointment_time
+    ? `🕒 ${new Date(booking.appointment_time.seconds ? booking.appointment_time.seconds * 1000 : booking.appointment_time).toLocaleString('ar-EG')}`
+    : '';
+const queueDisplay = (queueNumberText || appointmentTimeText)
+    ? `<div style="font-size:12px; line-height:1.6;">${queueNumberText}${queueNumberText && appointmentTimeText ? '<br>' : ''}${appointmentTimeText}</div>`
+    : '<span style="color:#a0aec0; font-size:11px;">لم يُحدد</span>';
+
+const jsBookingId = booking.id;
+const editQueueBtn = `<button class="btn" style="background:#edf2f7; color:#333; font-size:11px; margin-top:6px;" onclick="openQueueModal('${jsBookingId}')">✏️ تعديل</button>`;
+
 const row = `
     <tr>
         <td data-label="اسم المريض"><strong>${escapeHtml(booking.patient_name)}</strong></td>
@@ -518,6 +553,7 @@ const row = `
         <td data-label="السن">${patientAgeText}</td>
         <td data-label="العنوان">${patientAddressText}</td>
         <td data-label="العيادة"><span class="clinic-tag">🏥 ${selectedClinic}${clinicHours}${clinicPriceText}</span></td>
+        <td data-label="الدور والموعد">${queueDisplay}${editQueueBtn}</td>
         <td data-label="تاريخ الطلب" style="font-size:12px; color:#718096;">${bookingDate}</td>
         <td data-label="الحالة">${statusBadge}</td>
         <td data-label="القرار">${actionButtons}</td>
@@ -535,7 +571,7 @@ const row = `
                   }
               }, (error) => {
                   console.error("Firestore Error: ", error);
-                tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الحجوزات: ' + error.message + '</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الحجوزات: ' + error.message + '</td></tr>';
               });
         }
 
@@ -551,7 +587,50 @@ const row = `
                 showToast("حدث خطأ أثناء التحديث: " + error.message, 'error');
             }
         }
+// ================= تحديد رقم الدور وميعاد الحضور (اختياري) =================
+let activeQueueBookingId = null;
 
+window.openQueueModal = function(bookingId) {
+    activeQueueBookingId = bookingId;
+    const booking = window._bookingsCache ? window._bookingsCache[bookingId] : null;
+
+    document.getElementById('queueNumberInput').value = (booking && booking.queue_number !== undefined && booking.queue_number !== null) ? booking.queue_number : '';
+
+    if (booking && booking.appointment_time) {
+        const ms = booking.appointment_time.seconds ? booking.appointment_time.seconds * 1000 : new Date(booking.appointment_time).getTime();
+        const d = new Date(ms);
+        const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('appointmentTimeInput').value = localIso;
+    } else {
+        document.getElementById('appointmentTimeInput').value = '';
+    }
+
+    document.getElementById('queueModal').style.display = 'flex';
+};
+
+window.closeQueueModal = function() {
+    document.getElementById('queueModal').style.display = 'none';
+    activeQueueBookingId = null;
+};
+
+window.saveQueueInfo = async function() {
+    if (!activeQueueBookingId) return;
+
+    const queueRaw = document.getElementById('queueNumberInput').value;
+    const appointmentRaw = document.getElementById('appointmentTimeInput').value;
+
+    const updateData = {};
+    updateData.queue_number = queueRaw !== '' ? parseInt(queueRaw, 10) : firebase.firestore.FieldValue.delete();
+    updateData.appointment_time = appointmentRaw !== '' ? firebase.firestore.Timestamp.fromDate(new Date(appointmentRaw)) : firebase.firestore.FieldValue.delete();
+
+    try {
+        await db.collection("bookings").doc(activeQueueBookingId).update(updateData);
+        showToast('✅ تم حفظ بيانات الدور والموعد بنجاح.', 'success');
+        closeQueueModal();
+    } catch (err) {
+        showToast('حدث خطأ أثناء الحفظ: ' + err.message, 'error');
+    }
+};
         // التحكم الصوتي الصارم
         function playAlertSound() {
             if (!isSoundPlaying) {
