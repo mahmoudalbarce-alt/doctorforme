@@ -1377,52 +1377,65 @@ if (patientSnap.exists) {
         }
 
         // ================= فتح نافذة تفاصيل الطبيب واختيار العيادة =================
-        function openDoctorDetails(doctorId) {
-            const data = window._doctorsCache ? window._doctorsCache[doctorId] : null;
-            if (!data) {
-                showToast(t('doctorLoadError'), 'error');
-                return;
-            }
+     function openDoctorDetails(doctorId) {
+    const data = window._doctorsCache ? window._doctorsCache[doctorId] : null;
+    if (!data) {
+        showToast(t('doctorLoadError'), 'error');
+        return;
+    }
 
-            currentDoctorForDetails = { id: doctorId, ...data };
-            selectedClinicIndex = null;
-            document.getElementById('proceedBookingBtn').disabled = true;
+    currentDoctorForDetails = { id: doctorId, ...data };
+    selectedClinicIndex = null;
+    document.getElementById('proceedBookingBtn').disabled = true;
 
-            const avatarSrc = data.image_url ? data.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
-            document.getElementById('detailsAvatar').src = avatarSrc;
-            document.getElementById('detailsName').innerText = `${doctorPrefix()} ${data.name}`;
-            document.getElementById('detailsSpecialty').innerText = data.specialty || '';
+    const avatarSrc = data.image_url ? data.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
+    document.getElementById('detailsAvatar').src = avatarSrc;
+    document.getElementById('detailsName').innerText = `${doctorPrefix()} ${data.name}`;
+    document.getElementById('detailsSpecialty').innerText = data.specialty || '';
 
-            const listContainer = document.getElementById('detailsClinicsList');
-            listContainer.innerHTML = '';
+    const listContainer = document.getElementById('detailsClinicsList');
+    listContainer.innerHTML = '';
 
-            if (!data.clinics || data.clinics.length === 0) {
-                listContainer.innerHTML = `<p style="font-size:13px; color:#a0aec0;">${t('noClinicsRegistered')}</p>`;
-            } else {
-                data.clinics.forEach((clinic, idx) => {
-                    const item = document.createElement('label');
-                    item.className = 'clinic-select-item';
-                    item.id = `clinicOption_${idx}`;
+    const allClinics = data.clinics || [];
+    // لو الطبيب حدد عيادة (أو أكتر) كـ "تستقبل حجوزات الآن"، نعرض دول بس.
+    // لو مفيش أي عيادة محددة، كل العيادات تفضل متاحة عادي (السلوك الافتراضي).
+    const anyClinicMarkedActive = allClinics.some(c => c.receiving === true);
+    const availableClinics = anyClinicMarkedActive
+        ? allClinics.filter(c => c.receiving === true)
+        : allClinics;
 
-                    const mapButton = clinic.google_maps_link
-                        ? `<a href="${escapeHtml(clinic.google_maps_link)}" target="_blank" class="map-btn" onclick="event.stopPropagation()">📍 عرض الموقع على الخريطة</a>`
-                        : '';
+    // نحتفظ بفهرس العيادة الأصلي (في المصفوفة الكاملة) عشان proceedToBookingForm يشتغل صح
+    const availableClinicsWithOriginalIndex = availableClinics.map(clinic => {
+        return { clinic, originalIndex: allClinics.indexOf(clinic) };
+    });
 
-                    item.innerHTML = `
-                        <input type="radio" name="clinicChoice" value="${idx}" onchange="selectClinicOption(${idx})">
-                        <div>
-                            <div class="clinic-address">📍 ${escapeHtml(clinic.clinic_address)}</div>
-                            <div class="clinic-hours">🕒 ${escapeHtml(clinic.work_hours)}</div>
-                            ${clinic.price !== undefined && clinic.price !== null ? `<div class="clinic-hours">${t('priceLabel')} ${escapeHtml(clinic.price)} ${t('priceCurrency')}</div>` : ''}
-                            ${mapButton}
-                        </div>
-                    `;
-                    listContainer.appendChild(item);
-                });
-            }
+    if (availableClinicsWithOriginalIndex.length === 0) {
+        listContainer.innerHTML = `<p style="font-size:13px; color:#a0aec0;">${t('noClinicsRegistered')}</p>`;
+    } else {
+        availableClinicsWithOriginalIndex.forEach(({ clinic, originalIndex }) => {
+            const item = document.createElement('label');
+            item.className = 'clinic-select-item';
+            item.id = `clinicOption_${originalIndex}`;
 
-            document.getElementById('doctorDetailsModal').style.display = 'flex';
-        }
+            const mapButton = clinic.google_maps_link
+                ? `<a href="${escapeHtml(clinic.google_maps_link)}" target="_blank" class="map-btn" onclick="event.stopPropagation()">📍 عرض الموقع على الخريطة</a>`
+                : '';
+
+            item.innerHTML = `
+                <input type="radio" name="clinicChoice" value="${originalIndex}" onchange="selectClinicOption(${originalIndex})">
+                <div>
+                    <div class="clinic-address">📍 ${escapeHtml(clinic.clinic_address)}</div>
+                    <div class="clinic-hours">🕒 ${escapeHtml(clinic.work_hours)}</div>
+                    ${clinic.price !== undefined && clinic.price !== null ? `<div class="clinic-hours">${t('priceLabel')} ${escapeHtml(clinic.price)} ${t('priceCurrency')}</div>` : ''}
+                    ${mapButton}
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    document.getElementById('doctorDetailsModal').style.display = 'flex';
+}
 
         function selectClinicOption(idx) {
             selectedClinicIndex = idx;
