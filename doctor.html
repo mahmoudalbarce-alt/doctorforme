@@ -231,18 +231,20 @@
         
         <div class="table-responsive">
             <table id="bookingsTable">
-                <thead>
-                    <tr>
-                        <th>اسم المريض</th>
-                        <th>رقم الهاتف</th>
-                        <th>العيادة / الفرع المحجوز</th>
-                        <th>تاريخ الطلب</th>
-                        <th>الحالة الحالية</th>
-                        <th>القرار والإجراء</th>
-                    </tr>
-                </thead>
+    <thead>
+    <tr>
+        <th>اسم المريض</th>
+        <th>رقم الهاتف</th>
+        <th>السن</th>
+        <th>العنوان</th>
+        <th>العيادة / الفرع المحجوز</th>
+        <th>تاريخ الطلب</th>
+        <th>الحالة الحالية</th>
+        <th>القرار والإجراء</th>
+    </tr>
+</thead>
                 <tbody>
-                    <tr><td colspan="6" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
+                 <tr><td colspan="8" style="text-align:center;">جاري تحميل الحجوزات المباشرة...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -373,8 +375,8 @@
             db.collection("bookings")
               .where("doctor_id", "==", doctorId)
               .onSnapshot((snapshot) => {
-                  if (snapshot.empty) {
-                      tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
+              if (snapshot.empty) {
+               tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد حجوزات مسجلة باسمك حتى الآن.</td></tr>';
                       stopAlertSound();
                       return;
                   }
@@ -430,10 +432,15 @@
                       const clinicHours = booking.clinic_hours ? ` (${escapeHtml(booking.clinic_hours)})` : '';
                       const clinicPriceText = (booking.clinic_price !== undefined && booking.clinic_price !== null) ? ` - 💰 ${escapeHtml(booking.clinic_price)} ج.م` : '';
 
-                   const row = `
+const patientAgeText = (booking.patient_age !== undefined && booking.patient_age !== null) ? escapeHtml(booking.patient_age) : 'غير محدد';
+const patientAddressText = booking.patient_address ? escapeHtml(booking.patient_address) : 'غير محدد';
+
+const row = `
     <tr>
         <td data-label="اسم المريض"><strong>${escapeHtml(booking.patient_name)}</strong></td>
         <td data-label="رقم الهاتف">${escapeHtml(booking.patient_phone)}</td>
+        <td data-label="السن">${patientAgeText}</td>
+        <td data-label="العنوان">${patientAddressText}</td>
         <td data-label="العيادة"><span class="clinic-tag">🏥 ${selectedClinic}${clinicHours}${clinicPriceText}</span></td>
         <td data-label="تاريخ الطلب" style="font-size:12px; color:#718096;">${bookingDate}</td>
         <td data-label="الحالة">${statusBadge}</td>
@@ -452,7 +459,7 @@
                   }
               }, (error) => {
                   console.error("Firestore Error: ", error);
-                  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الحجوزات: ' + error.message + '</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الحجوزات: ' + error.message + '</td></tr>';
               });
         }
 
