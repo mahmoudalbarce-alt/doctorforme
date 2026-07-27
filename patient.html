@@ -897,6 +897,25 @@
         </div>
     </div>
 </div>
+
+
+<div id="receiptUploadModal" class="modal">
+    <div class="modal-content">
+        <h3>📤 إرسال إيصال الدفع</h3>
+        <p style="font-size:13px; color:#718096; margin-bottom:15px;">ارفع صورة إيصال التحويل وسيتم مراجعته من قبل الإدارة لتأكيد حجزك.</p>
+        <div class="form-group">
+            <label>صورة الإيصال</label>
+            <input type="file" id="receiptFileInput" accept="image/*" class="form-control">
+        </div>
+        <div id="receiptUploadProgress" style="display:none; font-size:13px; color:var(--primary); margin-bottom:10px;">
+            جاري الرفع... <span id="receiptUploadPercent">0%</span>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeReceiptUploadModal()">إلغاء</button>
+            <button type="button" class="submit-btn" id="receiptSubmitBtn" onclick="submitReceiptUpload()">إرسال الإيصال</button>
+        </div>
+    </div>
+</div>
     <!-- نافذة تأكيد مخصصة (بديل لـ confirm الافتراضية بالمتصفح) -->
     <div id="confirmModal" class="modal">
         <div class="modal-content" style="max-width:360px; text-align:center;">
@@ -911,7 +930,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-
     <script>
         // تكوين Firebase (موحّد مع باقي صفحات المشروع)
         const firebaseConfig = {
@@ -1173,6 +1191,9 @@
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key]) el.placeholder = dict[key];
             });
+
+     
+
             // إعادة رسم أزرار "تفاصيل" في كروت الأطباء بلغة العرض الحالية
             document.querySelectorAll('.details-btn').forEach(btn => {
                 btn.innerText = dict.detailsBtn;
@@ -1591,6 +1612,93 @@ function startPaymentCountdown(deadline) {
     tick();
     paymentCountdownInterval = setInterval(tick, 1000);
 }
+// ================= رفع إيصال الدفع عن طريق التطبيق =================
+let activeReceiptBookingId = null;
+
+window.openReceiptUploadModal = function(bookingId) {
+    activeReceiptBookingId = bookingId;
+    document.getElementById('receiptFileInput').value = '';
+    document.getElementById('receiptUploadProgress').style.display = 'none';
+    document.getElementById('receiptUploadModal').style.display = 'flex';
+};
+
+window.closeReceiptUploadModal = function() {
+    document.getElementById('receiptUploadModal').style.display = 'none';
+    activeReceiptBookingId = null;
+};
+
+window.submitReceiptUpload = async function() {
+    const fileInput = document.getElementById('receiptFileInput');
+    const file = fileInput.files[0];
+    if (!file) {
+        showToast('برجاء اختيار صورة الإيصال أولاً.', 'error');
+        return;
+    }
+    if (!activeReceiptBookingId) return;
+
+    const submitBtn = document.getElementById('receiptSubmitBtn');
+    submitBtn.disabled = true;
+    const progressDiv = document.getElementById('receiptUploadProgress');
+    progressDiv.style.display = 'block';
+    progressDiv.innerText = 'جاري ضغط الصورة...';
+
+    try {
+        const compressedBase64 = await compressImageToBase64(file, 800, 0.6);
+
+        // التأكد إن حجم الصورة بعد الضغط أقل من حد Firestore الآمن
+        const sizeInBytes = compressedBase64.length * 0.75;
+        if (sizeInBytes > 900000) {
+            throw new Error('حجم الصورة كبير جداً حتى بعد الضغط، برجاء اختيار صورة أصغر أو أوضح.');
+        }
+
+        progressDiv.innerText = 'جاري الحفظ...';
+
+        await db.collection("bookings").doc(activeReceiptBookingId).update({
+            receipt_base64: compressedBase64,
+            receipt_submitted_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast('✅ تم إرسال الإيصال بنجاح، سيتم مراجعته قريباً.', 'success');
+        closeReceiptUploadModal();
+    } catch (error) {
+        console.error('Receipt upload error:', error);
+        showToast('حدث خطأ أثناء رفع الإيصال: ' + error.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+    }
+};
+
+// ضغط الصورة وتحويلها لـ Base64 قبل الحفظ في Firestore
+function compressImageToBase64(file, maxWidth, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const base64 = canvas.toDataURL('image/jpeg', quality);
+                resolve(base64);
+            };
+            img.onerror = reject;
+            img.src = event.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
        function listenToMyBookings() {
     const listDiv = document.getElementById('bookingsList');
@@ -1643,6 +1751,25 @@ function startPaymentCountdown(deadline) {
                 const deadlineMs = booking.payment_deadline.seconds * 1000;
                 countdownHtml = `<div class="payment-countdown" data-deadline="${deadlineMs}" data-booking-id="${booking.id}" style="font-size:12px; color:#d97706; font-weight:bold; margin-top:6px;">⏳ --:--</div>`;
                  }
+                 let paymentActionsHtml = '';
+if (booking.status === 'pending' && booking.payment_deadline) {
+    const paymentAmount = (booking.payment_amount !== undefined && booking.payment_amount !== null) ? booking.payment_amount : null;
+    const waMessage = paymentAmount !== null
+        ? `مرحباً، أرسل لكم إيصال دفع مبلغ تأكيد الحجز (${paymentAmount} ج.م) لحجز رقم ${booking.id}`
+        : `مرحباً، أريد الاستفسار عن مبلغ تأكيد حجز رقم ${booking.id}`;
+    const receiptSubmitted = !!booking.receipt_base64;
+
+    paymentActionsHtml = `
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; width:100%;">
+            <button class="btn" style="background:${receiptSubmitted ? '#a0aec0' : 'var(--primary)'}; color:white; flex:1; min-width:150px;" onclick="openReceiptUploadModal('${booking.id}')">
+                ${receiptSubmitted ? '✅ تم إرسال الإيصال' : '📤 إرسال الإيصال عبر التطبيق'}
+            </button>
+            <button class="btn" style="background:#25D366; color:white; flex:1; min-width:150px;" onclick="window.open('https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(waMessage)}', '_blank')">
+                📱 إرسال عبر واتساب
+            </button>
+        </div>
+    `;
+}
                 const priceValue = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
                 const priceLine = (priceValue !== undefined && priceValue !== null) ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">${t('priceLabel')} ${escapeHtml(priceValue)} ${t('priceCurrency')}</p>` : '';
 
@@ -1651,9 +1778,10 @@ function startPaymentCountdown(deadline) {
                         <div>
                             <h3 style="margin:0 0 8px 0; font-size:16px;">${doctorPrefix()} ${escapeHtml(booking.doctor_name)}</h3>
                             <p style="margin:0 0 5px 0; font-size:13px; color:#4a5568;">🏥 ${t('clinicLabelShort')}: ${escapeHtml(booking.clinic_address)}</p>
-                          ${hoursLine}
-                        ${priceLine}
-                           ${countdownHtml}
+                     ${hoursLine}
+${priceLine}
+${countdownHtml}
+${paymentActionsHtml}
                             <small style="color:#a0aec0;">${t('requestDateLabel')}: ${dateStr}</small>
                         </div>
                         <div>
@@ -1666,6 +1794,7 @@ function startPaymentCountdown(deadline) {
             console.error("Firestore error in my bookings list:", error);
             listDiv.innerHTML = `<div style="text-align:center; padding:40px; color:#e74c3c;">${t('bookingsLoadError')}</div>`;
         });
+        
 }
 
         // ================= إرسال شكوى / طلب دعم / مقترح =================
