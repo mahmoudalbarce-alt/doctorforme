@@ -1544,13 +1544,6 @@ async function confirmBookingSubmit(event) {
         currentPatient = { ...currentPatient, name, phone, age, address };
         document.getElementById('welcomeText').innerText = `${t('welcomeGreeting')} ${name} 👋`;
 
-        let paymentAmount = null;
-        if (pendingBooking.clinicPrice !== null && pendingBooking.clinicPrice !== undefined) {
-            paymentAmount = Math.round((pendingBooking.clinicPrice * 0.25 + SERVICE_FEE_EGP) * 100) / 100;
-        }
-
-        const paymentDeadline = new Date(Date.now() + BOOKING_PAYMENT_MINUTES * 60 * 1000);
-
         const bookingData = {
             patient_id: patientId,
             patient_name: name,
@@ -1562,15 +1555,14 @@ async function confirmBookingSubmit(event) {
             clinic_address: pendingBooking.clinicAddress,
             clinic_hours: pendingBooking.clinicHours,
             clinic_price: pendingBooking.clinicPrice,
-            payment_amount: paymentAmount,
-            payment_deadline: firebase.firestore.Timestamp.fromDate(paymentDeadline),
             status: "pending",
             created_at: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        const bookingRef = await db.collection("bookings").add(bookingData);
+        await db.collection("bookings").add(bookingData);
         closeBookingModal();
-        openPaymentInstructionsModal(paymentAmount, paymentDeadline, bookingRef.id);
+        showToast(t('bookingSuccess'), 'success');
+        switchTab('my-bookings', document.querySelectorAll('.sidebar-menu li')[1]);
 
     } catch (error) {
         console.error("Error creating booking:", error);
