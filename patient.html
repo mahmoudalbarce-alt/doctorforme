@@ -1705,15 +1705,19 @@ function compressImageToBase64(file, maxWidth, quality) {
     });
 }
 
-       function listenToMyBookings() {
+ let isFirstMyBookingsSnapshot = true;
+const paymentModalShownFor = new Set();
+
+function listenToMyBookings() {
     const listDiv = document.getElementById('bookingsList');
 
     // قمنا بحذف .orderBy() لتفادي الحاجة للفهرسة (Index)
     db.collection("bookings")
         .where("patient_id", "==", patientId)
         .onSnapshot((snapshot) => {
-            if (snapshot.empty) {
+   if (snapshot.empty) {
                 listDiv.innerHTML = `<div style="text-align:center; padding:40px; color:#a0aec0;">${t('noBookingsYet')}</div>`;
+                isFirstMyBookingsSnapshot = false;
                 return;
             }
 
@@ -1722,6 +1726,19 @@ function compressImageToBase64(file, maxWidth, quality) {
             snapshot.forEach(doc => {
                 bookingsArray.push({ id: doc.id, ...doc.data() });
             });
+
+            // فتح نافذة تعليمات الدفع تلقائياً أول ما الحجز يتحول لـ "موافق عليه من الدكتور"
+            if (!isFirstMyBookingsSnapshot) {
+                bookingsArray.forEach(booking => {
+                    if (booking.status === 'doctor_approved' && booking.payment_deadline && !paymentModalShownFor.has(booking.id)) {
+                        paymentModalShownFor.add(booking.id);
+                        const deadlineDate = new Date(booking.payment_deadline.seconds * 1000);
+                        const amount = (booking.payment_amount !== undefined && booking.payment_amount !== null) ? booking.payment_amount : null;
+                        openPaymentInstructionsModal(amount, deadlineDate, booking.id);
+                    }
+                });
+            }
+            isFirstMyBookingsSnapshot = false;
 
             bookingsArray.sort((a, b) => {
                 const timeA = a.created_at ? (a.created_at.seconds || 0) : 0;
@@ -1751,11 +1768,11 @@ function compressImageToBase64(file, maxWidth, quality) {
                 const dateObj = booking.created_at ? (booking.created_at.seconds ? new Date(booking.created_at.seconds * 1000) : new Date(booking.created_at)) : null;
                 const dateStr = dateObj ? dateObj.toLocaleString(currentDateLocale()) : t('dateNotSpecified');
                 const hoursLine = booking.clinic_hours ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">🕒 ${escapeHtml(booking.clinic_hours)}</p>` : '';
-                let countdownHtml = '';
-                if (booking.status === 'pending' && booking.payment_deadline) {
-                const deadlineMs = booking.payment_deadline.seconds * 1000;
-                countdownHtml = `<div class="payment-countdown" data-deadline="${deadlineMs}" data-booking-id="${booking.id}" style="font-size:12px; color:#d97706; font-weight:bold; margin-top:6px;">⏳ --:--</div>`;
-                 }
+            let countdownHtml = '';
+if (booking.status === 'doctor_approved' && booking.payment_deadline) {
+const deadlineMs = booking.payment_deadline.seconds * 1000;
+countdownHtml = `<div class="payment-countdown" data-deadline="${deadlineMs}" data-booking-id="${booking.id}" style="font-size:12px; color:#d97706; font-weight:bold; margin-top:6px;">⏳ --:--</div>`;
+ }
                  let queueInfoHtml = '';
 const hasQueueNumber = (booking.queue_number !== undefined && booking.queue_number !== null && booking.queue_number !== '');
 const hasAppointmentTime = !!booking.appointment_time;
@@ -1778,8 +1795,8 @@ if ((hasQueueNumber || hasAppointmentTime) && (booking.status === 'confirmed' ||
         </div>
     `;
 }
-                 let paymentActionsHtml = '';
-if (booking.status === 'pending' && booking.payment_deadline) {
+    let paymentActionsHtml = '';
+if (booking.status === 'doctor_approved' && booking.payment_deadline) {
     const paymentAmount = (booking.payment_amount !== undefined && booking.payment_amount !== null) ? booking.payment_amount : null;
     const waMessage = paymentAmount !== null
         ? `مرحباً، أرسل لكم إيصال دفع مبلغ تأكيد الحجز (${paymentAmount} ج.م) لحجز رقم ${booking.id}`
