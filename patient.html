@@ -1708,6 +1708,9 @@ function compressImageToBase64(file, maxWidth, quality) {
  let isFirstMyBookingsSnapshot = true;
 const paymentModalShownFor = new Set();
 
+let isFirstMyBookingsSnapshot = true;
+let paymentModalShownFor = new Set();
+
 function listenToMyBookings() {
     const listDiv = document.getElementById('bookingsList');
 
@@ -1727,8 +1730,16 @@ function listenToMyBookings() {
                 bookingsArray.push({ id: doc.id, ...doc.data() });
             });
 
-            // فتح نافذة تعليمات الدفع تلقائياً أول ما الحجز يتحول لـ "موافق عليه من الدكتور"
-            if (!isFirstMyBookingsSnapshot) {
+            // في أول Snapshot بس: نسجل كل الحجوزات اللي أصلاً doctor_approved
+            // كـ "شوفها المريض قبل كده" عشان منفتحش النافذة تلقائياً على حجوزات قديمة
+            if (isFirstMyBookingsSnapshot) {
+                bookingsArray.forEach(booking => {
+                    if (booking.status === 'doctor_approved') {
+                        paymentModalShownFor.add(booking.id);
+                    }
+                });
+            } else {
+                // بعد كده: فتح نافذة الدفع بس للحجوزات اللي دخلت الحالة دي فعلاً حديثاً
                 bookingsArray.forEach(booking => {
                     if (booking.status === 'doctor_approved' && booking.payment_deadline && !paymentModalShownFor.has(booking.id)) {
                         paymentModalShownFor.add(booking.id);
