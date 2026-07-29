@@ -902,33 +902,44 @@
                     }
                     tableBody.innerHTML = '';
                     
-                    snapshot.forEach(doc => {
-                        const doctor = doc.data();
-                        const docId = doc.id;
-                        let clinicsTextRaw = doctor.clinics ? doctor.clinics.map(c => c.clinic_address).join(" | ") : "لم تحدد بعد";
-                        const clinicsText = escapeHtml(clinicsTextRaw);
-                        const safeName = escapeHtml(doctor.name || 'غير معروف');
-                        const safePhone = escapeHtml(doctor.phone || 'بدون هاتف');
-                        const safeSpecialty = escapeHtml(doctor.specialty || 'عام');
-                        const jsName = escapeForInlineJsAttr(doctor.name || '');
-                        
-                        tableBody.innerHTML += `
-                            <tr>
-                                <td><b>د. ${safeName}</b></td>
-                                <td>${safePhone}</td>
-                                <td><span class="status-badge status-approved">${safeSpecialty}</span></td>
-                                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${clinicsText}">${clinicsText}</td>
-                                <td>
-                                    <input type="url" class="image-url-input" id="imgUrl_${docId}" placeholder="رابط صورة الطبيب (اختياري)">
-                                    <span class="image-url-hint">يقبل روابط جوجل درايف أو أي رابط صورة مباشر</span>
-                                </td>
-                                <td>
-                                    <button class="btn btn-success" onclick="approveDoctor('${docId}', '${jsName}')">موافقة وتفعيل ✅</button>
-                                    <button class="btn btn-danger" onclick="rejectDoctor('${docId}', '${jsName}')">رفض وتجاهل ❌</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
+         snapshot.forEach(doc => {
+    const doctor = doc.data();
+    const docId = doc.id;
+    const accountType = doctor.account_type || 'شخصي';
+    const safeName = escapeHtml(doctor.name || 'غير معروف');
+    const safePhone = escapeHtml(doctor.phone || 'بدون هاتف');
+    const jsName = escapeForInlineJsAttr(doctor.name || '');
+
+    let specialtyCell, clinicsCell;
+
+    if (accountType === 'شخصي') {
+        specialtyCell = `<span class="status-badge status-approved">${escapeHtml(doctor.specialty || 'عام')}</span>`;
+        let clinicsTextRaw = doctor.clinics ? doctor.clinics.map(c => c.clinic_address).join(" | ") : "لم تحدد بعد";
+        clinicsCell = escapeHtml(clinicsTextRaw);
+    } else {
+        specialtyCell = `<span class="status-badge" style="background:#e0e7ff; color:#4338ca;">${escapeHtml(accountType)}</span>`;
+        const docsList = doctor.doctors_list || [];
+        const namesText = docsList.map(d => `${d.name || ''} (${d.specialty || ''})`).join(' | ') || 'لا يوجد أطباء مضافين';
+        clinicsCell = `📍 ${escapeHtml(doctor.facility_address || 'عنوان غير محدد')}<br><small>${escapeHtml(namesText)}</small>`;
+    }
+
+    tableBody.innerHTML += `
+        <tr>
+            <td><b>${accountType === 'شخصي' ? 'د. ' : ''}${safeName}</b></td>
+            <td>${safePhone}</td>
+            <td>${specialtyCell}</td>
+            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis;" title="${clinicsCell.replace(/<[^>]*>/g, ' ')}">${clinicsCell}</td>
+            <td>
+                <input type="url" class="image-url-input" id="imgUrl_${docId}" placeholder="رابط صورة/شعار (اختياري)">
+                <span class="image-url-hint">يقبل روابط جوجل درايف أو أي رابط صورة مباشر</span>
+            </td>
+            <td>
+                <button class="btn btn-success" onclick="approveDoctor('${docId}', '${jsName}')">موافقة وتفعيل ✅</button>
+                <button class="btn btn-danger" onclick="rejectDoctor('${docId}', '${jsName}')">رفض وتجاهل ❌</button>
+            </td>
+        </tr>
+    `;
+});
                 }).catch(err => {
                     console.error("Error loading pending doctors: ", err);
                     tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">حدث خطأ أثناء تحميل الطلبات: ${err.message}</td></tr>`;
