@@ -1284,154 +1284,223 @@ if (patientSnap.exists) {
 
         // جلب الأطباء المعتمدين من الإدارة
         async function loadApprovedDoctors() {
-            const grid = document.getElementById('doctorsGrid');
+    const grid = document.getElementById('doctorsGrid');
 
-            try {
-                const snapshot = await db.collection("users")
-                    .where("role", "==", "doctor")
-                    .where("status", "==", "approved")
-                    .get();
+    try {
+        const snapshot = await db.collection("users")
+            .where("role", "==", "doctor")
+            .where("status", "==", "approved")
+            .get();
 
-                // نخزن بيانات الأطباء في متغير عام سهل الوصول له عند البحث/الفلترة وفتح التفاصيل
-                window._doctorsCache = {};
-                snapshot.forEach(doc => {
-                    window._doctorsCache[doc.id] = doc.data();
+        window._doctorsCache = {};
+        window._bookableList = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            window._doctorsCache[doc.id] = data;
+            const accountType = data.account_type || 'شخصي';
+
+            if (accountType === 'شخصي') {
+                window._bookableList.push({
+                    key: doc.id,
+                    accountId: doc.id,
+                    isInstitutional: false,
+                    facilityIndex: null,
+                    name: data.name,
+                    specialty: data.specialty,
+                    image_url: data.image_url,
+                    clinicsCount: (data.clinics || []).length
                 });
-
-                populateSpecialtyFilter();
-                applyDoctorFilters();
-
-            } catch (error) {
-                console.error("Error loading doctors:", error);
-                grid.innerHTML = `<div class="no-doctors">${t('doctorLoadError')}</div>`;
+            } else {
+                (data.doctors_list || []).forEach((phys, idx) => {
+                    if (phys.receiving === false) return;
+                    window._bookableList.push({
+                        key: `${doc.id}_${idx}`,
+                        accountId: doc.id,
+                        isInstitutional: true,
+                        facilityIndex: idx,
+                        name: phys.name,
+                        specialty: phys.specialty,
+                        image_url: data.image_url,
+                        facilityName: data.name,
+                        clinicsCount: 1
+                    });
+                });
             }
-        }
+        });
+
+        populateSpecialtyFilter();
+        applyDoctorFilters();
+
+    } catch (error) {
+        console.error("Error loading doctors:", error);
+        grid.innerHTML = `<div class="no-doctors">${t('doctorLoadError')}</div>`;
+    }
+}
 
         // بناء قائمة التخصصات في الفلتر من التخصصات الموجودة فعلياً بين الأطباء المعتمدين
-        function populateSpecialtyFilter() {
-            const select = document.getElementById('specialtyFilterSelect');
-            const previousValue = select.value;
-            const specialties = new Set();
+function populateSpecialtyFilter() {
+    const select = document.getElementById('specialtyFilterSelect');
+    const previousValue = select.value;
+    const specialties = new Set();
 
-            Object.values(window._doctorsCache || {}).forEach(data => {
-                if (data.specialty) specialties.add(data.specialty);
-            });
+    (window._bookableList || []).forEach(entry => {
+        if (entry.specialty) specialties.add(entry.specialty);
+    });
 
-            select.innerHTML = `<option value="">${t('allSpecialties')}</option>`;
-            Array.from(specialties).sort().forEach(spec => {
-                const opt = document.createElement('option');
-                opt.value = spec;
-                opt.innerText = spec;
-                select.appendChild(opt);
-            });
+    select.innerHTML = `<option value="">${t('allSpecialties')}</option>`;
+    Array.from(specialties).sort().forEach(spec => {
+        const opt = document.createElement('option');
+        opt.value = spec;
+        opt.innerText = spec;
+        select.appendChild(opt);
+    });
 
-            select.value = previousValue; // نحافظ على اختيار المستخدم لو لسه موجود
-        }
+    select.value = previousValue;
+}
 
         // بحث ذكي بالاسم أو التخصص أو المنطقة (محافظة/مدينة/عنوان أي عيادة)، مع فلتر التخصص
-        function applyDoctorFilters() {
-            const grid = document.getElementById('doctorsGrid');
-            const searchTerm = (document.getElementById('doctorSearchInput').value || '').trim().toLowerCase();
-            const specialtyFilter = document.getElementById('specialtyFilterSelect').value;
-            const cache = window._doctorsCache || {};
-            const entries = Object.entries(cache);
+function applyDoctorFilters() {
+    const grid = document.getElementById('doctorsGrid');
+    const searchTerm = (document.getElementById('doctorSearchInput').value || '').trim().toLowerCase();
+    const specialtyFilter = document.getElementById('specialtyFilterSelect').value;
+    const list = window._bookableList || [];
 
-            if (entries.length === 0) {
-                grid.innerHTML = `<div class="no-doctors" style="grid-column: 1/-1; text-align: center;">${t('noDoctorsAvailable')}</div>`;
-                return;
-            }
+    if (list.length === 0) {
+        grid.innerHTML = `<div class="no-doctors" style="grid-column: 1/-1; text-align: center;">${t('noDoctorsAvailable')}</div>`;
+        return;
+    }
 
-            const filtered = entries.filter(([docId, data]) => {
-                if (specialtyFilter && data.specialty !== specialtyFilter) return false;
-                if (!searchTerm) return true;
+    const filtered = list.filter(entry => {
+        if (specialtyFilter && entry.specialty !== specialtyFilter) return false;
+        if (!searchTerm) return true;
 
-                const clinicsText = (data.clinics || []).map(c => `${c.clinic_address || ''} ${c.governorate || ''} ${c.city || ''} ${c.village || ''}`).join(' ');
-                const haystack = `${data.name || ''} ${data.specialty || ''} ${clinicsText}`.toLowerCase();
-                return haystack.includes(searchTerm);
-            });
+        const account = window._doctorsCache[entry.accountId];
+        const clinicsText = entry.isInstitutional
+            ? (account ? account.facility_address || '' : '')
+            : (account && account.clinics ? account.clinics.map(c => c.clinic_address || '').join(' ') : '');
 
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="no-doctors" style="grid-column: 1/-1; text-align: center;">${t('noDoctorsMatch')}</div>`;
-                return;
-            }
+        const haystack = `${entry.name || ''} ${entry.specialty || ''} ${entry.facilityName || ''} ${clinicsText}`.toLowerCase();
+        return haystack.includes(searchTerm);
+    });
 
-            grid.innerHTML = '';
-            filtered.forEach(([docId, data]) => {
-                const avatarSrc = data.image_url ? escapeHtml(data.image_url) : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
-                const clinicsCount = data.clinics ? data.clinics.length : 0;
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div class="no-doctors" style="grid-column: 1/-1; text-align: center;">${t('noDoctorsMatch')}</div>`;
+        return;
+    }
 
-                grid.innerHTML += `
-                    <div class="doctor-card">
-                        <div class="doc-profile">
-                            <img src="${avatarSrc}" class="doc-avatar" alt="Doctor Photo">
-                            <div class="doc-info">
-                                <h3>${doctorPrefix()} ${escapeHtml(data.name)}</h3>
-                                <span class="doc-specialty">${escapeHtml(data.specialty)}</span>
-                            </div>
-                        </div>
-                        <div class="doc-summary-line">🏥 ${t('clinicsCountLabel')}: ${clinicsCount}</div>
-                        <button class="details-btn" onclick='openDoctorDetails(${JSON.stringify(docId)})'>${t('detailsBtn')}</button>
+    grid.innerHTML = '';
+    filtered.forEach(entry => {
+        const avatarSrc = entry.image_url ? escapeHtml(entry.image_url) : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
+        const facilityLine = entry.isInstitutional
+            ? `<div class="doc-summary-line" style="border-top:none; margin-top:0; padding-top:0;">🏢 ${escapeHtml(entry.facilityName || '')}</div>`
+            : '';
+
+        grid.innerHTML += `
+            <div class="doctor-card">
+                <div class="doc-profile">
+                    <img src="${avatarSrc}" class="doc-avatar" alt="Doctor Photo">
+                    <div class="doc-info">
+                        <h3>${doctorPrefix()} ${escapeHtml(entry.name)}</h3>
+                        <span class="doc-specialty">${escapeHtml(entry.specialty || '')}</span>
                     </div>
-                `;
-            });
-        }
+                </div>
+                ${facilityLine}
+                <div class="doc-summary-line">🏥 ${t('clinicsCountLabel')}: ${entry.clinicsCount}</div>
+                <button class="details-btn" onclick='openDoctorDetails(${JSON.stringify(entry.key)})'>${t('detailsBtn')}</button>
+            </div>
+        `;
+    });
+}
 
         // ================= فتح نافذة تفاصيل الطبيب واختيار العيادة =================
-     function openDoctorDetails(doctorId) {
-    const data = window._doctorsCache ? window._doctorsCache[doctorId] : null;
-    if (!data) {
+  function openDoctorDetails(entryKey) {
+    const entry = (window._bookableList || []).find(e => e.key === entryKey);
+    if (!entry) {
+        showToast(t('doctorLoadError'), 'error');
+        return;
+    }
+    const account = window._doctorsCache[entry.accountId];
+    if (!account) {
         showToast(t('doctorLoadError'), 'error');
         return;
     }
 
-    currentDoctorForDetails = { id: doctorId, ...data };
+    currentDoctorForDetails = {
+        id: entry.accountId,
+        name: entry.name,
+        specialty: entry.specialty,
+        isInstitutional: entry.isInstitutional,
+        facilityIndex: entry.facilityIndex,
+        facilityName: entry.facilityName || null
+    };
     selectedClinicIndex = null;
     document.getElementById('proceedBookingBtn').disabled = true;
 
-    const avatarSrc = data.image_url ? data.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
+    const avatarSrc = entry.image_url ? entry.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
     document.getElementById('detailsAvatar').src = avatarSrc;
-    document.getElementById('detailsName').innerText = `${doctorPrefix()} ${data.name}`;
-    document.getElementById('detailsSpecialty').innerText = data.specialty || '';
+    document.getElementById('detailsName').innerText = `${doctorPrefix()} ${entry.name}`;
+    document.getElementById('detailsSpecialty').innerText = entry.specialty || '';
 
     const listContainer = document.getElementById('detailsClinicsList');
     listContainer.innerHTML = '';
 
-    const allClinics = data.clinics || [];
-    // لو الطبيب حدد عيادة (أو أكتر) كـ "تستقبل حجوزات الآن"، نعرض دول بس.
-    // لو مفيش أي عيادة محددة، كل العيادات تفضل متاحة عادي (السلوك الافتراضي).
-    const anyClinicMarkedActive = allClinics.some(c => c.receiving === true);
-    const availableClinics = anyClinicMarkedActive
-        ? allClinics.filter(c => c.receiving === true)
-        : allClinics;
+    if (entry.isInstitutional) {
+        const phys = (account.doctors_list || [])[entry.facilityIndex] || {};
+        const clinic = {
+            clinic_address: account.facility_address || '',
+            work_hours: phys.work_hours || '',
+            price: phys.price,
+            google_maps_link: account.facility_map_link || ''
+        };
+        currentDoctorForDetails.clinics = [clinic];
 
-    // نحتفظ بفهرس العيادة الأصلي (في المصفوفة الكاملة) عشان proceedToBookingForm يشتغل صح
-    const availableClinicsWithOriginalIndex = availableClinics.map(clinic => {
-        return { clinic, originalIndex: allClinics.indexOf(clinic) };
-    });
+        const mapButton = clinic.google_maps_link
+            ? `<a href="${escapeHtml(clinic.google_maps_link)}" target="_blank" class="map-btn" onclick="event.stopPropagation()">📍 عرض الموقع على الخريطة</a>`
+            : '';
+        const item = document.createElement('label');
+        item.className = 'clinic-select-item';
+        item.id = `clinicOption_0`;
+        item.innerHTML = `
+            <input type="radio" name="clinicChoice" value="0" onchange="selectClinicOption(0)">
+            <div>
+                <div class="clinic-address">📍 ${escapeHtml(clinic.clinic_address)}</div>
+                <div class="clinic-hours">🕒 ${escapeHtml(clinic.work_hours)}</div>
+                ${clinic.price !== undefined && clinic.price !== null ? `<div class="clinic-hours">${t('priceLabel')} ${escapeHtml(clinic.price)} ${t('priceCurrency')}</div>` : ''}
+                ${mapButton}
+            </div>
+        `;
+        listContainer.appendChild(item);
 
-    if (availableClinicsWithOriginalIndex.length === 0) {
-        listContainer.innerHTML = `<p style="font-size:13px; color:#a0aec0;">${t('noClinicsRegistered')}</p>`;
     } else {
-        availableClinicsWithOriginalIndex.forEach(({ clinic, originalIndex }) => {
-            const item = document.createElement('label');
-            item.className = 'clinic-select-item';
-            item.id = `clinicOption_${originalIndex}`;
+        const allClinics = account.clinics || [];
+        currentDoctorForDetails.clinics = allClinics;
+        const anyActive = allClinics.some(c => c.receiving === true);
+        const available = anyActive ? allClinics.filter(c => c.receiving === true) : allClinics;
 
-            const mapButton = clinic.google_maps_link
-                ? `<a href="${escapeHtml(clinic.google_maps_link)}" target="_blank" class="map-btn" onclick="event.stopPropagation()">📍 عرض الموقع على الخريطة</a>`
-                : '';
-
-            item.innerHTML = `
-                <input type="radio" name="clinicChoice" value="${originalIndex}" onchange="selectClinicOption(${originalIndex})">
-                <div>
-                    <div class="clinic-address">📍 ${escapeHtml(clinic.clinic_address)}</div>
-                    <div class="clinic-hours">🕒 ${escapeHtml(clinic.work_hours)}</div>
-                    ${clinic.price !== undefined && clinic.price !== null ? `<div class="clinic-hours">${t('priceLabel')} ${escapeHtml(clinic.price)} ${t('priceCurrency')}</div>` : ''}
-                    ${mapButton}
-                </div>
-            `;
-            listContainer.appendChild(item);
-        });
+        if (available.length === 0) {
+            listContainer.innerHTML = `<p style="font-size:13px; color:#a0aec0;">${t('noClinicsRegistered')}</p>`;
+        } else {
+            available.forEach(clinic => {
+                const originalIndex = allClinics.indexOf(clinic);
+                const mapButton = clinic.google_maps_link
+                    ? `<a href="${escapeHtml(clinic.google_maps_link)}" target="_blank" class="map-btn" onclick="event.stopPropagation()">📍 عرض الموقع على الخريطة</a>`
+                    : '';
+                const item = document.createElement('label');
+                item.className = 'clinic-select-item';
+                item.id = `clinicOption_${originalIndex}`;
+                item.innerHTML = `
+                    <input type="radio" name="clinicChoice" value="${originalIndex}" onchange="selectClinicOption(${originalIndex})">
+                    <div>
+                        <div class="clinic-address">📍 ${escapeHtml(clinic.clinic_address)}</div>
+                        <div class="clinic-hours">🕒 ${escapeHtml(clinic.work_hours)}</div>
+                        ${clinic.price !== undefined && clinic.price !== null ? `<div class="clinic-hours">${t('priceLabel')} ${escapeHtml(clinic.price)} ${t('priceCurrency')}</div>` : ''}
+                        ${mapButton}
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
     }
 
     document.getElementById('doctorDetailsModal').style.display = 'flex';
@@ -1489,14 +1558,16 @@ if (patientSnap.exists) {
             proceedBtn.disabled = false;
             proceedBtn.innerText = originalBtnText;
 
-            const clinic = currentDoctorForDetails.clinics[selectedClinicIndex];
-            pendingBooking = {
-                doctorId: currentDoctorForDetails.id,
-                doctorName: currentDoctorForDetails.name,
-                clinicAddress: clinic.clinic_address,
-                clinicHours: clinic.work_hours,
-                clinicPrice: (clinic.price !== undefined && clinic.price !== null) ? clinic.price : null
-            };
+       const clinic = currentDoctorForDetails.clinics[selectedClinicIndex];
+pendingBooking = {
+    doctorId: currentDoctorForDetails.id,
+    doctorName: currentDoctorForDetails.name,
+    clinicAddress: clinic.clinic_address,
+    clinicHours: clinic.work_hours,
+    clinicPrice: (clinic.price !== undefined && clinic.price !== null) ? clinic.price : null,
+    facilityDoctorIndex: currentDoctorForDetails.isInstitutional ? currentDoctorForDetails.facilityIndex : null,
+    facilityName: currentDoctorForDetails.facilityName || null
+};
 
             closeDoctorDetailsModal();
 
@@ -1544,20 +1615,22 @@ async function confirmBookingSubmit(event) {
         currentPatient = { ...currentPatient, name, phone, age, address };
         document.getElementById('welcomeText').innerText = `${t('welcomeGreeting')} ${name} 👋`;
 
-        const bookingData = {
-            patient_id: patientId,
-            patient_name: name,
-            patient_phone: phone,
-            patient_age: age,
-            patient_address: address,
-            doctor_id: pendingBooking.doctorId,
-            doctor_name: pendingBooking.doctorName,
-            clinic_address: pendingBooking.clinicAddress,
-            clinic_hours: pendingBooking.clinicHours,
-            clinic_price: pendingBooking.clinicPrice,
-            status: "pending",
-            created_at: firebase.firestore.FieldValue.serverTimestamp()
-        };
+  const bookingData = {
+    patient_id: patientId,
+    patient_name: name,
+    patient_phone: phone,
+    patient_age: age,
+    patient_address: address,
+    doctor_id: pendingBooking.doctorId,
+    doctor_name: pendingBooking.doctorName,
+    clinic_address: pendingBooking.clinicAddress,
+    clinic_hours: pendingBooking.clinicHours,
+    clinic_price: pendingBooking.clinicPrice,
+    facility_doctor_index: pendingBooking.facilityDoctorIndex,
+    facility_name: pendingBooking.facilityName,
+    status: "pending",
+    created_at: firebase.firestore.FieldValue.serverTimestamp()
+};
 
         await db.collection("bookings").add(bookingData);
         closeBookingModal();
@@ -1727,16 +1800,8 @@ function listenToMyBookings() {
                 bookingsArray.push({ id: doc.id, ...doc.data() });
             });
 
-            // في أول Snapshot بس: نسجل كل الحجوزات اللي أصلاً doctor_approved
-            // كـ "شوفها المريض قبل كده" عشان منفتحش النافذة تلقائياً على حجوزات قديمة
-            if (isFirstMyBookingsSnapshot) {
-                bookingsArray.forEach(booking => {
-                    if (booking.status === 'doctor_approved') {
-                        paymentModalShownFor.add(booking.id);
-                    }
-                });
-            } else {
-                // بعد كده: فتح نافذة الدفع بس للحجوزات اللي دخلت الحالة دي فعلاً حديثاً
+            // فتح نافذة تعليمات الدفع تلقائياً أول ما الحجز يتحول لـ "موافق عليه من الدكتور"
+            if (!isFirstMyBookingsSnapshot) {
                 bookingsArray.forEach(booking => {
                     if (booking.status === 'doctor_approved' && booking.payment_deadline && !paymentModalShownFor.has(booking.id)) {
                         paymentModalShownFor.add(booking.id);
