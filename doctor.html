@@ -290,6 +290,9 @@
     <h2>الحجوزات الواردة</h2>
 </header>
 
+        <div class="audio-notice">
+          
+        </div>
         
         <div class="table-responsive">
             <table id="bookingsTable">
@@ -299,6 +302,7 @@
         <th>رقم الهاتف</th>
         <th>السن</th>
         <th>العنوان</th>
+        <th>الطبيب المطلوب</th>
         <th>العيادة / الفرع المحجوز</th>
         <th>تاريخ الطلب</th>
         <th>الحالة الحالية</th>
@@ -549,6 +553,7 @@ const row = `
         <td data-label="رقم الهاتف">${escapeHtml(booking.patient_phone)}</td>
         <td data-label="السن">${patientAgeText}</td>
         <td data-label="العنوان">${patientAddressText}</td>
+        <td data-label="الطبيب المطلوب">${escapeHtml(booking.doctor_name || 'غير محدد')}</td>
         <td data-label="العيادة"><span class="clinic-tag">🏥 ${selectedClinic}${clinicHours}${clinicPriceText}</span></td>
         <td data-label="الدور والموعد">${queueDisplay}${editQueueBtn}</td>
         <td data-label="تاريخ الطلب" style="font-size:12px; color:#718096;">${bookingDate}</td>
@@ -573,17 +578,31 @@ const row = `
         }
 
         // دالة قبول الحجز وتحويله لـ "موافق عليه من الدكتور" وبانتظار مكالمة الإدارة
-        window.updateToDoctorApproved = async function(id) {
-            try {
-                stopAlertSound();
-                await db.collection("bookings").doc(id).update({
-                    status: 'doctor_approved'
-                });
-                showToast("تمت موافقتك بنجاح! تم إرسال الطلب الآن إلى لوحة الإدارة لإجراء التنسيق المالي والاتفاق الهاتفي مع المريض.", 'success');
-            } catch (error) {
-                showToast("حدث خطأ أثناء التحديث: " + error.message, 'error');
-            }
+ window.updateToDoctorApproved = async function(id) {
+    try {
+        stopAlertSound();
+
+        const booking = window._bookingsCache ? window._bookingsCache[id] : null;
+        const clinicPrice = booking ? booking.clinic_price : null;
+        const SERVICE_FEE_EGP = 5;
+
+        let paymentAmount = null;
+        if (clinicPrice !== null && clinicPrice !== undefined) {
+            paymentAmount = Math.round((clinicPrice * 0.25 + SERVICE_FEE_EGP) * 100) / 100;
         }
+
+        const paymentDeadline = new Date(Date.now() + 15 * 60 * 1000);
+
+        await db.collection("bookings").doc(id).update({
+            status: 'doctor_approved',
+            payment_amount: paymentAmount,
+            payment_deadline: firebase.firestore.Timestamp.fromDate(paymentDeadline)
+        });
+        showToast("تمت موافقتك بنجاح! تم إرسال طلب الدفع للمريض الآن.", 'success');
+    } catch (error) {
+        showToast("حدث خطأ أثناء التحديث: " + error.message, 'error');
+    }
+}
 // ================= تحديد رقم الدور وميعاد الحضور (اختياري) =================
 let activeQueueBookingId = null;
 
@@ -734,7 +753,8 @@ window.toggleSidebar = function(open) {
 
 // ================= إدارة العيادات والأسعار =================
 let editableClinics = [];
-
+let editableFacilityDoctors = [];
+let doctorAccountType = 'شخصي';
 window.openClinicsModal = async function() {
     toggleSidebar(false);
     const listDiv = document.getElementById('clinicsEditList');
@@ -744,39 +764,51 @@ window.openClinicsModal = async function() {
     try {
         const doc = await db.collection("users").doc(doctorId).get();
         const data = doc.exists ? doc.data() : {};
-        editableClinics = JSON.parse(JSON.stringify(data.clinics || []));
+        doctorAccountType = data.account_type || 'شخصي';
 
-        if (editableClinics.length === 0) {
-            listDiv.innerHTML = '<p style="text-align:center; color:#a0aec0;">لا توجد عيادات مسجلة لحسابك حالياً.</p>';
-            return;
+        if (doctorAccountType === 'شخصي') {
+            editableClinics = JSON.parse(JSON.stringify(data.clinics || []));
+            if (editableClinics.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#a0aec0;">لا توجد عيادات مسجلة لحسابك حالياً.</p>';
+                return;
+            }
+            renderClinicsEditList();
+        } else {
+            editableFacilityDoctors = JSON.parse(JSON.stringify(data.doctors_list || []));
+            if (editableFacilityDoctors.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#a0aec0;">لا يوجد أطباء مسجلين بالمكان حالياً.</p>';
+                return;
+            }
+            renderFacilityDoctorsEditList();
         }
-
-        renderClinicsEditList();
     } catch (err) {
-        listDiv.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ أثناء تحميل بيانات العيادات: ' + err.message + '</p>';
+        listDiv.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ أثناء تحميل البيانات: ' + err.message + '</p>';
     }
 };
 
-function renderClinicsEditList() {
+function renderFacilityDoctorsEditList() {
     const listDiv = document.getElementById('clinicsEditList');
     listDiv.innerHTML = '';
 
-    editableClinics.forEach((clinic, idx) => {
-        const isActive = clinic.receiving === true;
+    editableFacilityDoctors.forEach((phys, idx) => {
+        const isActive = phys.receiving !== false;
         const row = document.createElement('div');
         row.className = 'clinic-edit-row';
         row.innerHTML = `
-            <div style="font-weight:bold; font-size:13px;">📍 ${escapeHtml(clinic.clinic_address || 'عيادة بدون عنوان')}</div>
+            <div style="font-weight:bold; font-size:13px;">👨‍⚕️ ${escapeHtml(phys.name || 'طبيب بدون اسم')}</div>
 
-            <label>ساعات العمل</label>
-            <input type="text" value="${escapeHtml(clinic.work_hours || '')}" data-field="work_hours" data-idx="${idx}">
+            <label>التخصص</label>
+            <input type="text" value="${escapeHtml(phys.specialty || '')}" data-field="specialty" data-idx="${idx}">
 
             <label>سعر الكشف (ج.م)</label>
-            <input type="number" min="0" value="${clinic.price !== undefined && clinic.price !== null ? clinic.price : ''}" data-field="price" data-idx="${idx}">
+            <input type="number" min="0" value="${phys.price !== undefined && phys.price !== null ? phys.price : ''}" data-field="price" data-idx="${idx}">
+
+            <label>مواعيد العمل</label>
+            <input type="text" value="${escapeHtml(phys.work_hours || '')}" data-field="work_hours" data-idx="${idx}">
 
             <div class="clinic-active-toggle">
-                <input type="checkbox" id="clinicActive_${idx}" ${isActive ? 'checked' : ''} onchange="toggleClinicActive(${idx}, this.checked)">
-                <label for="clinicActive_${idx}" style="margin:0;">تستقبل حجوزات الآن</label>
+                <input type="checkbox" id="physActive_${idx}" ${isActive ? 'checked' : ''} onchange="toggleFacilityDoctorActive(${idx}, this.checked)">
+                <label for="physActive_${idx}" style="margin:0;">يستقبل حجوزات الآن</label>
             </div>
         `;
         listDiv.appendChild(row);
@@ -787,16 +819,14 @@ function renderClinicsEditList() {
             const idx = parseInt(e.target.getAttribute('data-idx'), 10);
             const field = e.target.getAttribute('data-field');
             let value = e.target.value;
-            if (field === 'price') {
-                value = value === '' ? null : parseFloat(value);
-            }
-            editableClinics[idx][field] = value;
+            if (field === 'price') value = value === '' ? null : parseFloat(value);
+            editableFacilityDoctors[idx][field] = value;
         });
     });
 }
 
-window.toggleClinicActive = function(idx, checked) {
-    editableClinics[idx].receiving = checked;
+window.toggleFacilityDoctorActive = function(idx, checked) {
+    editableFacilityDoctors[idx].receiving = checked;
 };
 
 window.closeClinicsModal = function() {
@@ -805,10 +835,12 @@ window.closeClinicsModal = function() {
 
 window.saveClinicsChanges = async function() {
     try {
-        await db.collection("users").doc(doctorId).update({
-            clinics: editableClinics
-        });
-        showToast('✅ تم حفظ تعديلات العيادات بنجاح.', 'success');
+        if (doctorAccountType === 'شخصي') {
+            await db.collection("users").doc(doctorId).update({ clinics: editableClinics });
+        } else {
+            await db.collection("users").doc(doctorId).update({ doctors_list: editableFacilityDoctors });
+        }
+        showToast('✅ تم حفظ التعديلات بنجاح.', 'success');
         closeClinicsModal();
     } catch (err) {
         showToast('حدث خطأ أثناء الحفظ: ' + err.message, 'error');
