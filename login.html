@@ -646,13 +646,14 @@ function selectRole(role) {
 
     document.getElementById('selectedRole').value = role;
 
-    if (role === 'patient') {
-        document.getElementById('rolePatient').classList.add('selected');
-        document.getElementById('patientSection').classList.add('active');
-        document.getElementById('accountTypeGroup').style.display = 'none';
-        document.getElementById('regNameLabel').innerText = 'الاسم الكامل';
-        toggleRequiredFields('patient');
-    } else {
+  if (role === 'patient') {
+    showToast("تهانينا! تم إنشاء حسابك بنجاح كعميل.", 'success');
+    localStorage.setItem('user_id', uid);
+    localStorage.setItem('user_name', name);
+    localStorage.setItem('user_role', 'patient');
+    notifyFlutterLogin(uid, 'patient', email, password);
+    setTimeout(() => { window.location.href = 'patient.html'; }, 1000);
+} else {
         document.getElementById('roleDoctor').classList.add('selected');
         document.getElementById('doctorSection').classList.add('active');
         document.getElementById('accountTypeGroup').style.display = 'block';
