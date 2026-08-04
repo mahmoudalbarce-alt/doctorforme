@@ -343,7 +343,7 @@
             <div class="form-group">
                 <label>نوع الحساب</label>
                 <div class="role-selector">
-                    <div class="role-option selected" id="rolePatient" onclick="selectRole('patient')">🧑‍🦽 حساب شخصي</div>
+                    <div class="role-option selected" id="rolePatient" onclick="selectRole('patient')">🧑حساب شخصي</div>
                     <div class="role-option" id="roleDoctor" onclick="selectRole('doctor')">👨‍⚕️ حساب دكتور</div>
                 </div>
                 <input type="hidden" id="selectedRole" value="patient">
@@ -415,7 +415,6 @@
             <option value="عظام">عظام 🦴</option>
             <option value="رمد">رمد / عيون 👁️</option>
             <option value="مخ وأعصاب">مخ وأعصاب 🧠</option>
-            <option value="أنف وأذن وحنجة">مخ وأعصاب</option>
             <option value="أخرى">تخصص آخر (اكتبه بنفسك) ✏️</option>
         </select>
     </div>
@@ -471,8 +470,10 @@
                 <div id="clinicsContainer">
                     </div>
                 <button type="button" class="add-clinic-btn" onclick="addClinicBlock()">➕ إضافة عيادة أخرى</button>
-                   <button type="submit" class="submit-btn">إنشاء الحساب</button>
-    </div>
+                <button type="submit" class="submit-btn">إنشاء الحساب</button>
+            </div>
+
+            
         </form>
     </div>
 
@@ -521,11 +522,10 @@ const firebaseConfig = {
                 } else if (userData.role === 'doctor' && userData.status === 'approved') {
                     localStorage.setItem('user_role', 'doctor');
                     window.location.href = 'doctor.html';
-            else if (userData.role === 'patient') {
-    localStorage.setItem('user_role', 'patient');
-    notifyFlutterLogin(uid, 'patient', email, password);
-    window.location.href = 'patient.html';
-}
+                } else if (userData.role === 'patient') {
+                    localStorage.setItem('user_role', 'patient');
+                    window.location.href = 'patient.html';
+                }
                 // لو الدكتور لسه pending أو rejected، نسيبه في صفحة الدخول عادي لحد ما يتفعل حسابه
             } catch (err) {
                 console.error("Auto-login check failed:", err);
