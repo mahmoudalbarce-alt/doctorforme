@@ -523,8 +523,9 @@ const firebaseConfig = {
                     localStorage.setItem('user_role', 'doctor');
                     window.location.href = 'doctor.html';
                 } else if (userData.role === 'patient') {
-                    localStorage.setItem('user_role', 'patient');
-                    window.location.href = 'patient.html';
+                  localStorage.setItem('user_role', 'patient');
+                  notifyFlutterLogin(uid, 'patient', email, password);
+                  window.location.href = 'patient.html';
                 }
                 // لو الدكتور لسه pending أو rejected، نسيبه في صفحة الدخول عادي لحد ما يتفعل حسابه
             } catch (err) {
@@ -1098,13 +1099,14 @@ if (role === 'doctor') {
                 // 2. الحفظ في Firestore
                 await db.collection("users").doc(uid).set(userData);
 
-                if (role === 'patient') {
-                    showToast("تهانينا! تم إنشاء حسابك بنجاح كعميل.", 'success');
-                    localStorage.setItem('user_id', uid);
-                    localStorage.setItem('user_name', name);
-                    localStorage.setItem('user_role', 'patient');
-                    setTimeout(() => { window.location.href = 'patient.html'; }, 1000);
-                } else {
+            if (role === 'patient') {
+             showToast("تهانينا! تم إنشاء حسابك بنجاح كعميل.", 'success');
+             localStorage.setItem('user_id', uid);
+             localStorage.setItem('user_name', name);
+             localStorage.setItem('user_role', 'patient');
+              notifyFlutterLogin(uid, 'patient', email, password);
+              setTimeout(() => { window.location.href = 'patient.html'; }, 1000);
+               } else {
                     showToast("تم تسجيل حسابك بنجاح! حسابك بانتظار موافقة الإدارة لتتمكن من تسجيل الدخول.", 'success');
                     auth.signOut();
                     switchTab('login');
