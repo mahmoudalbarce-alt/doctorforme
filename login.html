@@ -520,10 +520,11 @@ const firebaseConfig = {
                 } else if (userData.role === 'doctor' && userData.status === 'approved') {
                     localStorage.setItem('user_role', 'doctor');
                     window.location.href = 'doctor.html';
-                } else if (userData.role === 'patient') {
-                    localStorage.setItem('user_role', 'patient');
-                    window.location.href = 'patient.html';
-                }
+            else if (userData.role === 'patient') {
+    localStorage.setItem('user_role', 'patient');
+    notifyFlutterLogin(uid, 'patient', email, password);
+    window.location.href = 'patient.html';
+}
                 // لو الدكتور لسه pending أو rejected، نسيبه في صفحة الدخول عادي لحد ما يتفعل حسابه
             } catch (err) {
                 console.error("Auto-login check failed:", err);
