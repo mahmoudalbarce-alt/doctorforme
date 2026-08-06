@@ -524,7 +524,7 @@ const firebaseConfig = {
                     window.location.href = 'doctor.html';
                 } else if (userData.role === 'patient') {
                   localStorage.setItem('user_role', 'patient');
-                  notifyFlutterLogin(uid, 'patient', email, password);
+                  
                   window.location.href = 'patient.html';
                 }
                 // لو الدكتور لسه pending أو rejected، نسيبه في صفحة الدخول عادي لحد ما يتفعل حسابه
@@ -1184,6 +1184,7 @@ if (role === 'doctor') {
                     // 3. التحقق لو الحساب "مريض"
                     else if (userData.role === 'patient') {
                         localStorage.setItem('user_role', 'patient');
+                        notifyFlutterLogin(uid, 'patient', email, password);
                         window.location.href = 'patient.html';
                     }
                 } else {
