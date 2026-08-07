@@ -1360,6 +1360,7 @@ function populateSpecialtyFilter() {
 }
 
         // بحث ذكي بالاسم أو التخصص أو المنطقة (محافظة/مدينة/عنوان أي عيادة)، مع فلتر التخصص
+// بحث ذكي بالاسم أو التخصص أو المنطقة (محافظة/مدينة/عنوان أي عيادة)، مع فلتر التخصص
 function applyDoctorFilters() {
     const grid = document.getElementById('doctorsGrid');
     const searchTerm = (document.getElementById('doctorSearchInput').value || '').trim().toLowerCase();
@@ -1391,6 +1392,15 @@ function applyDoctorFilters() {
 
     grid.innerHTML = '';
     filtered.forEach(entry => {
+        const account = window._doctorsCache[entry.accountId];
+        // التحقق مما إذا كان الطبيب متصلاً حالياً
+        const online = account ? isDoctorOnline(account.last_active) : false;
+        
+        // تصميم شارة المتاح / غير المتاح
+        const availabilityBadge = online 
+            ? `<span style="font-size: 11px; background: #d1fae5; color: #059669; padding: 2px 6px; border-radius: 10px; margin-right: 6px; display: inline-block; font-weight: normal;">🟢 متاح الآن</span>`
+            : `<span style="font-size: 11px; background: #fee2e2; color: #dc2626; padding: 2px 6px; border-radius: 10px; margin-right: 6px; display: inline-block; font-weight: normal;">🔴 غير متاح</span>`;
+
         const avatarSrc = entry.image_url ? escapeHtml(entry.image_url) : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
         const facilityLine = entry.isInstitutional
             ? `<div class="doc-summary-line" style="border-top:none; margin-top:0; padding-top:0;">🏢 ${escapeHtml(entry.facilityName || '')}</div>`
@@ -1401,7 +1411,7 @@ function applyDoctorFilters() {
                 <div class="doc-profile">
                     <img src="${avatarSrc}" class="doc-avatar" alt="Doctor Photo">
                     <div class="doc-info">
-                        <h3>${doctorPrefix()} ${escapeHtml(entry.name)}</h3>
+                        <h3>${doctorPrefix()} ${escapeHtml(entry.name)} ${availabilityBadge}</h3>
                         <span class="doc-specialty">${escapeHtml(entry.specialty || '')}</span>
                     </div>
                 </div>
