@@ -1822,7 +1822,7 @@ function listenToMyBookings() {
                         
                         // حساب نصف مبلغ الحجز (50%)
                         const bookingPrice = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
-                        const amount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) : null;
+                        const amount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) + 5 : null;
                         
                         openPaymentInstructionsModal(amount, deadlineDate, booking.id);
                     }
@@ -1889,7 +1889,7 @@ let paymentActionsHtml = '';
 if (booking.status === 'doctor_approved' && booking.payment_deadline) {
     // حساب نصف مبلغ الحجز للزر الموجود داخل الكارت
     const bookingPrice = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
-    const paymentAmount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) : null;
+    const paymentAmount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) + 5 : null;
     
     // تعديل نص رسالة الواتساب
     const waMessage = paymentAmount !== null
