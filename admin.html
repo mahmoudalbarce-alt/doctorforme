@@ -378,6 +378,7 @@
             <button class="tab-btn" data-tab="bookings" onclick="switchTab('bookings', this)">إدارة حجز المواعيد 📅</button>
             <button class="tab-btn super-admin-only-tab" data-tab="doctorsList" onclick="switchTab('doctorsList', this)">الأطباء 👨‍⚕️</button>
             <button class="tab-btn super-admin-only-tab" data-tab="activeDoctors" onclick="switchTab('activeDoctors', this)">الأطباء النشطين والمستحقات 💰</button>
+            <button class="tab-btn super-admin-only-tab" data-tab="profits" onclick="switchTab('profits', this)">أرباح المنصة 📈</button>
             <button class="tab-btn super-admin-only-tab" data-tab="patientsList" onclick="switchTab('patientsList', this)">المرضى 🧑‍🦽</button>
             <button class="tab-btn super-admin-only-tab" data-tab="adminsList" onclick="switchTab('adminsList', this)">المشرفين 🔑</button>
             <button class="tab-btn super-admin-only-tab" data-tab="complaints" onclick="switchTab('complaints', this)">الشكاوى 📨</button>
@@ -473,6 +474,37 @@
             </thead>
             <tbody id="activeDoctorsTable">
                 <tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+<div id="profitsTab" class="tab-content">
+    <div class="card">
+        <h2>أرباح المنصة من الحجوزات 📈</h2>
+        <p style="font-size:12px; color:#718096; margin-top:-10px;">
+            💡 إجمالي أرباح المنصة من الحجوزات المؤكدة (نصف قيمة الكشف + 5 ج.م رسوم الخدمة). متاح للمدير العام فقط.
+        </p>
+        
+        <!-- بطاقة الإجمالي -->
+        <div style="background: #e0f2fe; border: 1px solid #bae6fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <h3 style="margin: 0; color: #0369a1; font-size: 16px;">إجمالي الأرباح الصافية</h3>
+            <div id="totalProfitsValue" style="font-size: 28px; font-weight: bold; color: #0284c7; margin-top: 10px;">جاري الحساب...</div>
+        </div>
+
+        <div class="table-responsive">
+        <table style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th>تاريخ الحجز</th>
+                    <th>المريض</th>
+                    <th>الطبيب</th>
+                    <th>سعر الكشف</th>
+                    <th>ربح المنصة</th>
+                </tr>
+            </thead>
+            <tbody id="profitsTable">
+                <tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>
             </tbody>
         </table>
         </div>
@@ -887,9 +919,15 @@
             document.getElementById('doctorsListTab').classList.add('active');
             loadAllDoctors();
             } else if (tabName === 'activeDoctors') {
-            if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
-            document.getElementById('activeDoctorsTab').classList.add('active');
-            loadActiveDoctorsFinancials();
+                if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+                document.getElementById('activeDoctorsTab').classList.add('active');
+                loadActiveDoctorsFinancials();
+            // --- إضافة كود تبويب الأرباح هنا ---
+            } else if (tabName === 'profits') {
+                if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+                document.getElementById('profitsTab').classList.add('active');
+                loadProfits();
+            // ------------------------------------
             } else if (tabName === 'patientsList') {
                 if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
                 document.getElementById('patientsListTab').classList.add('active');
@@ -1212,8 +1250,12 @@ async function loadActiveDoctorsFinancials() {
                 };
             }
 
-            doctorsAgg[doctorId].confirmedCount += 1;
-            const amount = (data.payment_amount !== undefined && data.payment_amount !== null) ? parseFloat(data.payment_amount) : 0;
+        doctorsAgg[doctorId].confirmedCount += 1;
+            
+            // حساب المستحقات: 50% من سعر الكشف (السعر النهائي إن وجد، وإلا سعر العيادة الأساسي)
+            const bookingPrice = (data.final_price !== undefined && data.final_price !== null) ? data.final_price : data.clinic_price;
+            const amount = (bookingPrice !== undefined && bookingPrice !== null) ? (parseFloat(bookingPrice) / 2) : 0;
+            
             if (!isNaN(amount)) {
                 doctorsAgg[doctorId].totalTransferred += amount;
             }
@@ -1502,7 +1544,75 @@ async function loadActiveDoctorsFinancials() {
                     tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">خطأ أثناء جلب السجلات: ${err.message}</td></tr>`;
                 });
         }
+// ================= أرباح المنصة =================
+async function loadProfits() {
+    const tableBody = document.getElementById('profitsTable');
+    const totalDisplay = document.getElementById('totalProfitsValue');
+    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
+    totalDisplay.innerText = 'جاري الحساب...';
 
+    try {
+        // هنجيب بس الحجوزات المؤكدة عشان نحسب الأرباح الفعلية
+        const snapshot = await db.collection("bookings")
+            .where("status", "==", "confirmed")
+            .get();
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#a0aec0;">لا توجد حجوزات مؤكدة لحساب الأرباح حتى الآن.</td></tr>';
+            totalDisplay.innerText = '0 ج.م';
+            return;
+        }
+
+        let totalProfits = 0;
+        let bookingsList = [];
+
+        snapshot.forEach(doc => {
+            bookingsList.push({ id: doc.id, ...doc.data() });
+        });
+
+        // ترتيب الحجوزات (الأحدث أولاً)
+        bookingsList.sort((a, b) => {
+            const tA = a.created_at ? (a.created_at.seconds || 0) : 0;
+            const tB = b.created_at ? (b.created_at.seconds || 0) : 0;
+            return tB - tA;
+        });
+
+        tableBody.innerHTML = '';
+
+        bookingsList.forEach(data => {
+            // تحديد سعر الكشف
+            const bookingPrice = (data.final_price !== undefined && data.final_price !== null) ? data.final_price : data.clinic_price;
+            
+            // حساب ربح المنصة: (50% من الكشف) + 5 جنيه رسوم خدمة
+            let platformProfit = 0;
+            if (bookingPrice !== undefined && bookingPrice !== null) {
+                platformProfit = (parseFloat(bookingPrice) / 2) + 5;
+                totalProfits += platformProfit;
+            }
+
+            const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG') : 'غير محدد';
+            const safePrice = bookingPrice !== undefined && bookingPrice !== null ? `${bookingPrice} ج.م` : 'غير محدد';
+            
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${dateStr}</td>
+                    <td>${escapeHtml(data.patient_name || 'غير معروف')}</td>
+                    <td>د. ${escapeHtml(data.doctor_name || 'غير معروف')}</td>
+                    <td>${safePrice}</td>
+                    <td><strong style="color:var(--success);">${platformProfit.toFixed(2)} ج.م</strong></td>
+                </tr>
+            `;
+        });
+
+        // عرض الإجمالي النهائي في المربع الأزرق
+        totalDisplay.innerText = `${totalProfits.toFixed(2)} ج.م`;
+
+    } catch (err) {
+        console.error("Error loading profits:", err);
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">حدث خطأ أثناء التحميل: ${err.message}</td></tr>`;
+        totalDisplay.innerText = 'خطأ في الحساب';
+    }
+}
         function notifyFlutterLogout() {
             try {
                 if (window.FlutterAuth && typeof window.FlutterAuth.postMessage === 'function') {
