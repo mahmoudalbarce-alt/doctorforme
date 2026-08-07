@@ -377,6 +377,7 @@
             <button class="tab-btn active" data-tab="requests" onclick="switchTab('requests', this)">طلبات تسجيل الأطباء 📩</button>
             <button class="tab-btn" data-tab="bookings" onclick="switchTab('bookings', this)">إدارة حجز المواعيد 📅</button>
             <button class="tab-btn super-admin-only-tab" data-tab="doctorsList" onclick="switchTab('doctorsList', this)">الأطباء 👨‍⚕️</button>
+            <button class="tab-btn super-admin-only-tab" data-tab="activeDoctors" onclick="switchTab('activeDoctors', this)">الأطباء النشطين والمستحقات 💰</button>
             <button class="tab-btn super-admin-only-tab" data-tab="patientsList" onclick="switchTab('patientsList', this)">المرضى 🧑‍🦽</button>
             <button class="tab-btn super-admin-only-tab" data-tab="adminsList" onclick="switchTab('adminsList', this)">المشرفين 🔑</button>
             <button class="tab-btn super-admin-only-tab" data-tab="complaints" onclick="switchTab('complaints', this)">الشكاوى 📨</button>
@@ -458,7 +459,29 @@
                 </div>
             </div>
         </div>
-
+<div id="activeDoctorsTab" class="tab-content">
+    <div class="card">
+        <h2>الأطباء النشطين والمستحقات المالية 💰</h2>
+        <p style="font-size:12px; color:#718096; margin-top:-10px;">
+            💡 يعرض هذا التبويب كل طبيب لديه حجز واحد على الأقل، مع إجمالي المبالغ التي حوّلها المرضى فعلياً (حجوزات مؤكدة فقط) وعدد الحجوزات المؤكدة الخاصة به.
+        </p>
+        <div class="table-responsive">
+        <table style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th>اسم الطبيب</th>
+                    <th>رقم الهاتف</th>
+                    <th>عدد الحجوزات المؤكدة</th>
+                    <th>إجمالي المبالغ المحوّلة من المرضى</th>
+                </tr>
+            </thead>
+            <tbody id="activeDoctorsTable">
+                <tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
         <div id="patientsListTab" class="tab-content">
             <div class="card">
                 <h2>قائمة المرضى المسجلين بالنظام 🧑‍🦽</h2>
@@ -864,9 +887,13 @@
                 bookingsHasNewAlert = false;
                 stopAlertSoundIfClear();
             } else if (tabName === 'doctorsList') {
-                if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
-                document.getElementById('doctorsListTab').classList.add('active');
-                loadAllDoctors();
+            if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+            document.getElementById('doctorsListTab').classList.add('active');
+            loadAllDoctors();
+            } else if (tabName === 'activeDoctors') {
+            if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+            document.getElementById('activeDoctorsTab').classList.add('active');
+            loadActiveDoctorsFinancials();
             } else if (tabName === 'patientsList') {
                 if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
                 document.getElementById('patientsListTab').classList.add('active');
@@ -1159,7 +1186,76 @@ window.closeReceiptViewModal = function() {
                     tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
                 });
         }
+// ================= الأطباء النشطين والمستحقات المالية =================
+async function loadActiveDoctorsFinancials() {
+    const tableBody = document.getElementById('activeDoctorsTable');
+    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>';
 
+    try {
+        const snapshot = await db.collection("bookings")
+            .where("status", "==", "confirmed")
+            .get();
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#a0aec0;">لا توجد حجوزات مؤكدة حتى الآن.</td></tr>';
+            return;
+        }
+
+        // تجميع البيانات لكل دكتور: عدد الحجوزات المؤكدة + إجمالي المبلغ المحوّل
+        const doctorsAgg = {};
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const doctorId = data.doctor_id;
+            if (!doctorId) return;
+
+            if (!doctorsAgg[doctorId]) {
+                doctorsAgg[doctorId] = {
+                    name: data.doctor_name || 'غير معروف',
+                    confirmedCount: 0,
+                    totalTransferred: 0
+                };
+            }
+
+            doctorsAgg[doctorId].confirmedCount += 1;
+            const amount = (data.payment_amount !== undefined && data.payment_amount !== null) ? parseFloat(data.payment_amount) : 0;
+            if (!isNaN(amount)) {
+                doctorsAgg[doctorId].totalTransferred += amount;
+            }
+        });
+
+        const doctorIds = Object.keys(doctorsAgg);
+
+        // جلب رقم هاتف كل دكتور من مستنده الأصلي
+        const phonePromises = doctorIds.map(id =>
+            db.collection("users").doc(id).get().then(docSnap => {
+                doctorsAgg[id].phone = docSnap.exists ? (docSnap.data().phone || 'بدون هاتف') : 'غير متاح';
+            }).catch(() => {
+                doctorsAgg[id].phone = 'غير متاح';
+            })
+        );
+        await Promise.all(phonePromises);
+
+        // ترتيب تنازلي حسب إجمالي المبلغ المستحق (الأعلى أولاً)
+        const sortedIds = doctorIds.sort((a, b) => doctorsAgg[b].totalTransferred - doctorsAgg[a].totalTransferred);
+
+        tableBody.innerHTML = '';
+        sortedIds.forEach(id => {
+            const d = doctorsAgg[id];
+            tableBody.innerHTML += `
+                <tr>
+                    <td><b>د. ${escapeHtml(d.name)}</b></td>
+                    <td>${escapeHtml(d.phone)}</td>
+                    <td>${d.confirmedCount}</td>
+                    <td><strong style="color:var(--success);">${d.totalTransferred.toFixed(2)} ج.م</strong></td>
+                </tr>
+            `;
+        });
+
+    } catch (err) {
+        console.error("Error loading active doctors financials:", err);
+        tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">حدث خطأ أثناء التحميل: ${err.message}</td></tr>`;
+    }
+}
         function loadAllPatients() {
             const tableBody = document.getElementById('allPatientsTable');
             tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>';
