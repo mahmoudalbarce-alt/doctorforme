@@ -1656,16 +1656,19 @@ async function confirmBookingSubmit(event) {
 function openPaymentInstructionsModal(paymentAmount, paymentDeadline, bookingId) {
     const summaryDiv = document.getElementById('paymentAmountSummary');
     if (paymentAmount !== null) {
+        // تم تعديل النص التوضيحي ليكون 50%
         summaryDiv.innerHTML = `<div>💰 المبلغ المطلوب تحويله: <strong style="color:var(--primary); font-size:18px;">${paymentAmount} ج.م</strong></div>
-            <div style="font-size:12px; color:#a0aec0; margin-top:5px;">(25% من قيمة الكشف + 5 ج.م رسوم خدمة)</div>`;
+            <div style="font-size:12px; color:#a0aec0; margin-top:5px;">(50% من قيمة الكشف)</div>`;
     } else {
         summaryDiv.innerHTML = `<div style="color:#a0aec0; font-size:13px;">سعر الكشف غير محدد حالياً، برجاء التواصل مع الإدارة عبر واتساب لتحديد المبلغ المطلوب.</div>`;
     }
 
     const whatsappBtn = document.getElementById('whatsappPaymentBtn');
+    // تم تعديل نص رسالة الواتساب هنا
     const messageText = paymentAmount !== null
-        ? `مرحباً، أرسل لكم إيصال دفع مبلغ تأكيد الحجز (${paymentAmount} ج.م) لحجز رقم ${bookingId}`
+        ? `مرحباً، أرسل لكم إيصال دفع نصف مبلغ الكشف لتأكيد الحجز (${paymentAmount} ج.م) لحجز رقم ${bookingId}`
         : `مرحباً، أريد الاستفسار عن مبلغ تأكيد حجز رقم ${bookingId}`;
+    
     whatsappBtn.onclick = () => {
         window.open(`https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(messageText)}`, '_blank');
     };
@@ -1810,13 +1813,17 @@ function listenToMyBookings() {
                 bookingsArray.push({ id: doc.id, ...doc.data() });
             });
 
-            // فتح نافذة تعليمات الدفع تلقائياً أول ما الحجز يتحول لـ "موافق عليه من الدكتور"
+      // فتح نافذة تعليمات الدفع تلقائياً أول ما الحجز يتحول لـ "موافق عليه من الدكتور"
             if (!isFirstMyBookingsSnapshot) {
                 bookingsArray.forEach(booking => {
                     if (booking.status === 'doctor_approved' && booking.payment_deadline && !paymentModalShownFor.has(booking.id)) {
                         paymentModalShownFor.add(booking.id);
                         const deadlineDate = new Date(booking.payment_deadline.seconds * 1000);
-                        const amount = (booking.payment_amount !== undefined && booking.payment_amount !== null) ? booking.payment_amount : null;
+                        
+                        // حساب نصف مبلغ الحجز (50%)
+                        const bookingPrice = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
+                        const amount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) : null;
+                        
                         openPaymentInstructionsModal(amount, deadlineDate, booking.id);
                     }
                 });
@@ -1878,11 +1885,15 @@ if ((hasQueueNumber || hasAppointmentTime) && (booking.status === 'confirmed' ||
         </div>
     `;
 }
-    let paymentActionsHtml = '';
+let paymentActionsHtml = '';
 if (booking.status === 'doctor_approved' && booking.payment_deadline) {
-    const paymentAmount = (booking.payment_amount !== undefined && booking.payment_amount !== null) ? booking.payment_amount : null;
+    // حساب نصف مبلغ الحجز للزر الموجود داخل الكارت
+    const bookingPrice = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
+    const paymentAmount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) : null;
+    
+    // تعديل نص رسالة الواتساب
     const waMessage = paymentAmount !== null
-        ? `مرحباً، أرسل لكم إيصال دفع مبلغ تأكيد الحجز (${paymentAmount} ج.م) لحجز رقم ${booking.id}`
+        ? `مرحباً، أرسل لكم إيصال دفع نصف مبلغ الكشف لتأكيد الحجز (${paymentAmount} ج.م) لحجز رقم ${booking.id}`
         : `مرحباً، أريد الاستفسار عن مبلغ تأكيد حجز رقم ${booking.id}`;
     const receiptSubmitted = !!booking.receipt_base64;
 
