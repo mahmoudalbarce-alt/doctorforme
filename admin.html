@@ -482,8 +482,8 @@
 <div id="profitsTab" class="tab-content">
     <div class="card">
         <h2>أرباح المنصة من الحجوزات 📈</h2>
-        <p style="font-size:12px; color:#718096; margin-top:-10px;">
-            💡 إجمالي أرباح المنصة من الحجوزات المؤكدة (نصف قيمة الكشف + 5 ج.م رسوم الخدمة). متاح للمدير العام فقط.
+      <p style="font-size:12px; color:#718096; margin-top:-10px;">
+            💡 إجمالي أرباح المنصة من الحجوزات المؤكدة (رسوم الخدمة الثابتة 5 ج.م عن كل حجز). متاح للمدير العام فقط.
         </p>
         
         <!-- بطاقة الإجمالي -->
@@ -1580,18 +1580,15 @@ async function loadProfits() {
         tableBody.innerHTML = '';
 
         bookingsList.forEach(data => {
-            // تحديد سعر الكشف
+            // تحديد سعر الكشف (للعرض فقط في الجدول)
             const bookingPrice = (data.final_price !== undefined && data.final_price !== null) ? data.final_price : data.clinic_price;
+            const safePrice = bookingPrice !== undefined && bookingPrice !== null ? `${bookingPrice} ج.م` : 'غير محدد';
             
-            // حساب ربح المنصة: (50% من الكشف) + 5 جنيه رسوم خدمة
-            let platformProfit = 0;
-            if (bookingPrice !== undefined && bookingPrice !== null) {
-                platformProfit = (parseFloat(bookingPrice) / 2) + 5;
-                totalProfits += platformProfit;
-            }
+            // حساب ربح المنصة: 5 جنيه ثابتة لكل حجز مؤكد
+            const platformProfit = 5;
+            totalProfits += platformProfit;
 
             const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG') : 'غير محدد';
-            const safePrice = bookingPrice !== undefined && bookingPrice !== null ? `${bookingPrice} ج.م` : 'غير محدد';
             
             tableBody.innerHTML += `
                 <tr>
@@ -1599,13 +1596,13 @@ async function loadProfits() {
                     <td>${escapeHtml(data.patient_name || 'غير معروف')}</td>
                     <td>د. ${escapeHtml(data.doctor_name || 'غير معروف')}</td>
                     <td>${safePrice}</td>
-                    <td><strong style="color:var(--success);">${platformProfit.toFixed(2)} ج.م</strong></td>
+                    <td><strong style="color:var(--success);">${platformProfit} ج.م</strong></td>
                 </tr>
             `;
         });
 
         // عرض الإجمالي النهائي في المربع الأزرق
-        totalDisplay.innerText = `${totalProfits.toFixed(2)} ج.م`;
+        totalDisplay.innerText = `${totalProfits} ج.م`;
 
     } catch (err) {
         console.error("Error loading profits:", err);
