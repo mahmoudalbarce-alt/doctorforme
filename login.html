@@ -274,7 +274,6 @@
             line-height: 1.5;
         }
 
-        /* تنبيهات Toast مخصصة (بديل alert() اللي بيظهر دومين الموقع) */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -349,21 +348,21 @@
                 <input type="hidden" id="selectedRole" value="patient">
             </div>
 
-         <div class="form-group" id="accountTypeGroup" style="display:none;">
-    <label>نوع الحساب</label>
-    <select id="doctorAccountType" class="form-control" onchange="handleAccountTypeChange()">
-        <option value="شخصي" selected>شخصي (طبيب واحد)</option>
-        <option value="مركز">مركز طبي</option>
-        <option value="مؤسسة">مؤسسة طبية</option>
-        <option value="مستشفى تخصصي">مستشفى تخصصي</option>
-    </select>
-    <span class="field-hint">💡 اختر "شخصي" لو أنت طبيب مستقل، أو نوع المنشأة لو بتسجل مركز/مستشفى فيه أكتر من طبيب.</span>
-</div>
+            <div class="form-group" id="accountTypeGroup" style="display:none;">
+                <label>نوع الحساب</label>
+                <select id="doctorAccountType" class="form-control" onchange="handleAccountTypeChange()">
+                    <option value="شخصي" selected>شخصي (طبيب واحد)</option>
+                    <option value="مركز">مركز طبي</option>
+                    <option value="مؤسسة">مؤسسة طبية</option>
+                    <option value="مستشفى تخصصي">مستشفى تخصصي</option>
+                </select>
+                <span class="field-hint">💡 اختر "شخصي" لو أنت طبيب مستقل، أو نوع المنشأة لو بتسجل مركز/مستشفى فيه أكتر من طبيب.</span>
+            </div>
 
-<div class="form-group">
-    <label id="regNameLabel">الاسم الكامل</label>
-    <input type="text" id="regName" class="form-control" placeholder="أدخل الاسم ثلاثي أو رباعي" required>
-</div>
+            <div class="form-group">
+                <label id="regNameLabel">الاسم الكامل</label>
+                <input type="text" id="regName" class="form-control" placeholder="أدخل الاسم ثلاثي أو رباعي" required>
+            </div>
             <div class="form-group">
                 <label>رقم الهاتف</label>
                 <input type="tel" id="regPhone" class="form-control" placeholder="مثال: 01234567890" required pattern="[0-9]{11}">
@@ -398,82 +397,69 @@
                 </div>
             </div>
 
-<div id="doctorSection" class="dynamic-section">
-    <div class="alert-info">
-        💡 يرجى العلم أنه عند إتمام تسجيل الحساب، سيتم إرساله للإدارة للمراجعة والموافقة، ولن تتمكن من الدخول للوحة التحكم حتى تكتمل الموافقة الإدارية. الصورة الشخصية هيتم إضافتها بمعرفة الإدارة أثناء المراجعة.
-    </div>
+            <div id="doctorSection" class="dynamic-section">
+                <div class="alert-info">
+                    💡 يرجى العلم أنه عند إتمام تسجيل الحساب، سيتم إرساله للإدارة للمراجعة والموافقة، ولن تتمكن من الدخول للوحة التحكم حتى تكتمل الموافقة الإدارية. الصورة الشخصية هيتم إضافتها بمعرفة الإدارة أثناء المراجعة.
+                </div>
 
-    <div class="form-group" id="personalSpecialtyGroup">
-        <label>التخصص الطبي</label>
-        <select id="doctorSpecialty" class="form-control" onchange="toggleOtherSpecialtyField()">
-            <option value="">اختر التخصص...</option>
-            <option value="أسنان">أسنان 🦷</option>
-            <option value="باطنة">باطنة 🩺</option>
-            <option value="أطفال">أطفال 👶</option>
-            <option value="جلدية">جلدية ✨</option>
-            <option value="نساء وتوليد">نساء وتوليد 🤰</option>
-            <option value="عظام">عظام 🦴</option>
-            <option value="رمد">رمد / عيون 👁️</option>
-            <option value="مخ وأعصاب">مخ وأعصاب 🧠</option>
-            <option value="أخرى">تخصص آخر (اكتبه بنفسك) ✏️</option>
-        </select>
-    </div>
-    <div class="form-group" id="otherSpecialtyGroup" style="display:none;">
-        <label>اكتب التخصص</label>
-        <input type="text" id="doctorSpecialtyOther" class="form-control" placeholder="مثال: طب نفسي">
-    </div>
-
-    <div id="personalClinicsSection">
-        <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 معلومات العيادات ومواعيد العمل</h3>
-        <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">اكتب بيانات عيادتك الرئيسية أولاً، وبعد كده تقدر تضيف أي عيادات إضافية، كل عيادة ليها محافظتها ومدينتها وعنوانها التفصيلي ومواعيدها ورابط خريطتها بشكل منفصل تماماً عن باقي العيادات.</p>
-        <div id="clinicsContainer"></div>
-        <button type="button" class="add-clinic-btn" onclick="addClinicBlock()">➕ إضافة عيادة أخرى</button>
-    </div>
-
-    <div id="institutionalSection" style="display:none;">
-        <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 عنوان المكان (مشترك لكل الأطباء)</h3>
-        <div class="form-group">
-            <label>المحافظة</label>
-            <select id="facilityGov" class="form-control" onchange="populateFacilityCities(this.value)">
-                <option value="">اختر المحافظة...</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>المدينة / المركز</label>
-            <select id="facilityCity" class="form-control">
-                <option value="">اختر المدينة...</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>الشارع / وصف الموقع بالتفصيل</label>
-            <input type="text" id="facilityVillage" class="form-control" placeholder="مثال: شارع الجلاء، برج النيل، الدور الثالث">
-        </div>
-        <div class="form-group">
-            <label>رابط موقع المكان على خرائط جوجل (اختياري)</label>
-            <input type="url" id="facilityMapLink" class="form-control" placeholder="ضع رابط مشاركة الموقع الجغرافي">
-        </div>
-
-        <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">👨‍⚕️ الأطباء العاملون بالمكان</h3>
-        <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">أضف كل طبيب بتخصصه ومواعيد عمله الخاصة، وهيظهر لكل طبيب سعر كشف ومواعيد مستقلة عن باقي الأطباء رغم اشتراكهم في نفس العنوان.</p>
-        <div id="institutionDoctorsContainer"></div>
-        <button type="button" class="add-clinic-btn" onclick="addInstitutionDoctorBlock()">➕ إضافة طبيب آخر</button>
-    </div>
-</div>
-
+                <div class="form-group" id="personalSpecialtyGroup">
+                    <label>التخصص الطبي</label>
+                    <select id="doctorSpecialty" class="form-control" onchange="toggleOtherSpecialtyField()">
+                        <option value="">اختر التخصص...</option>
+                        <option value="أسنان">أسنان 🦷</option>
+                        <option value="باطنة">باطنة 🩺</option>
+                        <option value="أطفال">أطفال 👶</option>
+                        <option value="جلدية">جلدية ✨</option>
+                        <option value="نساء وتوليد">نساء وتوليد 🤰</option>
+                        <option value="عظام">عظام 🦴</option>
+                        <option value="رمد">رمد / عيون 👁️</option>
+                        <option value="مخ وأعصاب">مخ وأعصاب 🧠</option>
+                        <option value="أخرى">تخصص آخر (اكتبه بنفسك) ✏️</option>
+                    </select>
+                </div>
                 <div class="form-group" id="otherSpecialtyGroup" style="display:none;">
                     <label>اكتب التخصص</label>
                     <input type="text" id="doctorSpecialtyOther" class="form-control" placeholder="مثال: طب نفسي">
                 </div>
 
-                <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 معلومات العيادات ومواعيد العمل</h3>
-                <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">اكتب بيانات عيادتك الرئيسية أولاً، وبعد كده تقدر تضيف أي عيادات إضافية، كل عيادة ليها محافظتها ومدينتها وعنوانها التفصيلي ومواعيدها ورابط خريطتها بشكل منفصل تماماً عن باقي العيادات.</p>
-                <div id="clinicsContainer">
+                <div id="personalClinicsSection">
+                    <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 معلومات العيادات ومواعيد العمل</h3>
+                    <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">اكتب بيانات عيادتك الرئيسية أولاً، وبعد كده تقدر تضيف أي عيادات إضافية، كل عيادة ليها محافظتها ومدينتها وعنوانها التفصيلي ومواعيدها (فترة صباحية ومسائية) بشكل منفصل تماماً.</p>
+                    <div id="clinicsContainer"></div>
+                    <button type="button" class="add-clinic-btn" onclick="addClinicBlock()">➕ إضافة عيادة أخرى</button>
+                </div>
+
+                <div id="institutionalSection" style="display:none;">
+                    <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">📍 عنوان المكان (مشترك لكل الأطباء)</h3>
+                    <div class="form-group">
+                        <label>المحافظة</label>
+                        <select id="facilityGov" class="form-control" onchange="populateFacilityCities(this.value)">
+                            <option value="">اختر المحافظة...</option>
+                        </select>
                     </div>
-                <button type="button" class="add-clinic-btn" onclick="addClinicBlock()">➕ إضافة عيادة أخرى</button>
-                <button type="submit" class="submit-btn">إنشاء الحساب</button>
+                    <div class="form-group">
+                        <label>المدينة / المركز</label>
+                        <select id="facilityCity" class="form-control">
+                            <option value="">اختر المدينة...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الشارع / وصف الموقع بالتفصيل</label>
+                        <input type="text" id="facilityVillage" class="form-control" placeholder="مثال: شارع الجلاء، برج النيل، الدور الثالث">
+                    </div>
+                    <div class="form-group">
+                        <label>رابط موقع المكان على خرائط جوجل (اختياري)</label>
+                        <input type="url" id="facilityMapLink" class="form-control" placeholder="ضع رابط مشاركة الموقع الجغرافي">
+                    </div>
+
+                    <h3 style="font-size: 16px; margin: 20px 0 10px 0; color: var(--primary);">👨‍⚕️ الأطباء العاملون بالمكان</h3>
+                    <p style="font-size:12px; color:#718096; margin:0 0 15px 0;">أضف كل طبيب بتخصصه ومواعيده (فترتين عمل)، وهيظهر لكل طبيب سعر كشف ومواعيد مستقلة عن باقي الأطباء.</p>
+                    <div id="institutionDoctorsContainer"></div>
+                    <button type="button" class="add-clinic-btn" onclick="addInstitutionDoctorBlock()">➕ إضافة طبيب آخر</button>
+                </div>
             </div>
 
-            
+            <button type="submit" class="submit-btn" style="margin-top: 15px;">إنشاء الحساب</button>
         </form>
     </div>
 
@@ -481,32 +467,29 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-      <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBYasEz-4b-f4xsG3V8O5oQ-aOhDqS1Ue0",
-  authDomain: "doctorforme-62aaf.firebaseapp.com",
-  projectId: "doctorforme-62aaf",
-  storageBucket: "doctorforme-62aaf.firebasestorage.app",
-  messagingSenderId: "121506902078",
-  appId: "1:121506902078:web:f60f680810614cbe88e16f",
-  measurementId: "G-CYNKCJH6KB"
-};
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBYasEz-4b-f4xsG3V8O5oQ-aOhDqS1Ue0",
+          authDomain: "doctorforme-62aaf.firebaseapp.com",
+          projectId: "doctorforme-62aaf",
+          storageBucket: "doctorforme-62aaf.firebasestorage.app",
+          messagingSenderId: "121506902078",
+          appId: "1:121506902078:web:f60f680810614cbe88e16f",
+          measurementId: "G-CYNKCJH6KB"
+        };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // حفظ جلسة الدخول محلياً على الجهاز عشان المستخدم يدخل تلقائياً في المرة الجاية
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
             console.warn("Persistence setup failed:", err);
         });
 
-        // ================= التحقق التلقائي لو فيه جلسة دخول محفوظة بالفعل =================
         let autoRedirectChecked = false;
         auth.onAuthStateChanged(async (user) => {
-            if (autoRedirectChecked) return; // نتأكد إننا منعملش التوجيه أكتر من مرة
+            if (autoRedirectChecked) return;
             autoRedirectChecked = true;
-
-            if (!user) return; // مفيش جلسة محفوظة، يفضل يشوف فورم الدخول عادي
+            if (!user) return;
 
             try {
                 const docSnap = await db.collection("users").doc(user.uid).get();
@@ -523,17 +506,14 @@ const firebaseConfig = {
                     localStorage.setItem('user_role', 'doctor');
                     window.location.href = 'doctor.html';
                 } else if (userData.role === 'patient') {
-                  localStorage.setItem('user_role', 'patient');
-                  
-                  window.location.href = 'patient.html';
+                    localStorage.setItem('user_role', 'patient');
+                    window.location.href = 'patient.html';
                 }
-                // لو الدكتور لسه pending أو rejected، نسيبه في صفحة الدخول عادي لحد ما يتفعل حسابه
             } catch (err) {
                 console.error("Auto-login check failed:", err);
             }
         });
 
-        // ================= بيانات المحافظات والمدن المصرية =================
         const egyptData = {
             "القاهرة": ["مصر الجديدة", "مدينة نصر", "شبرا", "المعادي", "حلوان", "التجمع الخامس", "وسط البلد"],
             "الجيزة": ["الدقي", "المهندسين", "الهرم", "فيصل", "6 أكتوبر", "الشيخ زايد", "العجوزة", "الوراق"],
@@ -564,7 +544,6 @@ const firebaseConfig = {
             "جنوب سيناء": ["شرم الشيخ", "طور سيناء", "دهب", "نويبع", "رأس سدر"]
         };
 
-        // ================= نظام التنبيهات المخصص (Toast) بديل alert() =================
         function showToast(message, type) {
             type = type || 'info';
             const container = document.getElementById('toastContainer');
@@ -575,14 +554,13 @@ const firebaseConfig = {
             setTimeout(() => { toast.remove(); }, 4000);
         }
 
-   window.onload = function() {
-    populateGovOptions(document.getElementById('patientGov'));
-    populateGovOptions(document.getElementById('facilityGov'));
-    addClinicBlock();
-    toggleRequiredFields('patient'); // تفعيل متطلبات المريض فقط في البداية
-};
+        window.onload = function() {
+            populateGovOptions(document.getElementById('patientGov'));
+            populateGovOptions(document.getElementById('facilityGov'));
+            addClinicBlock();
+            toggleRequiredFields('patient');
+        };
 
-        // تعبئة قائمة المحافظات لأي عنصر select (تستخدم لحقل المريض ولكل عيادة دكتور)
         function populateGovOptions(selectEl) {
             for (let gov in egyptData) {
                 let opt = document.createElement('option');
@@ -592,7 +570,6 @@ const firebaseConfig = {
             }
         }
 
-        // تعبئة مدن المريض حسب المحافظة المختارة
         function populatePatientCities(govValue) {
             const citySelect = document.getElementById('patientCity');
             citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
@@ -606,7 +583,6 @@ const firebaseConfig = {
             }
         }
 
-        // تعبئة مدن أي عيادة دكتور حسب المحافظة المختارة (كل عيادة مستقلة عن التانية)
         function populateCitiesForClinic(govSelectEl) {
             const block = govSelectEl.closest('.clinic-block');
             const citySelect = block.querySelector('.clinic-city');
@@ -640,88 +616,81 @@ const firebaseConfig = {
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
-function selectRole(role) {
-    document.getElementById('rolePatient').classList.remove('selected');
-    document.getElementById('roleDoctor').classList.remove('selected');
-    document.getElementById('patientSection').classList.remove('active');
-    document.getElementById('doctorSection').classList.remove('active');
+        function selectRole(role) {
+            document.getElementById('rolePatient').classList.remove('selected');
+            document.getElementById('roleDoctor').classList.remove('selected');
+            document.getElementById('patientSection').classList.remove('active');
+            document.getElementById('doctorSection').classList.remove('active');
 
-    document.getElementById('selectedRole').value = role;
+            document.getElementById('selectedRole').value = role;
 
-    if (role === 'patient') {
-        document.getElementById('rolePatient').classList.add('selected');
-        document.getElementById('patientSection').classList.add('active');
-        document.getElementById('accountTypeGroup').style.display = 'none';
-        document.getElementById('regNameLabel').innerText = 'الاسم الكامل';
-        toggleRequiredFields('patient');
-    } else {
-        document.getElementById('roleDoctor').classList.add('selected');
-        document.getElementById('doctorSection').classList.add('active');
-        document.getElementById('accountTypeGroup').style.display = 'block';
-        handleAccountTypeChange();
-    }
-}
-
-// ================= تبديل نوع حساب الدكتور (شخصي / مؤسسي) =================
-function handleAccountTypeChange() {
-    const accountType = document.getElementById('doctorAccountType').value;
-    const personalSpecialtyGroup = document.getElementById('personalSpecialtyGroup');
-    const personalClinicsSection = document.getElementById('personalClinicsSection');
-    const institutionalSection = document.getElementById('institutionalSection');
-    const regNameLabel = document.getElementById('regNameLabel');
-
-    if (accountType === 'شخصي') {
-        personalSpecialtyGroup.style.display = 'block';
-        personalClinicsSection.style.display = 'block';
-        institutionalSection.style.display = 'none';
-        regNameLabel.innerText = 'الاسم الكامل';
-    } else {
-        personalSpecialtyGroup.style.display = 'none';
-        personalClinicsSection.style.display = 'none';
-        institutionalSection.style.display = 'block';
-        regNameLabel.innerText = 'اسم المسؤول / المدير عن الحساب';
-
-        if (document.getElementById('institutionDoctorsContainer').children.length === 0) {
-            addInstitutionDoctorBlock();
+            if (role === 'patient') {
+                document.getElementById('rolePatient').classList.add('selected');
+                document.getElementById('patientSection').classList.add('active');
+                document.getElementById('accountTypeGroup').style.display = 'none';
+                document.getElementById('regNameLabel').innerText = 'الاسم الكامل';
+                toggleRequiredFields('patient');
+            } else {
+                document.getElementById('roleDoctor').classList.add('selected');
+                document.getElementById('doctorSection').classList.add('active');
+                document.getElementById('accountTypeGroup').style.display = 'block';
+                handleAccountTypeChange();
+            }
         }
-    }
 
-    toggleRequiredFields('doctor');
-}
+        function handleAccountTypeChange() {
+            const accountType = document.getElementById('doctorAccountType').value;
+            const personalSpecialtyGroup = document.getElementById('personalSpecialtyGroup');
+            const personalClinicsSection = document.getElementById('personalClinicsSection');
+            const institutionalSection = document.getElementById('institutionalSection');
+            const regNameLabel = document.getElementById('regNameLabel');
 
-        // دالة هامة لتعطيل الـ required عن الحقول المخفية لضمان عمل الزرار فوراً
- function toggleRequiredFields(role) {
-    if (role === 'patient') {
-        document.getElementById('patientAge').required = true;
-        document.getElementById('patientGov').required = true;
-        document.getElementById('patientCity').required = true;
-        document.getElementById('patientVillage').required = true;
+            if (accountType === 'شخصي') {
+                personalSpecialtyGroup.style.display = 'block';
+                personalClinicsSection.style.display = 'block';
+                institutionalSection.style.display = 'none';
+                regNameLabel.innerText = 'الاسم الكامل';
+            } else {
+                personalSpecialtyGroup.style.display = 'none';
+                personalClinicsSection.style.display = 'none';
+                institutionalSection.style.display = 'block';
+                regNameLabel.innerText = 'اسم المسؤول / المدير عن الحساب';
 
-        document.getElementById('doctorSpecialty').required = false;
-        document.getElementById('doctorSpecialtyOther').required = false;
-        document.querySelectorAll('.clinic-gov, .clinic-city, .clinic-village, .clinic-price, .clinic-time-from-hour, .clinic-time-from-period, .clinic-time-to-hour, .clinic-time-to-period')
-            .forEach(el => el.required = false);
-        document.querySelectorAll('.inst-doctor-name, .inst-doctor-specialty, .inst-doctor-price, .inst-doctor-from-hour, .inst-doctor-from-period, .inst-doctor-to-hour, .inst-doctor-to-period')
-            .forEach(el => el.required = false);
-    } else {
-        document.getElementById('patientAge').required = false;
-        document.getElementById('patientGov').required = false;
-        document.getElementById('patientCity').required = false;
-        document.getElementById('patientVillage').required = false;
+                if (document.getElementById('institutionDoctorsContainer').children.length === 0) {
+                    addInstitutionDoctorBlock();
+                }
+            }
 
-        const accountType = document.getElementById('doctorAccountType').value;
-        const isPersonal = accountType === 'شخصي';
+            toggleRequiredFields('doctor');
+        }
 
-        document.getElementById('doctorSpecialty').required = isPersonal;
-        toggleOtherSpecialtyField();
-        document.querySelectorAll('.clinic-gov, .clinic-city, .clinic-village, .clinic-price, .clinic-time-from-hour, .clinic-time-from-period, .clinic-time-to-hour, .clinic-time-to-period')
-            .forEach(el => el.required = isPersonal);
+        function toggleRequiredFields(role) {
+            if (role === 'patient') {
+                document.getElementById('patientAge').required = true;
+                document.getElementById('patientGov').required = true;
+                document.getElementById('patientCity').required = true;
+                document.getElementById('patientVillage').required = true;
 
-        document.querySelectorAll('.inst-doctor-name, .inst-doctor-specialty, .inst-doctor-price, .inst-doctor-from-hour, .inst-doctor-from-period, .inst-doctor-to-hour, .inst-doctor-to-period')
-            .forEach(el => el.required = !isPersonal);
-    }
-}
-        // إظهار/إخفاء حقل "اكتب التخصص" لما يختار "أخرى"
+                document.getElementById('doctorSpecialty').required = false;
+                document.getElementById('doctorSpecialtyOther').required = false;
+                document.querySelectorAll('.clinic-gov, .clinic-city, .clinic-village, .clinic-price').forEach(el => el.required = false);
+                document.querySelectorAll('.inst-doctor-name, .inst-doctor-specialty, .inst-doctor-price').forEach(el => el.required = false);
+            } else {
+                document.getElementById('patientAge').required = false;
+                document.getElementById('patientGov').required = false;
+                document.getElementById('patientCity').required = false;
+                document.getElementById('patientVillage').required = false;
+
+                const accountType = document.getElementById('doctorAccountType').value;
+                const isPersonal = accountType === 'شخصي';
+
+                document.getElementById('doctorSpecialty').required = isPersonal;
+                toggleOtherSpecialtyField();
+                document.querySelectorAll('.clinic-gov, .clinic-city, .clinic-village, .clinic-price').forEach(el => el.required = isPersonal);
+                document.querySelectorAll('.inst-doctor-name, .inst-doctor-specialty, .inst-doctor-price').forEach(el => el.required = !isPersonal);
+            }
+        }
+
         function toggleOtherSpecialtyField() {
             const select = document.getElementById('doctorSpecialty');
             const group = document.getElementById('otherSpecialtyGroup');
@@ -746,7 +715,6 @@ function handleAccountTypeChange() {
             block.className = isMain ? 'clinic-block main-clinic' : 'clinic-block';
             block.id = `clinic_block_${clinicCount}`;
             
-            // جعل حقول العيادة إجبارية فقط لو الحساب الحالي "دكتور"
             const isDoctor = document.getElementById('selectedRole').value === 'doctor';
             const reqAttr = isDoctor ? 'required' : '';
             const blockTitle = isMain ? 'العيادة الرئيسية 🏥' : `عيادة إضافية رقم (${clinicCount})`;
@@ -769,7 +737,7 @@ function handleAccountTypeChange() {
                 <div class="form-group">
                     <label>القرية / الشارع</label>
                     <input type="text" class="form-control clinic-village" placeholder="مثال: شارع الجلاء بجوار صيدلية النيل، الدور الثالث" ${reqAttr}>
-                    <span class="field-hint">💡 اكتب وصف تفصيلي للمكان (اسم الشارع، رقم العقار، أقرب علامة مميزة...) عشان المريض يوصلك بسهولة.</span>
+                    <span class="field-hint">💡 اكتب وصف تفصيلي للمكان عشان المريض يوصلك بسهولة.</span>
                 </div>
                 <div class="form-group">
                     <label>سعر الكشف (جنيه)</label>
@@ -791,32 +759,66 @@ function handleAccountTypeChange() {
                         <label><input type="checkbox" class="clinic-day" value="الجمعة"> الجمعة</label>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>من الساعة</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="number" class="form-control clinic-time-from-hour" min="1" max="12" placeholder="مثال: 5" style="flex:1;" ${reqAttr}>
-                        <select class="form-control clinic-time-from-period" style="flex:1;" ${reqAttr}>
-                            <option value="">صباحاً / مساءً</option>
-                            <option value="صباحاً">صباحاً</option>
-                            <option value="مساءً">مساءً</option>
-                        </select>
+
+                <!-- الفترة الأولى (الصباحية) -->
+                <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:10px;">
+                    <div style="font-weight:600; font-size:13px; color:var(--primary); margin-bottom:8px;">☀️ فترة العمل الأولى (الصباحية - اختياري)</div>
+                    <div style="display:flex; gap:10px; margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">من الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control clinic-m-from-hour" min="1" max="12" placeholder="مثال: 9" style="flex:1;">
+                                <select class="form-control clinic-m-from-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">إلى الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control clinic-m-to-hour" min="1" max="12" placeholder="مثال: 2" style="flex:1;">
+                                <select class="form-control clinic-m-to-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>إلي الساعة</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="number" class="form-control clinic-time-to-hour" min="1" max="12" placeholder="مثال: 10" style="flex:1;" ${reqAttr}>
-                        <select class="form-control clinic-time-to-period" style="flex:1;" ${reqAttr}>
-                            <option value="">صباحاً / مساءً</option>
-                            <option value="صباحاً">صباحاً</option>
-                            <option value="مساءً">مساءً</option>
-                        </select>
+
+                <!-- الفترة الثانية (المسائية) -->
+                <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
+                    <div style="font-weight:600; font-size:13px; color:var(--primary); margin-bottom:8px;">🌙 فترة العمل الثانية (المسائية - اختياري)</div>
+                    <div style="display:flex; gap:10px; margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">من الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control clinic-e-from-hour" min="1" max="12" placeholder="مثال: 5" style="flex:1;">
+                                <select class="form-control clinic-e-from-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">إلى الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control clinic-e-to-hour" min="1" max="12" placeholder="مثال: 10" style="flex:1;">
+                                <select class="form-control clinic-e-to-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
             container.appendChild(block);
-
-            // تعبئة قائمة المحافظات الخاصة بالعيادة دي فور إنشائها
             populateGovOptions(block.querySelector('.clinic-gov'));
         }
 
@@ -824,115 +826,152 @@ function handleAccountTypeChange() {
             const block = document.getElementById(`clinic_block_${id}`);
             if (block) block.remove();
         }
-function populateFacilityCities(govValue) {
-    const citySelect = document.getElementById('facilityCity');
-    citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
-    if (govValue && egyptData[govValue]) {
-        egyptData[govValue].forEach(city => {
-            let opt = document.createElement('option');
-            opt.value = city;
-            opt.innerHTML = city;
-            citySelect.appendChild(opt);
-        });
-    }
-}
 
-let instDoctorCount = 0;
-function addInstitutionDoctorBlock() {
-    instDoctorCount++;
-    const container = document.getElementById('institutionDoctorsContainer');
-    const block = document.createElement('div');
-    block.className = 'clinic-block';
-    block.id = `inst_doctor_${instDoctorCount}`;
+        function populateFacilityCities(govValue) {
+            const citySelect = document.getElementById('facilityCity');
+            citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
+            if (govValue && egyptData[govValue]) {
+                egyptData[govValue].forEach(city => {
+                    let opt = document.createElement('option');
+                    opt.value = city;
+                    opt.innerHTML = city;
+                    citySelect.appendChild(opt);
+                });
+            }
+        }
 
-    const accountType = document.getElementById('doctorAccountType').value;
-    const reqAttr = accountType !== 'شخصي' ? 'required' : '';
+        let instDoctorCount = 0;
+        function addInstitutionDoctorBlock() {
+            instDoctorCount++;
+            const container = document.getElementById('institutionDoctorsContainer');
+            const block = document.createElement('div');
+            block.className = 'clinic-block';
+            block.id = `inst_doctor_${instDoctorCount}`;
 
-    block.innerHTML = `
-        <button type="button" class="remove-clinic-btn" onclick="removeInstitutionDoctorBlock(${instDoctorCount})">حذف ❌</button>
-        <div style="font-weight: bold; margin-bottom: 10px; color:#718096;">طبيب رقم (${instDoctorCount})</div>
-        <div class="form-group">
-            <label>اسم الطبيب</label>
-            <input type="text" class="form-control inst-doctor-name" placeholder="اسم الطبيب بالكامل" ${reqAttr}>
-        </div>
-        <div class="form-group">
-            <label>التخصص الطبي</label>
-            <select class="form-control inst-doctor-specialty" onchange="toggleInstOtherSpecialty(this)" ${reqAttr}>
-                <option value="">اختر التخصص...</option>
-                <option value="أسنان">أسنان 🦷</option>
-                <option value="باطنة">باطنة 🩺</option>
-                <option value="أطفال">أطفال 👶</option>
-                <option value="جلدية">جلدية ✨</option>
-                <option value="نساء وتوليد">نساء وتوليد 🤰</option>
-                <option value="عظام">عظام 🦴</option>
-                <option value="رمد">رمد / عيون 👁️</option>
-                <option value="مخ وأعصاب">مخ وأعصاب 🧠</option>
-                <option value="أخرى">تخصص آخر (اكتبه بنفسك) ✏️</option>
-            </select>
-        </div>
-        <div class="form-group inst-other-specialty-group" style="display:none;">
-            <label>اكتب التخصص</label>
-            <input type="text" class="form-control inst-doctor-specialty-other" placeholder="مثال: طب نفسي">
-        </div>
-        <div class="form-group">
-            <label>سعر الكشف (جنيه)</label>
-            <input type="number" class="form-control inst-doctor-price" min="0" placeholder="مثال: 150" ${reqAttr}>
-        </div>
-        <div class="form-group">
-            <label>أيام العمل الخاصة بهذا الطبيب</label>
-            <div class="days-selector">
-                <label><input type="checkbox" class="inst-doctor-day" value="السبت"> السبت</label>
-                <label><input type="checkbox" class="inst-doctor-day" value="الأحد"> الأحد</label>
-                <label><input type="checkbox" class="inst-doctor-day" value="الإثنين"> الإثنين</label>
-                <label><input type="checkbox" class="inst-doctor-day" value="الثلاثاء"> الثلاثاء</label>
-                <label><input type="checkbox" class="inst-doctor-day" value="الأربعاء"> الأربعاء</label>
-                <label><input type="checkbox" class="inst-doctor-day" value="الخميس"> الخميس</label>
-                <label><input type="checkbox" class="inst-doctor-day" value="الجمعة"> الجمعة</label>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>من الساعة</label>
-            <div style="display:flex; gap:10px;">
-                <input type="number" class="form-control inst-doctor-from-hour" min="1" max="12" placeholder="مثال: 5" style="flex:1;" ${reqAttr}>
-                <select class="form-control inst-doctor-from-period" style="flex:1;" ${reqAttr}>
-                    <option value="">صباحاً / مساءً</option>
-                    <option value="صباحاً">صباحاً</option>
-                    <option value="مساءً">مساءً</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>إلي الساعة</label>
-            <div style="display:flex; gap:10px;">
-                <input type="number" class="form-control inst-doctor-to-hour" min="1" max="12" placeholder="مثال: 10" style="flex:1;" ${reqAttr}>
-                <select class="form-control inst-doctor-to-period" style="flex:1;" ${reqAttr}>
-                    <option value="">صباحاً / مساءً</option>
-                    <option value="صباحاً">صباحاً</option>
-                    <option value="مساءً">مساءً</option>
-                </select>
-            </div>
-        </div>
-    `;
-    container.appendChild(block);
-}
+            const accountType = document.getElementById('doctorAccountType').value;
+            const reqAttr = accountType !== 'شخصي' ? 'required' : '';
 
-function removeInstitutionDoctorBlock(id) {
-    const block = document.getElementById(`inst_doctor_${id}`);
-    if (block) block.remove();
-}
+            block.innerHTML = `
+                <button type="button" class="remove-clinic-btn" onclick="removeInstitutionDoctorBlock(${instDoctorCount})">حذف ❌</button>
+                <div style="font-weight: bold; margin-bottom: 10px; color:#718096;">طبيب رقم (${instDoctorCount})</div>
+                <div class="form-group">
+                    <label>اسم الطبيب</label>
+                    <input type="text" class="form-control inst-doctor-name" placeholder="اسم الطبيب بالكامل" ${reqAttr}>
+                </div>
+                <div class="form-group">
+                    <label>التخصص الطبي</label>
+                    <select class="form-control inst-doctor-specialty" onchange="toggleInstOtherSpecialty(this)" ${reqAttr}>
+                        <option value="">اختر التخصص...</option>
+                        <option value="أسنان">أسنان 🦷</option>
+                        <option value="باطنة">باطنة 🩺</option>
+                        <option value="أطفال">أطفال 👶</option>
+                        <option value="جلدية">جلدية ✨</option>
+                        <option value="نساء وتوليد">نساء وتوليد 🤰</option>
+                        <option value="عظام">عظام 🦴</option>
+                        <option value="رمد">رمد / عيون 👁️</option>
+                        <option value="مخ وأعصاب">مخ وأعصاب 🧠</option>
+                        <option value="أخرى">تخصص آخر (اكتبه بنفسك) ✏️</option>
+                    </select>
+                </div>
+                <div class="form-group inst-other-specialty-group" style="display:none;">
+                    <label>اكتب التخصص</label>
+                    <input type="text" class="form-control inst-doctor-specialty-other" placeholder="مثال: طب نفسي">
+                </div>
+                <div class="form-group">
+                    <label>سعر الكشف (جنيه)</label>
+                    <input type="number" class="form-control inst-doctor-price" min="0" placeholder="مثال: 150" ${reqAttr}>
+                </div>
+                <div class="form-group">
+                    <label>أيام العمل الخاصة بهذا الطبيب</label>
+                    <div class="days-selector">
+                        <label><input type="checkbox" class="inst-doctor-day" value="السبت"> السبت</label>
+                        <label><input type="checkbox" class="inst-doctor-day" value="الأحد"> الأحد</label>
+                        <label><input type="checkbox" class="inst-doctor-day" value="الإثنين"> الإثنين</label>
+                        <label><input type="checkbox" class="inst-doctor-day" value="الثلاثاء"> الثلاثاء</label>
+                        <label><input type="checkbox" class="inst-doctor-day" value="الأربعاء"> الأربعاء</label>
+                        <label><input type="checkbox" class="inst-doctor-day" value="الخميس"> الخميس</label>
+                        <label><input type="checkbox" class="inst-doctor-day" value="الجمعة"> الجمعة</label>
+                    </div>
+                </div>
 
-function toggleInstOtherSpecialty(selectEl) {
-    const block = selectEl.closest('.clinic-block');
-    const group = block.querySelector('.inst-other-specialty-group');
-    const otherInput = block.querySelector('.inst-doctor-specialty-other');
-    if (selectEl.value === 'أخرى') {
-        group.style.display = 'block';
-    } else {
-        group.style.display = 'none';
-        otherInput.value = '';
-    }
-}
-        // ================= معالجة عملية إنشاء الحساب (Register) =================
+                <!-- الفترة الأولى (الصباحية) للطبيب المؤسسي -->
+                <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:10px;">
+                    <div style="font-weight:600; font-size:13px; color:var(--primary); margin-bottom:8px;">☀️ فترة العمل الأولى (الصباحية - اختياري)</div>
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">من الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control inst-m-from-hour" min="1" max="12" placeholder="مثال: 9" style="flex:1;">
+                                <select class="form-control inst-m-from-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">إلى الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control inst-m-to-hour" min="1" max="12" placeholder="مثال: 2" style="flex:1;">
+                                <select class="form-control inst-m-to-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الفترة الثانية (المسائية) للطبيب المؤسسي -->
+                <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
+                    <div style="font-weight:600; font-size:13px; color:var(--primary); margin-bottom:8px;">🌙 فترة العمل الثانية (المسائية - اختياري)</div>
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">من الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control inst-e-from-hour" min="1" max="12" placeholder="مثال: 5" style="flex:1;">
+                                <select class="form-control inst-e-from-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">إلى الساعة</label>
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="form-control inst-e-to-hour" min="1" max="12" placeholder="مثال: 10" style="flex:1;">
+                                <select class="form-control inst-e-to-period" style="flex:1;">
+                                    <option value="">فترة</option>
+                                    <option value="صباحاً">صباحاً</option>
+                                    <option value="مساءً">مساءً</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(block);
+        }
+
+        function removeInstitutionDoctorBlock(id) {
+            const block = document.getElementById(`inst_doctor_${id}`);
+            if (block) block.remove();
+        }
+
+        function toggleInstOtherSpecialty(selectEl) {
+            const block = selectEl.closest('.clinic-block');
+            const group = block.querySelector('.inst-other-specialty-group');
+            const otherInput = block.querySelector('.inst-doctor-specialty-other');
+            if (selectEl.value === 'أخرى') {
+                group.style.display = 'block';
+            } else {
+                group.style.display = 'none';
+                otherInput.value = '';
+            }
+        }
+
         async function handleRegister(event) {
             event.preventDefault();
             
@@ -941,46 +980,42 @@ function toggleInstOtherSpecialty(selectEl) {
             const phone = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPassword').value;
 
-            
-   // تحقق إضافي للدكتور حسب نوع الحساب
-let doctorAccountType = 'شخصي';
-if (role === 'doctor') {
-    doctorAccountType = document.getElementById('doctorAccountType').value;
+            let doctorAccountType = 'شخصي';
+            if (role === 'doctor') {
+                doctorAccountType = document.getElementById('doctorAccountType').value;
 
-    if (doctorAccountType === 'شخصي') {
-        const blocks = document.querySelectorAll('#clinicsContainer .clinic-block');
-        for (const block of blocks) {
-            const hasDay = block.querySelectorAll('.clinic-day:checked').length > 0;
-            if (!hasDay) {
-                showToast('برجاء اختيار يوم عمل واحد على الأقل لكل عيادة.', 'error');
-                return;
+                if (doctorAccountType === 'شخصي') {
+                    const blocks = document.querySelectorAll('#clinicsContainer .clinic-block');
+                    for (const block of blocks) {
+                        const hasDay = block.querySelectorAll('.clinic-day:checked').length > 0;
+                        if (!hasDay) {
+                            showToast('برجاء اختيار يوم عمل واحد على الأقل لكل عيادة.', 'error');
+                            return;
+                        }
+                    }
+                } else {
+                    const doctorBlocks = document.querySelectorAll('#institutionDoctorsContainer .clinic-block');
+                    if (doctorBlocks.length === 0) {
+                        showToast('برجاء إضافة طبيب واحد على الأقل بالمكان.', 'error');
+                        return;
+                    }
+                    for (const block of doctorBlocks) {
+                        const hasDay = block.querySelectorAll('.inst-doctor-day:checked').length > 0;
+                        if (!hasDay) {
+                            showToast('برجاء اختيار يوم عمل واحد على الأقل لكل طبيب.', 'error');
+                            return;
+                        }
+                    }
+                }
             }
-        }
-    } else {
-        const doctorBlocks = document.querySelectorAll('#institutionDoctorsContainer .clinic-block');
-        if (doctorBlocks.length === 0) {
-            showToast('برجاء إضافة طبيب واحد على الأقل بالمكان.', 'error');
-            return;
-        }
-        for (const block of doctorBlocks) {
-            const hasDay = block.querySelectorAll('.inst-doctor-day:checked').length > 0;
-            if (!hasDay) {
-                showToast('برجاء اختيار يوم عمل واحد على الأقل لكل طبيب.', 'error');
-                return;
-            }
-        }
-    }
-}
 
             const email = `${phone}@doctorforme.com`;
 
             try {
-                // 1. إنشاء حساب المصادقة في Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
-                autoRedirectChecked = true; // منعاً لتكرار نفس عملية التوجيه من كاشف الجلسة المحفوظة
+                autoRedirectChecked = true;
 
-                // تحضير كائن البيانات الأساسية
                 let userData = {
                     uid: uid,
                     name: name,
@@ -998,115 +1033,130 @@ if (role === 'doctor') {
                     userData.governorate = gov;
                     userData.city = city;
                     userData.village = village;
-                    // نص عنوان موحّد (محافظة - مدينة - تفاصيل) يستخدم في صفحة المريض وباقي الصفحات
                     userData.address = `${gov} - ${city} - ${village}`;
                 } 
-   else if (role === 'doctor') {
-    userData.account_type = doctorAccountType;
-    // الصورة مش بتترفع هنا؛ الإدارة هي اللي هتضيف رابط الصورة (من جوجل درايف مثلاً) وقت المراجعة والموافقة
-    userData.image_url = "";
-    // ملحوظة: الحالة هنا لازم تتطابق مع الحالة اللي بتدور عليها لوحة الأدمن (admin.html -> loadPendingDoctors)
-    userData.status = "pending";
+                else if (role === 'doctor') {
+                    userData.account_type = doctorAccountType;
+                    userData.image_url = "";
+                    userData.status = "pending";
 
-    if (doctorAccountType === 'شخصي') {
-        const specialtySelect = document.getElementById('doctorSpecialty').value;
-        const specialtyOther = document.getElementById('doctorSpecialtyOther').value.trim();
-        userData.specialty = (specialtySelect === 'أخرى' && specialtyOther) ? specialtyOther : specialtySelect;
+                    if (doctorAccountType === 'شخصي') {
+                        const specialtySelect = document.getElementById('doctorSpecialty').value;
+                        const specialtyOther = document.getElementById('doctorSpecialtyOther').value.trim();
+                        userData.specialty = (specialtySelect === 'أخرى' && specialtyOther) ? specialtyOther : specialtySelect;
 
-        const clinics = [];
-        const blocks = document.querySelectorAll('#clinicsContainer .clinic-block');
-        blocks.forEach(block => {
-            const gov = block.querySelector('.clinic-gov').value;
-            const city = block.querySelector('.clinic-city').value;
-            const village = block.querySelector('.clinic-village').value.trim();
-            const price = parseFloat(block.querySelector('.clinic-price').value);
-            const mapLink = block.querySelector('.clinic-map').value.trim();
+                        const clinics = [];
+                        const blocks = document.querySelectorAll('#clinicsContainer .clinic-block');
+                        blocks.forEach(block => {
+                            const gov = block.querySelector('.clinic-gov').value;
+                            const city = block.querySelector('.clinic-city').value;
+                            const village = block.querySelector('.clinic-village').value.trim();
+                            const price = parseFloat(block.querySelector('.clinic-price').value);
+                            const mapLink = block.querySelector('.clinic-map').value.trim();
+                            const workDays = Array.from(block.querySelectorAll('.clinic-day:checked')).map(cb => cb.value);
 
-            const workDays = Array.from(block.querySelectorAll('.clinic-day:checked')).map(cb => cb.value);
-            const fromHour = block.querySelector('.clinic-time-from-hour').value.trim();
-            const fromPeriod = block.querySelector('.clinic-time-from-period').value;
-            const toHour = block.querySelector('.clinic-time-to-hour').value.trim();
-            const toPeriod = block.querySelector('.clinic-time-to-period').value;
+                            // جمع بيانات الفترة الصباحية
+                            const mFromH = block.querySelector('.clinic-m-from-hour').value.trim();
+                            const mFromP = block.querySelector('.clinic-m-from-period').value;
+                            const mToH = block.querySelector('.clinic-m-to-hour').value.trim();
+                            const mToP = block.querySelector('.clinic-m-to-period').value;
 
-            const daysText = workDays.length > 0 ? workDays.join('، ') : 'أيام غير محددة';
-            const hoursText = (fromHour && fromPeriod && toHour && toPeriod)
-                ? `من ${fromHour} ${fromPeriod} حتى ${toHour} ${toPeriod}`
-                : 'مواعيد غير محددة';
-            const workHoursDisplay = `${daysText} - ${hoursText}`;
+                            // جمع بيانات الفترة المسائية
+                            const eFromH = block.querySelector('.clinic-e-from-hour').value.trim();
+                            const eFromP = block.querySelector('.clinic-e-from-period').value;
+                            const eToH = block.querySelector('.clinic-e-to-hour').value.trim();
+                            const eToP = block.querySelector('.clinic-e-to-period').value;
 
-            clinics.push({
-                governorate: gov,
-                city: city,
-                village: village,
-                clinic_address: `${gov} - ${city} - ${village}`,
-                price: isNaN(price) ? null : price,
-                google_maps_link: mapLink,
-                work_days: workDays,
-                time_from: { hour: fromHour, period: fromPeriod },
-                time_to: { hour: toHour, period: toPeriod },
-                work_hours: workHoursDisplay
-            });
-        });
-        userData.clinics = clinics;
+                            const daysText = workDays.length > 0 ? workDays.join('، ') : 'أيام غير محددة';
+                            
+                            let periodsArr = [];
+                            if (mFromH && mFromP && mToH && mToP) {
+                                periodsArr.push(`صباحاً: من ${mFromH} ${mFromP} حتى ${mToH} ${mToP}`);
+                            }
+                            if (eFromH && eFromP && eToH && eToP) {
+                                periodsArr.push(`مساءً: من ${eFromH} ${eFromP} حتى ${eToH} ${eToP}`);
+                            }
+                            const workHoursDisplay = `${daysText} - ${periodsArr.length > 0 ? periodsArr.join(' | ') : 'مواعيد غير محددة'}`;
 
-    } else {
-        // حساب مؤسسي: مركز / مؤسسة / مستشفى تخصصي
-        const gov = document.getElementById('facilityGov').value;
-        const city = document.getElementById('facilityCity').value;
-        const village = document.getElementById('facilityVillage').value.trim();
-        const mapLink = document.getElementById('facilityMapLink').value.trim();
+                            clinics.push({
+                                governorate: gov,
+                                city: city,
+                                village: village,
+                                clinic_address: `${gov} - ${city} - ${village}`,
+                                price: isNaN(price) ? null : price,
+                                google_maps_link: mapLink,
+                                work_days: workDays,
+                                morning_shift: { from_hour: mFromH, from_period: mFromP, to_hour: mToH, to_period: mToP },
+                                evening_shift: { from_hour: eFromH, from_period: eFromP, to_hour: eToH, to_period: eToP },
+                                work_hours: workHoursDisplay
+                            });
+                        });
+                        userData.clinics = clinics;
 
-        userData.facility_governorate = gov;
-        userData.facility_city = city;
-        userData.facility_village = village;
-        userData.facility_address = `${gov} - ${city} - ${village}`;
-        userData.facility_map_link = mapLink;
+                    } else {
+                        const gov = document.getElementById('facilityGov').value;
+                        const city = document.getElementById('facilityCity').value;
+                        const village = document.getElementById('facilityVillage').value.trim();
+                        const mapLink = document.getElementById('facilityMapLink').value.trim();
 
-        const doctorsList = [];
-        const doctorBlocks = document.querySelectorAll('#institutionDoctorsContainer .clinic-block');
-        doctorBlocks.forEach(block => {
-            const dName = block.querySelector('.inst-doctor-name').value.trim();
-            const dSpecialtySelect = block.querySelector('.inst-doctor-specialty').value;
-            const dSpecialtyOther = block.querySelector('.inst-doctor-specialty-other').value.trim();
-            const dSpecialty = (dSpecialtySelect === 'أخرى' && dSpecialtyOther) ? dSpecialtyOther : dSpecialtySelect;
-            const dPrice = parseFloat(block.querySelector('.inst-doctor-price').value);
+                        userData.facility_governorate = gov;
+                        userData.facility_city = city;
+                        userData.facility_village = village;
+                        userData.facility_address = `${gov} - ${city} - ${village}`;
+                        userData.facility_map_link = mapLink;
 
-            const workDays = Array.from(block.querySelectorAll('.inst-doctor-day:checked')).map(cb => cb.value);
-            const fromHour = block.querySelector('.inst-doctor-from-hour').value.trim();
-            const fromPeriod = block.querySelector('.inst-doctor-from-period').value;
-            const toHour = block.querySelector('.inst-doctor-to-hour').value.trim();
-            const toPeriod = block.querySelector('.inst-doctor-to-period').value;
+                        const doctorsList = [];
+                        const doctorBlocks = document.querySelectorAll('#institutionDoctorsContainer .clinic-block');
+                        doctorBlocks.forEach(block => {
+                            const dName = block.querySelector('.inst-doctor-name').value.trim();
+                            const dSpecialtySelect = block.querySelector('.inst-doctor-specialty').value;
+                            const dSpecialtyOther = block.querySelector('.inst-doctor-specialty-other').value.trim();
+                            const dSpecialty = (dSpecialtySelect === 'أخرى' && dSpecialtyOther) ? dSpecialtyOther : dSpecialtySelect;
+                            const dPrice = parseFloat(block.querySelector('.inst-doctor-price').value);
+                            const workDays = Array.from(block.querySelectorAll('.inst-doctor-day:checked')).map(cb => cb.value);
 
-            const daysText = workDays.length > 0 ? workDays.join('، ') : 'أيام غير محددة';
-            const hoursText = (fromHour && fromPeriod && toHour && toPeriod)
-                ? `من ${fromHour} ${fromPeriod} حتى ${toHour} ${toPeriod}`
-                : 'مواعيد غير محددة';
+                            const mFromH = block.querySelector('.inst-m-from-hour').value.trim();
+                            const mFromP = block.querySelector('.inst-m-from-period').value;
+                            const mToH = block.querySelector('.inst-m-to-hour').value.trim();
+                            const mToP = block.querySelector('.inst-m-to-period').value;
 
-            doctorsList.push({
-                name: dName,
-                specialty: dSpecialty,
-                price: isNaN(dPrice) ? null : dPrice,
-                work_days: workDays,
-                time_from: { hour: fromHour, period: fromPeriod },
-                time_to: { hour: toHour, period: toPeriod },
-                work_hours: `${daysText} - ${hoursText}`
-            });
-        });
-        userData.doctors_list = doctorsList;
-    }
-}
+                            const eFromH = block.querySelector('.inst-e-from-hour').value.trim();
+                            const eFromP = block.querySelector('.inst-e-from-period').value;
+                            const eToH = block.querySelector('.inst-e-to-hour').value.trim();
+                            const eToP = block.querySelector('.inst-e-to-period').value;
 
-                // 2. الحفظ في Firestore
+                            const daysText = workDays.length > 0 ? workDays.join('، ') : 'أيام غير محددة';
+                            let periodsArr = [];
+                            if (mFromH && mFromP && mToH && mToP) {
+                                periodsArr.push(`صباحاً: من ${mFromH} ${mFromP} حتى ${mToH} ${mToP}`);
+                            }
+                            if (eFromH && eFromP && eToH && eToP) {
+                                periodsArr.push(`مساءً: من ${eFromH} ${eFromP} حتى ${eToH} ${eToP}`);
+                            }
+
+                            doctorsList.push({
+                                name: dName,
+                                specialty: dSpecialty,
+                                price: isNaN(dPrice) ? null : dPrice,
+                                work_days: workDays,
+                                morning_shift: { from_hour: mFromH, from_period: mFromP, to_hour: mToH, to_period: mToP },
+                                evening_shift: { from_hour: eFromH, from_period: eFromP, to_hour: eToH, to_period: eToP },
+                                work_hours: `${daysText} - ${periodsArr.length > 0 ? periodsArr.join(' | ') : 'مواعيد غير محددة'}`
+                            });
+                        });
+                        userData.doctors_list = doctorsList;
+                    }
+                }
+
                 await db.collection("users").doc(uid).set(userData);
 
-            if (role === 'patient') {
-             showToast("تهانينا! تم إنشاء حسابك بنجاح كعميل.", 'success');
-             localStorage.setItem('user_id', uid);
-             localStorage.setItem('user_name', name);
-             localStorage.setItem('user_role', 'patient');
-              notifyFlutterLogin(uid, 'patient', email, password);
-              setTimeout(() => { window.location.href = 'patient.html'; }, 1000);
-               } else {
+                if (role === 'patient') {
+                    showToast("تهانينا! تم إنشاء حسابك بنجاح كعميل.", 'success');
+                    localStorage.setItem('user_id', uid);
+                    localStorage.setItem('user_name', name);
+                    localStorage.setItem('user_role', 'patient');
+                    setTimeout(() => { window.location.href = 'patient.html'; }, 1000);
+                } else {
                     showToast("تم تسجيل حسابك بنجاح! حسابك بانتظار موافقة الإدارة لتتمكن من تسجيل الدخول.", 'success');
                     auth.signOut();
                     switchTab('login');
@@ -1122,10 +1172,6 @@ if (role === 'doctor') {
             }
         }
 
-        // ================= معالجة عملية تسجيل الدخول (Login) المحدثة =================
-        // ================= جسر تسجيل الدخول لتطبيق Flutter (لخدمة الاستماع في الخلفية) =================
-        // بيبعت بيانات الدخول لقناة "FlutterAuth" عشان فلاتر يعمل جلسة Firebase خاصة بيه
-        // منفصلة عن جلسة المتصفح، ويقدر يشغّل خدمة استماع في الخلفية (Foreground Service)
         function notifyFlutterLogin(uid, role, email, password) {
             try {
                 if (window.FlutterAuth && typeof window.FlutterAuth.postMessage === 'function') {
@@ -1146,26 +1192,22 @@ if (role === 'doctor') {
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
-                autoRedirectChecked = true; // منعاً لتكرار نفس عملية التوجيه من كاشف الجلسة المحفوظة
+                autoRedirectChecked = true;
 
-                // جلب بيانات المستخدم من Firestore للتحقق من الرول
                 const docSnap = await db.collection("users").doc(uid).get();
 
                 if (docSnap.exists) {
                     const userData = docSnap.data();
 
-                    // حفظ البيانات محلياً في المتصفح لتسهيل التنقل
                     localStorage.setItem('user_id', uid);
                     localStorage.setItem('user_name', userData.name);
 
-                    // 1. التحقق لو الحساب "أدمن"
                     if (userData.role === 'admin') {
                         localStorage.setItem('user_role', 'admin');
                         showToast("أهلاً بك يا سيادة المدير! جاري التوجيه للوحة التحكم...", 'success');
                         notifyFlutterLogin(uid, 'admin', email, password);
                         setTimeout(() => { window.location.href = 'admin.html'; }, 800);
                     } 
-                    // 2. التحقق لو الحساب "دكتور"
                     else if (userData.role === 'doctor') {
                         if (userData.status === 'pending') {
                             showToast("عذراً، حسابك لا يزال قيد مراجعة وتفعيل الإدارة.", 'error');
@@ -1181,14 +1223,12 @@ if (role === 'doctor') {
                         notifyFlutterLogin(uid, 'doctor', email, password);
                         window.location.href = 'doctor.html';
                     } 
-                    // 3. التحقق لو الحساب "مريض"
                     else if (userData.role === 'patient') {
                         localStorage.setItem('user_role', 'patient');
                         notifyFlutterLogin(uid, 'patient', email, password);
                         window.location.href = 'patient.html';
                     }
                 } else {
-                    // حماية إضافية في حال لم يجد المستند في Firestore
                     showToast("تم تسجيل الدخول بنجاح، ولكن لم يتم العثور على بيانات الصلاحيات الخاصة بك في قاعدة البيانات.", 'error');
                 }
 
