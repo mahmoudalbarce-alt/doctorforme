@@ -483,7 +483,7 @@
     <div class="card">
         <h2>أرباح المنصة من الحجوزات 📈</h2>
       <p style="font-size:12px; color:#718096; margin-top:-10px;">
-            💡 إجمالي أرباح المنصة من الحجوزات المؤكدة (رسوم الخدمة الثابتة 5 ج.م عن كل حجز). متاح للمدير العام فقط.
+            💡 إجمالي أرباح المنصة من الحجوزات المؤكدة (رسوم الخدمة الثابتة 10 ج.م عن كل حجز). متاح للمدير العام فقط.
         </p>
         
         <!-- بطاقة الإجمالي -->
@@ -1584,8 +1584,8 @@ async function loadProfits() {
             const bookingPrice = (data.final_price !== undefined && data.final_price !== null) ? data.final_price : data.clinic_price;
             const safePrice = bookingPrice !== undefined && bookingPrice !== null ? `${bookingPrice} ج.م` : 'غير محدد';
             
-            // حساب ربح المنصة: 5 جنيه ثابتة لكل حجز مؤكد
-            const platformProfit = 5;
+            // حساب ربح المنصة: 10 جنيه ثابتة لكل حجز مؤكد
+            const platformProfit = 10;
             totalProfits += platformProfit;
 
             const dateStr = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleDateString('ar-EG') : 'غير محدد';
