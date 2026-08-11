@@ -316,7 +316,7 @@
 
     <div class="auth-container">
         <div class="logo-area">
-            <h1>تطبيق حجزي 🏥 V3.1</h1>
+            <h1>تطبيق حجزي 🏥 V3.2</h1>
             <p>منصتك الطبية المتكاملة لحجز العيادات وتسهيل التواصل</p>
         </div>
 
@@ -359,10 +359,11 @@
                 <span class="field-hint">💡 اختر "شخصي" لو أنت طبيب مستقل، أو نوع المنشأة لو بتسجل مركز/مستشفى فيه أكتر من طبيب.</span>
             </div>
 
-            <div class="form-group">
-                <label id="regNameLabel">الاسم الكامل</label>
-                <input type="text" id="regName" class="form-control" placeholder="أدخل الاسم ثلاثي أو رباعي" required>
-            </div>
+         <div class="form-group">
+    <label id="regNameLabel">الاسم الكامل</label>
+    <input type="text" id="regName" class="form-control" placeholder="أدخل الاسم ثلاثي أو رباعي" required>
+    <span class="field-hint" id="regNameHint" style="display:none;">💡 هذا الاسم سيظهر للمرضى مسبوقاً بصفة المكان (مركز / مؤسسة / مستشفى تخصصي).</span>
+</div>
             <div class="form-group">
                 <label>رقم الهاتف</label>
                 <input type="tel" id="regPhone" class="form-control" placeholder="مثال: 01234567890" required pattern="[0-9]{11}">
@@ -638,31 +639,37 @@
             }
         }
 
-        function handleAccountTypeChange() {
-            const accountType = document.getElementById('doctorAccountType').value;
-            const personalSpecialtyGroup = document.getElementById('personalSpecialtyGroup');
-            const personalClinicsSection = document.getElementById('personalClinicsSection');
-            const institutionalSection = document.getElementById('institutionalSection');
-            const regNameLabel = document.getElementById('regNameLabel');
+  function handleAccountTypeChange() {
+    const accountType = document.getElementById('doctorAccountType').value;
+    const personalSpecialtyGroup = document.getElementById('personalSpecialtyGroup');
+    const personalClinicsSection = document.getElementById('personalClinicsSection');
+    const institutionalSection = document.getElementById('institutionalSection');
+    const regNameLabel = document.getElementById('regNameLabel');
+    const regNameInput = document.getElementById('regName');
+    const regNameHint = document.getElementById('regNameHint');
 
-            if (accountType === 'شخصي') {
-                personalSpecialtyGroup.style.display = 'block';
-                personalClinicsSection.style.display = 'block';
-                institutionalSection.style.display = 'none';
-                regNameLabel.innerText = 'الاسم الكامل';
-            } else {
-                personalSpecialtyGroup.style.display = 'none';
-                personalClinicsSection.style.display = 'none';
-                institutionalSection.style.display = 'block';
-                regNameLabel.innerText = 'اسم المركز / المؤسسة';
+    if (accountType === 'شخصي') {
+        personalSpecialtyGroup.style.display = 'block';
+        personalClinicsSection.style.display = 'block';
+        institutionalSection.style.display = 'none';
+        regNameLabel.innerText = 'الاسم الكامل';
+        regNameInput.placeholder = 'أدخل الاسم ثلاثي أو رباعي';
+        regNameHint.style.display = 'none';
+    } else {
+        personalSpecialtyGroup.style.display = 'none';
+        personalClinicsSection.style.display = 'none';
+        institutionalSection.style.display = 'block';
+        regNameLabel.innerText = 'اسم المكان';
+        regNameInput.placeholder = `مثال: ${accountType} النور الطبي`;
+        regNameHint.style.display = 'block';
 
-                if (document.getElementById('institutionDoctorsContainer').children.length === 0) {
-                    addInstitutionDoctorBlock();
-                }
-            }
-
-            toggleRequiredFields('doctor');
+        if (document.getElementById('institutionDoctorsContainer').children.length === 0) {
+            addInstitutionDoctorBlock();
         }
+    }
+
+    toggleRequiredFields('doctor');
+}
 
         function toggleRequiredFields(role) {
             if (role === 'patient') {
@@ -1093,17 +1100,18 @@
                         });
                         userData.clinics = clinics;
 
-                    } else {
-                        const gov = document.getElementById('facilityGov').value;
-                        const city = document.getElementById('facilityCity').value;
-                        const village = document.getElementById('facilityVillage').value.trim();
-                        const mapLink = document.getElementById('facilityMapLink').value.trim();
+             } else {
+    const gov = document.getElementById('facilityGov').value;
+    const city = document.getElementById('facilityCity').value;
+    const village = document.getElementById('facilityVillage').value.trim();
+    const mapLink = document.getElementById('facilityMapLink').value.trim();
 
-                        userData.facility_governorate = gov;
-                        userData.facility_city = city;
-                        userData.facility_village = village;
-                        userData.facility_address = `${gov} - ${city} - ${village}`;
-                        userData.facility_map_link = mapLink;
+    userData.facility_type = doctorAccountType; // مركز / مؤسسة / مستشفى تخصصي
+    userData.facility_governorate = gov;
+    userData.facility_city = city;
+    userData.facility_village = village;
+    userData.facility_address = `${gov} - ${city} - ${village}`;
+    userData.facility_map_link = mapLink;
 
                         const doctorsList = [];
                         const doctorBlocks = document.querySelectorAll('#institutionDoctorsContainer .clinic-block');
