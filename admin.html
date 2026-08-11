@@ -441,14 +441,15 @@
                 <div class="table-responsive">
                 <table style="margin-top: 20px;">
                     <thead>
-                        <tr>
-                            <th>الاسم</th>
-                            <th>الهاتف</th>
-                            <th>التخصص</th>
-                            <th>الحالة</th>
-                            <th>تاريخ التسجيل</th>
-                            <th>التحكم بالحساب</th>
-                        </tr>
+                          <tr>
+                  <th>الاسم</th>
+                  <th>الهاتف</th>
+                  <th>التخصص</th>
+                  <th>حالة الحساب</th>
+                  <th>حالة الاتصال</th>
+                  <th>تاريخ التسجيل</th>
+                  <th>التحكم بالحساب</th>
+                 </tr>
                     </thead>
                     <tbody id="allDoctorsTable">
                     </tbody>
@@ -914,10 +915,11 @@
                 loadBookings();
                 bookingsHasNewAlert = false;
                 stopAlertSoundIfClear();
-            } else if (tabName === 'doctorsList') {
-            if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
-            document.getElementById('doctorsListTab').classList.add('active');
-            loadAllDoctors();
+         } else if (tabName === 'doctorsList') {
+           if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
+           document.getElementById('doctorsListTab').classList.add('active');
+           loadAllDoctors();
+           startDoctorsAutoRefresh();
             } else if (tabName === 'activeDoctors') {
                 if (isBookingsOnlyAdmin || !isSuperAdmin) return; // متاح للمدير العام فقط
                 document.getElementById('activeDoctorsTab').classList.add('active');
@@ -1184,16 +1186,16 @@ window.closeReceiptViewModal = function() {
             return new Date(data.created_at).toLocaleDateString('ar-EG');
         }
 
-        function loadAllDoctors() {
-            const tableBody = document.getElementById('allDoctorsTable');
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>';
+     function loadAllDoctors() {
+    const tableBody = document.getElementById('allDoctorsTable');
+    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">جاري التحميل...</td></tr>';
 
-            db.collection("users").where("role", "==", "doctor").get()
-                .then(snapshot => {
-                    if (snapshot.empty) {
-                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#a0aec0;">لا يوجد أطباء مسجلين حالياً.</td></tr>';
-                        return;
-                    }
+    db.collection("users").where("role", "==", "doctor").get()
+        .then(snapshot => {
+            if (snapshot.empty) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#a0aec0;">لا يوجد أطباء مسجلين حالياً.</td></tr>';
+                return;
+            }
                     tableBody.innerHTML = '';
                     snapshot.forEach(doc => {
                         const data = doc.data();
@@ -1205,20 +1207,21 @@ window.closeReceiptViewModal = function() {
                         else if (data.status === 'rejected') statusBadge = '<span class="status-badge status-rejected">مرفوض ❌</span>';
                         else statusBadge = '<span class="status-badge status-pending">بانتظار المراجعة ⏳</span>';
 
-                        tableBody.innerHTML += `
-                            <tr>
-                                <td><b>${escapeHtml(data.name || 'مجهول')}</b></td>
-                                <td>${escapeHtml(data.phone || 'بدون هاتف')}</td>
-                                <td>${escapeHtml(data.specialty || 'غير محدد')}</td>
-                                <td>${statusBadge}</td>
-                                <td>${formatUserDate(data)}</td>
-                                <td><button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button></td>
-                            </tr>
-                        `;
+                    tableBody.innerHTML += `
+    <tr>
+        <td><b>${escapeHtml(data.name || 'مجهول')}</b></td>
+        <td>${escapeHtml(data.phone || 'بدون هاتف')}</td>
+        <td>${escapeHtml(data.specialty || 'غير محدد')}</td>
+        <td>${statusBadge}</td>
+        <td>${connectionStatusBadge(data.last_active)}</td>
+        <td>${formatUserDate(data)}</td>
+        <td><button class="btn btn-danger" onclick="deleteUser('${uid}', '${escapedName}')">حذف مستخدم 🗑️</button></td>
+    </tr>
+`;
                     });
-                }).catch(err => {
-                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
-                });
+             }).catch(err => {
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
+});
         }
 // ================= الأطباء النشطين والمستحقات المالية =================
 async function loadActiveDoctorsFinancials() {
@@ -1328,7 +1331,32 @@ async function loadActiveDoctorsFinancials() {
                     tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">خطأ: ${err.message}</td></tr>`;
                 });
         }
+// التحقق إن الطبيب متصل فعلاً الآن (بعت "نبضة حياة" خلال آخر 3 دقايق)
+function isDoctorOnlineNow(lastActiveTimestamp) {
+    if (!lastActiveTimestamp || !lastActiveTimestamp.seconds) return false;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const diffSeconds = nowSeconds - lastActiveTimestamp.seconds;
+    return diffSeconds < 180; // 3 دقايق
+}
 
+function connectionStatusBadge(lastActiveTimestamp) {
+    const online = isDoctorOnlineNow(lastActiveTimestamp);
+    return online
+        ? '<span class="status-badge status-approved">🟢 متصل الآن</span>'
+        : '<span class="status-badge status-rejected">⚪ غير متصل</span>';
+}
+let doctorsAutoRefreshInterval = null;
+function startDoctorsAutoRefresh() {
+    if (doctorsAutoRefreshInterval) clearInterval(doctorsAutoRefreshInterval);
+    doctorsAutoRefreshInterval = setInterval(() => {
+        if (document.getElementById('doctorsListTab').classList.contains('active')) {
+            loadAllDoctors();
+        } else {
+            clearInterval(doctorsAutoRefreshInterval);
+            doctorsAutoRefreshInterval = null;
+        }
+    }, 30000); // كل 30 ثانية
+}
         function loadAllAdmins() {
             const tableBody = document.getElementById('allAdminsTable');
             tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
