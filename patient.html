@@ -1603,7 +1603,7 @@ pendingBooking = {
         // ================= تأكيد الحجز وحفظ بيانات المريض المحدثة =================
 const ADMIN_WHATSAPP_NUMBER = '201558536935';
 const BOOKING_PAYMENT_MINUTES = 15;
-const SERVICE_FEE_EGP = 5;
+const SERVICE_FEE_EGP = 10;
 let paymentCountdownInterval = null;
 
 async function confirmBookingSubmit(event) {
@@ -1658,7 +1658,7 @@ function openPaymentInstructionsModal(paymentAmount, paymentDeadline, bookingId)
     if (paymentAmount !== null) {
         // تم إضافة التنويه عن رسوم الخدمة هنا
         summaryDiv.innerHTML = `<div>💰 المبلغ المطلوب تحويله: <strong style="color:var(--primary); font-size:18px;">${paymentAmount} ج.م</strong></div>
-            <div style="font-size:12px; color:#a0aec0; margin-top:5px;">(نصف قيمة الكشف + 5 ج.م رسوم خدمة المنصة)</div>`;
+            <div style="font-size:12px; color:#a0aec0; margin-top:5px;">(نصف قيمة الكشف + 10 ج.م رسوم خدمة المنصة)</div>`;
     } else {
         summaryDiv.innerHTML = `<div style="color:#a0aec0; font-size:13px;">سعر الكشف غير محدد حالياً، برجاء التواصل مع الإدارة عبر واتساب لتحديد المبلغ المطلوب.</div>`;
     }
@@ -1821,7 +1821,7 @@ function listenToMyBookings() {
                         
                         // حساب نصف مبلغ الحجز + 5 جنيه رسوم خدمة
                         const bookingPrice = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
-                        const amount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) + 5 : null;
+                        const amount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) + 10 : null;
                         
                         openPaymentInstructionsModal(amount, deadlineDate, booking.id);
                     }
@@ -1888,7 +1888,7 @@ let paymentActionsHtml = '';
 if (booking.status === 'doctor_approved' && booking.payment_deadline) {
     // حساب نصف مبلغ الحجز + 5 جنيه رسوم خدمة للزر الموجود داخل الكارت
     const bookingPrice = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
-    const paymentAmount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) + 5 : null;
+    const paymentAmount = (bookingPrice !== undefined && bookingPrice !== null) ? (bookingPrice / 2) + 10 : null;
     
     // تعديل نص رسالة الواتساب
     const waMessage = paymentAmount !== null
