@@ -1170,6 +1170,14 @@
         function doctorPrefix() {
             return (localStorage.getItem('preferred_lang') === 'en') ? 'Dr.' : 'د.';
         }
+        // تحديد العنوان المعروض للمريض: "د. اسم الطبيب" للحسابات الشخصية، أو "الصفة + اسم المكان" للمؤسسات
+function displayTitleFor(entry, account) {
+    if (entry.isInstitutional && account) {
+        const facilityType = account.facility_type || 'مركز';
+        return `${facilityType} ${account.name || ''}`;
+    }
+    return `${doctorPrefix()} ${entry.name}`;
+}
 
         // صيغة التاريخ حسب اللغة الحالية
         function currentDateLocale() {
@@ -1406,20 +1414,25 @@ function applyDoctorFilters() {
             ? `<div class="doc-summary-line" style="border-top:none; margin-top:0; padding-top:0;">🏢 ${escapeHtml(entry.facilityName || '')}</div>`
             : '';
 
-        grid.innerHTML += `
-            <div class="doctor-card">
-                <div class="doc-profile">
-                    <img src="${avatarSrc}" class="doc-avatar" alt="Doctor Photo">
-                    <div class="doc-info">
-                        <h3>${doctorPrefix()} ${escapeHtml(entry.name)} ${availabilityBadge}</h3>
-                        <span class="doc-specialty">${escapeHtml(entry.specialty || '')}</span>
-                    </div>
-                </div>
-                ${facilityLine}
-                <div class="doc-summary-line">🏥 ${t('clinicsCountLabel')}: ${entry.clinicsCount}</div>
-                <button class="details-btn" onclick='openDoctorDetails(${JSON.stringify(entry.key)})'>${t('detailsBtn')}</button>
+const cardTitle = displayTitleFor(entry, account);
+const physicianLine = entry.isInstitutional
+    ? `<div class="doc-summary-line" style="border-top:none; margin-top:0; padding-top:0;">👨‍⚕️ ${doctorPrefix()} ${escapeHtml(entry.name)} — ${escapeHtml(entry.specialty || '')}</div>`
+    : '';
+
+grid.innerHTML += `
+    <div class="doctor-card">
+        <div class="doc-profile">
+            <img src="${avatarSrc}" class="doc-avatar" alt="Doctor Photo">
+            <div class="doc-info">
+                <h3>${escapeHtml(cardTitle)} ${availabilityBadge}</h3>
+                ${!entry.isInstitutional ? `<span class="doc-specialty">${escapeHtml(entry.specialty || '')}</span>` : ''}
             </div>
-        `;
+        </div>
+        ${physicianLine}
+        <div class="doc-summary-line">🏥 ${t('clinicsCountLabel')}: ${entry.clinicsCount}</div>
+        <button class="details-btn" onclick='openDoctorDetails(${JSON.stringify(entry.key)})'>${t('detailsBtn')}</button>
+    </div>
+`;
     });
 }
 
@@ -1448,9 +1461,11 @@ function applyDoctorFilters() {
     document.getElementById('proceedBookingBtn').disabled = true;
 
     const avatarSrc = entry.image_url ? entry.image_url : 'https://cdn-icons-png.flaticon.com/512/387/387561.png';
-    document.getElementById('detailsAvatar').src = avatarSrc;
-    document.getElementById('detailsName').innerText = `${doctorPrefix()} ${entry.name}`;
-    document.getElementById('detailsSpecialty').innerText = entry.specialty || '';
+document.getElementById('detailsAvatar').src = avatarSrc;
+document.getElementById('detailsName').innerText = displayTitleFor(entry, account);
+document.getElementById('detailsSpecialty').innerText = entry.isInstitutional
+    ? `${doctorPrefix()} ${entry.name} — ${entry.specialty || ''}`
+    : (entry.specialty || '');
 
     const listContainer = document.getElementById('detailsClinicsList');
     listContainer.innerHTML = '';
@@ -1568,10 +1583,16 @@ function applyDoctorFilters() {
             proceedBtn.disabled = false;
             proceedBtn.innerText = originalBtnText;
 
-       const clinic = currentDoctorForDetails.clinics[selectedClinicIndex];
+const clinic = currentDoctorForDetails.clinics[selectedClinicIndex];
+const account = window._doctorsCache[currentDoctorForDetails.id];
+const displayTitle = currentDoctorForDetails.isInstitutional
+    ? `${(account && account.facility_type) || 'مركز'} ${(account && account.name) || ''}`
+    : `${doctorPrefix()} ${currentDoctorForDetails.name}`;
+
 pendingBooking = {
     doctorId: currentDoctorForDetails.id,
     doctorName: currentDoctorForDetails.name,
+    doctorDisplayTitle: displayTitle,
     clinicAddress: clinic.clinic_address,
     clinicHours: clinic.work_hours,
     clinicPrice: (clinic.price !== undefined && clinic.price !== null) ? clinic.price : null,
@@ -1579,9 +1600,9 @@ pendingBooking = {
     facilityName: currentDoctorForDetails.facilityName || null
 };
 
-            closeDoctorDetailsModal();
+closeDoctorDetailsModal();
 
-            document.getElementById('modalDoctorName').innerText = `${doctorPrefix()} ${currentDoctorForDetails.name}`;
+document.getElementById('modalDoctorName').innerText = displayTitle;
             document.getElementById('modalClinicAddress').innerText = clinic.clinic_address;
             document.getElementById('modalClinicHours').innerText = clinic.work_hours;
             document.getElementById('modalClinicPrice').innerText = (clinic.price !== undefined && clinic.price !== null) ? `${clinic.price} ج.م` : 'غير محدد';
@@ -1625,7 +1646,7 @@ async function confirmBookingSubmit(event) {
         currentPatient = { ...currentPatient, name, phone, age, address };
         document.getElementById('welcomeText').innerText = `${t('welcomeGreeting')} ${name} 👋`;
 
-  const bookingData = {
+const bookingData = {
     patient_id: patientId,
     patient_name: name,
     patient_phone: phone,
@@ -1633,6 +1654,7 @@ async function confirmBookingSubmit(event) {
     patient_address: address,
     doctor_id: pendingBooking.doctorId,
     doctor_name: pendingBooking.doctorName,
+    doctor_display_title: pendingBooking.doctorDisplayTitle,
     clinic_address: pendingBooking.clinicAddress,
     clinic_hours: pendingBooking.clinicHours,
     clinic_price: pendingBooking.clinicPrice,
@@ -1910,10 +1932,14 @@ if (booking.status === 'doctor_approved' && booking.payment_deadline) {
                 const priceValue = (booking.final_price !== undefined && booking.final_price !== null) ? booking.final_price : booking.clinic_price;
                 const priceLine = (priceValue !== undefined && priceValue !== null) ? `<p style="margin:0 0 5px 0; font-size:12px; color:#a0aec0;">${t('priceLabel')} ${escapeHtml(priceValue)} ${t('priceCurrency')}</p>` : '';
 
-                listDiv.innerHTML += `
-                    <div class="booking-card ${booking.status}">
-                        <div>
-                            <h3 style="margin:0 0 8px 0; font-size:16px;">${doctorPrefix()} ${escapeHtml(booking.doctor_name)}</h3>
+const bookingTitle = booking.doctor_display_title
+    ? booking.doctor_display_title
+    : `${doctorPrefix()} ${booking.doctor_name}`;
+
+listDiv.innerHTML += `
+    <div class="booking-card ${booking.status}">
+        <div>
+            <h3 style="margin:0 0 8px 0; font-size:16px;">${escapeHtml(bookingTitle)}</h3>
                             <p style="margin:0 0 5px 0; font-size:13px; color:#4a5568;">🏥 ${t('clinicLabelShort')}: ${escapeHtml(booking.clinic_address)}</p>
 ${hoursLine}
 ${priceLine}
